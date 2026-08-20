@@ -41,16 +41,16 @@ Behavioural source-of-truth precedence is defined in `aidlc-e2e-rules.md` §3 an
 A reconnaissance of this repository was performed as required by `aidlc-e2e-rules.md` §14 and §22. Current repository contents:
 
 ```text
-README.md                                        (one line, no project detail)
+README.md                                        (title + frontend UI URL)
 .gitignore
 aidlc-docs/rules/aidlc-e2e-rules.md              POPULATED
 aidlc-docs/rules/clinical-rules.md               POPULATED
 aidlc-docs/workflows/e2e-test-generation-workflow.md   (this file)
-aidlc-docs/requirements/requirement-template.md  EMPTY
+aidlc-docs/requirements/requirement-template.md  POPULATED
 aidlc-docs/construction/generate-bdd.md          EMPTY
 aidlc-docs/construction/generate-testcase.md     EMPTY
 aidlc-docs/construction/generate-playwright.md   EMPTY
-aidlc-docs/schemas/traceability.schema.json      EMPTY
+aidlc-docs/schemas/traceability.schema.json      POPULATED
 ```
 
 Accordingly, the following are recorded per the No Assumption Rule (`aidlc-e2e-rules.md` §4):
@@ -62,14 +62,14 @@ MISSING INFORMATION
 | # | Missing input | Blocks from | Required from |
 |---|---|---|---|
 | P-01 | No approved requirements exist in `aidlc-docs/requirements/` | S1 onward | Product / BA |
-| P-02 | `requirement-template.md` is empty — the approved requirement shape is undefined | S0 onward | QA Lead / BA |
-| P-03 | `traceability.schema.json` is empty — the traceability record shape is undefined | S10 (and validation at every gate) | QA Lead / Eng Lead |
+| ~~P-02~~ | ~~`requirement-template.md` is empty~~ — **RESOLVED**, template authored; pending ratification at G0 | S0 onward | QA Lead / BA |
+| ~~P-03~~ | ~~`traceability.schema.json` is empty~~ — **RESOLVED**, JSON Schema authored and validator-verified; pending ratification at G0 | S10 (and validation at every gate) | QA Lead / Eng Lead |
 | P-04 | No Playwright framework exists (no `package.json`, no config, no fixtures, no Page Objects, no API clients, no auth utilities) | S6, S7 | Eng Lead / Automation Lead |
-| P-05 | No application under test is identified (no environment URLs, no API contracts) | S5, S9 | Eng Lead / Product |
+| P-05 | Partially addressed — a dev frontend URL is recorded in `README.md`, but there is still no API contract, no credential/role provisioning for test accounts, and no defined test environment policy | S5, S9 | Eng Lead / Product |
 | P-06 | No module taxonomy is approved, so the `<MODULE>` token in `REQ-<MODULE>-<NNN>` / `TC-<MODULE>-<NNN>` cannot be populated | S1 onward | Product / QA Lead |
 | P-07 | No clinical lifecycle/state model, enum set, or role-and-permission matrix is available in an approved source | S3, S4 | Clinical SME / Product |
 
-**Consequence:** stages S1 through S10 are currently blocked. Stage S0 is the only executable stage until P-01 through P-07 are resolved. This is the intended behaviour of the rules, not a workflow defect.
+**Consequence:** stages S1 through S10 remain blocked while P-01, P-04, P-05, P-06, and P-07 are open. Stage S0 is the only executable stage, and even it cannot run against a real requirement until P-01 and P-06 are closed. This is the intended behaviour of the rules, not a workflow defect.
 
 Note that the empty construction files (`generate-bdd.md`, `generate-testcase.md`, `generate-playwright.md`) are the construction prompt assets for stages S4 and S7. They are referenced by this workflow but authoring them is separate work, itself subject to Gate G0.
 
@@ -159,7 +159,7 @@ Summary table:
 
 **Inputs**
 - Candidate requirement reference
-- `aidlc-docs/requirements/requirement-template.md` (currently EMPTY — P-02)
+- `aidlc-docs/requirements/requirement-template.md` (authored; ratify at G0)
 - Both rules documents
 
 **AI actions**
@@ -403,7 +403,7 @@ See conflict **C-01** — BDD scenarios and test cases are co-produced and revie
 
 **Actions**
 - Record the full chain: `REQ → AC → TC → BDD → Playwright test → Execution → Result` (`aidlc-e2e-rules.md` §5, §31).
-- Validate the record against `aidlc-docs/schemas/traceability.schema.json` (**currently EMPTY — P-03; the schema must be authored before this stage can run**).
+- Validate the record against `aidlc-docs/schemas/traceability.schema.json` (JSON Schema draft 2020-12). The schema enforces the ID formats of §12, rejects a `COVERED` acceptance criterion with no covering test, rejects an uncovered criterion with no justification, and rejects a failed execution with no classification.
 - Recompute the coverage matrix from actuals rather than from intent.
 
 **Outputs / artifacts**
@@ -575,10 +575,10 @@ Test quantity is not a quality measure. The goal is the smallest set of reliable
 
 This workflow cannot be executed against any requirement until the prerequisites in §3 are closed. Recommended order:
 
-1. Approve or amend this workflow at **G0**, including a decision on conflict **C-01**.
-2. Author `aidlc-docs/requirements/requirement-template.md` (P-02).
-3. Author `aidlc-docs/schemas/traceability.schema.json` (P-03).
-4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06).
+1. ~~Approve or amend this workflow at **G0**, including a decision on conflict **C-01**.~~ C-01 decided: BDD and test cases are co-produced in S4. Formal G0 ratification still outstanding.
+2. ~~Author `aidlc-docs/requirements/requirement-template.md` (P-02).~~ Done — review and ratify at G0.
+3. ~~Author `aidlc-docs/schemas/traceability.schema.json` (P-03).~~ Done — review and ratify at G0.
+4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06). **This is now the critical path**: without it, no requirement or test case ID can be issued.
 5. Establish and approve the Playwright framework — architecture, fixtures, Page Objects, API clients, auth utilities (P-04, P-05).
 6. Author the three construction prompt files in `aidlc-docs/construction/`.
 7. Onboard the first approved requirement and run S0.

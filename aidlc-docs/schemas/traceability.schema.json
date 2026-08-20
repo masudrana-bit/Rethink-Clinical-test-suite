@@ -1,0 +1,424 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rethinkbhtech.com/aidlc/schemas/traceability.schema.json",
+  "title": "AIDLC E2E Traceability Record",
+  "description": "Machine-verifiable record of the traceability chain required by aidlc-e2e-rules.md sections 5 and 31: Requirement -> Acceptance Criterion -> Test Case -> BDD Scenario -> Playwright Test -> Execution -> Result. Validated at workflow stage S10 (Gate G7). Enum values are taken verbatim from the governing rules documents; the only exceptions are automationStatus and gate identifiers, which are process fields awaiting ratification at Gate G0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "requirements",
+    "testCases"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requirements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/requirement" }
+    },
+    "testCases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/testCase" }
+    },
+    "bddScenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/bddScenario" }
+    },
+    "automation": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/automationEntry" }
+    },
+    "executions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/execution" }
+    },
+    "blockers": {
+      "type": "array",
+      "description": "Open gaps and ambiguities. A non-empty blocker with blocking=true prevents Gate G7.",
+      "items": { "$ref": "#/$defs/blocker" }
+    },
+    "approvals": {
+      "type": "array",
+      "description": "Human gate sign-offs. AI must never author entries here.",
+      "items": { "$ref": "#/$defs/approval" }
+    }
+  },
+  "$defs": {
+    "requirementId": {
+      "type": "string",
+      "pattern": "^REQ-[A-Z0-9]+-[0-9]{3}$",
+      "description": "Format mandated by aidlc-e2e-rules.md section 12."
+    },
+    "acceptanceCriterionId": {
+      "type": "string",
+      "pattern": "^AC-[0-9]{3}$"
+    },
+    "testCaseId": {
+      "type": "string",
+      "pattern": "^TC-[A-Z0-9]+-[0-9]{3}$",
+      "description": "Format mandated by aidlc-e2e-rules.md section 12. Must be deterministic."
+    },
+    "sourceCitation": {
+      "type": "object",
+      "description": "Pointer to an approved source. AI-generated content is never an approved source.",
+      "additionalProperties": false,
+      "required": ["document"],
+      "properties": {
+        "document": { "type": "string" },
+        "location": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedOn": { "type": "string", "format": "date" }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "approved", "acceptanceCriteria"],
+      "properties": {
+        "id": { "$ref": "#/$defs/requirementId" },
+        "title": { "type": "string" },
+        "module": { "type": "string" },
+        "approved": {
+          "type": "boolean",
+          "description": "A test derived from an unapproved requirement is never production-ready."
+        },
+        "approvedBy": { "type": "string" },
+        "approvedOn": { "type": "string", "format": "date" },
+        "clinicalSmeSignOff": { "type": "boolean" },
+        "specPath": { "type": "string" },
+        "acceptanceCriteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/acceptanceCriterion" }
+        },
+        "clinicalRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/clinicalRuleRef" }
+        }
+      }
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "coverage"],
+      "properties": {
+        "id": { "$ref": "#/$defs/acceptanceCriterionId" },
+        "text": { "type": "string" },
+        "coverage": {
+          "enum": ["COVERED", "PARTIALLY_COVERED", "NOT_COVERED"],
+          "description": "Per aidlc-e2e-rules.md section 6, partial and absent coverage must be stated explicitly. Full coverage must not be claimed while any criterion is NOT_COVERED."
+        },
+        "coveredBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/testCaseId" }
+        },
+        "coverageJustification": {
+          "type": "string",
+          "description": "Required when coverage is PARTIALLY_COVERED or NOT_COVERED."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "coverage": { "const": "COVERED" } },
+            "required": ["coverage"]
+          },
+          "then": {
+            "properties": {
+              "coveredBy": { "type": "array", "minItems": 1 }
+            },
+            "required": ["coveredBy"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coverage": { "enum": ["PARTIALLY_COVERED", "NOT_COVERED"] }
+            },
+            "required": ["coverage"]
+          },
+          "then": {
+            "properties": {
+              "coverageJustification": { "type": "string" }
+            },
+            "required": ["coverageJustification"]
+          }
+        }
+      ]
+    },
+    "clinicalRuleRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "source"],
+      "properties": {
+        "ruleId": { "type": "string" },
+        "statement": { "type": "string" },
+        "source": { "$ref": "#/$defs/sourceCitation" }
+      }
+    },
+    "testCase": {
+      "type": "object",
+      "description": "Fields mirror the mandatory test case content of aidlc-e2e-rules.md section 11.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requirementId",
+        "acceptanceCriterionIds",
+        "objective",
+        "priority",
+        "testType",
+        "automationStatus"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/testCaseId" },
+        "requirementId": { "$ref": "#/$defs/requirementId" },
+        "acceptanceCriterionIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/acceptanceCriterionId" }
+        },
+        "objective": { "type": "string" },
+        "specPath": { "type": "string" },
+        "priority": {
+          "enum": ["P0", "P1", "P2", "P3"],
+          "description": "aidlc-e2e-rules.md section 13."
+        },
+        "testType": {
+          "enum": [
+            "POSITIVE",
+            "NEGATIVE",
+            "BOUNDARY",
+            "PERMISSION",
+            "STATE_TRANSITION",
+            "INTEGRATION"
+          ],
+          "description": "Scenario categories from aidlc-e2e-rules.md section 7."
+        },
+        "automationStatus": {
+          "enum": ["NOT_AUTOMATED", "IN_PROGRESS", "AUTOMATED", "BLOCKED"],
+          "description": "Process field; value set awaits ratification at Gate G0."
+        },
+        "duplicationDecision": {
+          "enum": ["NEW", "REUSE_EXISTING_TEST", "EXTEND_EXISTING_TEST"],
+          "description": "Outcome of the duplicate check required by aidlc-e2e-rules.md section 27."
+        },
+        "supersededBy": { "$ref": "#/$defs/testCaseId" },
+        "bddScenarioId": { "type": "string" },
+        "clinicalRuleIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blockerIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "bddScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "featureFile", "scenarioName", "testCaseIds"],
+      "properties": {
+        "id": { "type": "string" },
+        "featureFile": { "type": "string" },
+        "scenarioName": { "type": "string" },
+        "testCaseIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/testCaseId" }
+        }
+      }
+    },
+    "automationEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "testCaseId", "filePath", "testTitle"],
+      "properties": {
+        "id": { "type": "string" },
+        "testCaseId": { "$ref": "#/$defs/testCaseId" },
+        "filePath": { "type": "string" },
+        "testTitle": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "staticValidationPassed": { "type": "boolean" },
+        "qaReviewedBy": { "type": "string" },
+        "codeReviewedBy": { "type": "string" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "description": "Evidence fields follow clinical-rules.md section 36.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "testCaseId",
+        "requirementId",
+        "environment",
+        "executedAt",
+        "result"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "testCaseId": { "$ref": "#/$defs/testCaseId" },
+        "requirementId": { "$ref": "#/$defs/requirementId" },
+        "automationId": { "type": "string" },
+        "environment": { "type": "string" },
+        "executedAt": { "type": "string", "format": "date-time" },
+        "actorRole": {
+          "type": "string",
+          "description": "Role used for the run, not a real user identity."
+        },
+        "testDataRef": { "type": "string" },
+        "result": {
+          "enum": ["PASSED", "FAILED", "SKIPPED", "FLAKY"],
+          "description": "FLAKY per aidlc-e2e-rules.md section 25. Re-running until a pass and then reporting PASSED is prohibited."
+        },
+        "runCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of attempts. A value above 1 with result PASSED requires flakyInvestigation."
+        },
+        "flakyInvestigation": { "type": "string" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "classification": { "$ref": "#/$defs/classification" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "result": { "enum": ["FAILED", "FLAKY"] } },
+            "required": ["result"]
+          },
+          "then": {
+            "description": "A failure must be classified with evidence before a defect is raised.",
+            "properties": {
+              "classification": { "$ref": "#/$defs/classification" }
+            },
+            "required": ["classification"]
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phiReviewed"],
+      "properties": {
+        "screenshots": { "type": "array", "items": { "type": "string" } },
+        "traces": { "type": "array", "items": { "type": "string" } },
+        "videos": { "type": "array", "items": { "type": "string" } },
+        "apiEvidence": { "type": "array", "items": { "type": "string" } },
+        "failureDetail": { "type": "string" },
+        "phiReviewed": {
+          "type": "boolean",
+          "description": "Attestation that the evidence bundle contains no real PHI, per clinical-rules.md section 36."
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "supportingEvidence"],
+      "properties": {
+        "category": {
+          "oneOf": [
+            {
+              "enum": [
+                "PRODUCT_DEFECT",
+                "TEST_DEFECT",
+                "AUTOMATION_DEFECT",
+                "TEST_DATA_FAILURE",
+                "ENVIRONMENT_FAILURE",
+                "INTEGRATION_FAILURE",
+                "REQUIREMENT_GAP",
+                "UNKNOWN"
+              ],
+              "title": "General categories (aidlc-e2e-rules.md section 24)"
+            },
+            {
+              "enum": [
+                "CLINICAL_BUSINESS_RULE_DEFECT",
+                "FUNCTIONAL_DEFECT",
+                "DATA_INTEGRITY_DEFECT",
+                "AUTHORIZATION_DEFECT",
+                "INTEGRATION_DEFECT",
+                "AUTOMATION_DEFECT",
+                "TEST_DATA_DEFECT",
+                "ENVIRONMENT_DEFECT",
+                "REQUIREMENT_GAP",
+                "UNKNOWN"
+              ],
+              "title": "Clinical categories (clinical-rules.md section 37)"
+            }
+          ]
+        },
+        "supportingEvidence": {
+          "type": "string",
+          "description": "AI must supply evidence for the classification. Severity remains a human decision."
+        },
+        "classifiedBy": { "type": "string" },
+        "confirmedBy": { "type": "string" }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "token", "description", "blocking"],
+      "properties": {
+        "id": { "type": "string" },
+        "token": {
+          "enum": [
+            "MISSING_INFORMATION",
+            "CLINICAL_RULE_REQUIRES_CLARIFICATION",
+            "TEST_BLOCKED",
+            "NOT_SPECIFIED",
+            "NEEDS_SME_CONFIRMATION",
+            "CONFLICTING_REQUIREMENTS",
+            "MISSING_API_CONTRACT",
+            "MISSING_TEST_DATA_DEFINITION"
+          ],
+          "description": "Status vocabulary from aidlc-e2e-rules.md sections 4 and 29 and clinical-rules.md sections 4 and 11."
+        },
+        "description": { "type": "string" },
+        "blocking": {
+          "type": "boolean",
+          "description": "True when the gap affects expected clinical behaviour. Any true value prevents Gate G7."
+        },
+        "affects": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "owner": { "type": "string" },
+        "raisedOn": { "type": "string", "format": "date" },
+        "resolution": { "type": "string" },
+        "resolvedBy": { "type": "string" },
+        "resolvedOn": { "type": "string", "format": "date" }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "approvedBy", "role", "approvedOn"],
+      "properties": {
+        "gate": {
+          "enum": ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"],
+          "description": "Gates defined in the E2E test generation workflow."
+        },
+        "scope": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "role": { "type": "string" },
+        "approvedOn": { "type": "string", "format": "date" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}
