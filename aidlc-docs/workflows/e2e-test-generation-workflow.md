@@ -64,7 +64,7 @@ MISSING INFORMATION
 | P-01 | No approved requirements exist in `aidlc-docs/requirements/` | S1 onward | Product / BA |
 | ~~P-02~~ | ~~`requirement-template.md` is empty~~ — **RESOLVED**, template authored; pending ratification at G0 | S0 onward | QA Lead / BA |
 | ~~P-03~~ | ~~`traceability.schema.json` is empty~~ — **RESOLVED**, JSON Schema authored and validator-verified; pending ratification at G0 | S10 (and validation at every gate) | QA Lead / Eng Lead |
-| P-04 | No Playwright framework exists (no `package.json`, no config, no fixtures, no Page Objects, no API clients, no auth utilities) | S6, S7 | Eng Lead / Automation Lead |
+| P-04 | No Playwright framework exists (no Playwright config, no fixtures, no Page Objects, no API clients, no auth utilities). A root `package.json` exists, but only for documentation tooling — it does not constitute a test framework | S6, S7 | Eng Lead / Automation Lead |
 | P-05 | Partially addressed — a dev frontend URL is recorded in `README.md`, but there is still no API contract, no credential/role provisioning for test accounts, and no defined test environment policy | S5, S9 | Eng Lead / Product |
 | P-06 | No module taxonomy is approved, so the `<MODULE>` token in `REQ-<MODULE>-<NNN>` / `TC-<MODULE>-<NNN>` cannot be populated | S1 onward | Product / QA Lead |
 | P-07 | No clinical lifecycle/state model, enum set, or role-and-permission matrix is available in an approved source | S3, S4 | Clinical SME / Product |
@@ -404,6 +404,7 @@ See conflict **C-01** — BDD scenarios and test cases are co-produced and revie
 **Actions**
 - Record the full chain: `REQ → AC → TC → BDD → Playwright test → Execution → Result` (`aidlc-e2e-rules.md` §5, §31).
 - Validate the record against `aidlc-docs/schemas/traceability.schema.json` (JSON Schema draft 2020-12). The schema enforces the ID formats of §12, rejects a `COVERED` acceptance criterion with no covering test, rejects an uncovered criterion with no justification, and rejects a failed execution with no classification.
+- Run `npm run validate:traceability`. Beyond the schema, this checks cross-collection references, verifies that coverage claims are mutual (a criterion cannot claim a test case that does not claim it back), and enforces §25 by rejecting a `PASSED` result that took multiple attempts with no recorded investigation. Use `npm run validate:traceability:gate` to additionally fail on unmet G7 readiness.
 - Recompute the coverage matrix from actuals rather than from intent.
 
 **Outputs / artifacts**
