@@ -47,9 +47,9 @@ aidlc-docs/rules/aidlc-e2e-rules.md              POPULATED
 aidlc-docs/rules/clinical-rules.md               POPULATED
 aidlc-docs/workflows/e2e-test-generation-workflow.md   (this file)
 aidlc-docs/requirements/requirement-template.md  POPULATED
-aidlc-docs/construction/generate-bdd.md          EMPTY
-aidlc-docs/construction/generate-testcase.md     EMPTY
-aidlc-docs/construction/generate-playwright.md   EMPTY
+aidlc-docs/construction/generate-bdd.md          POPULATED
+aidlc-docs/construction/generate-testcase.md     POPULATED
+aidlc-docs/construction/generate-playwright.md   POPULATED
 aidlc-docs/schemas/traceability.schema.json      POPULATED
 ```
 
@@ -71,7 +71,7 @@ MISSING INFORMATION
 
 **Consequence:** stages S1 through S10 remain blocked while P-01, P-04, P-05, P-06, and P-07 are open. Stage S0 is the only executable stage, and even it cannot run against a real requirement until P-01 and P-06 are closed. This is the intended behaviour of the rules, not a workflow defect.
 
-Note that the empty construction files (`generate-bdd.md`, `generate-testcase.md`, `generate-playwright.md`) are the construction prompt assets for stages S4 and S7. They are referenced by this workflow but authoring them is separate work, itself subject to Gate G0.
+The construction prompts (`generate-bdd.md`, `generate-testcase.md`, `generate-playwright.md`) are now authored and are the operational instructions for stages S4 and S7. They are subject to ratification at Gate G0 along with this workflow. Note that `generate-playwright.md` is written but **not runnable**, because P-04 leaves it with no framework to inspect or reuse.
 
 ---
 
@@ -267,7 +267,7 @@ Required decision:
 
 See conflict **C-01** — BDD scenarios and test cases are co-produced and reviewed together at G3 pending a decision on strict ordering.
 
-**Inputs:** approved coverage matrix and scenario inventory; `aidlc-docs/construction/generate-bdd.md` and `generate-testcase.md` (both currently EMPTY).
+**Inputs:** approved coverage matrix and scenario inventory; the construction prompts `aidlc-docs/construction/generate-bdd.md` and `generate-testcase.md`.
 
 **AI actions**
 - Write Gherkin in business language, free of selectors, endpoints, and status codes (`aidlc-e2e-rules.md` §9), following the Given/When/Then structure of §10, one business behaviour per scenario.
@@ -333,7 +333,7 @@ See conflict **C-01** — BDD scenarios and test cases are co-produced and revie
 
 **Purpose:** implement the approved specification.
 
-**Inputs:** approved BDD + test cases, test data plan, reuse plan; `aidlc-docs/construction/generate-playwright.md` (currently EMPTY).
+**Inputs:** approved BDD + test cases, test data plan, reuse plan; the construction prompt `aidlc-docs/construction/generate-playwright.md`.
 
 **AI actions**
 - Generate TypeScript Playwright code following the existing architecture and conventions (`aidlc-e2e-rules.md` §14).
@@ -580,5 +580,7 @@ This workflow cannot be executed against any requirement until the prerequisites
 3. ~~Author `aidlc-docs/schemas/traceability.schema.json` (P-03).~~ Done — review and ratify at G0.
 4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06). **This is now the critical path**: without it, no requirement or test case ID can be issued.
 5. Establish and approve the Playwright framework — architecture, fixtures, Page Objects, API clients, auth utilities (P-04, P-05).
-6. Author the three construction prompt files in `aidlc-docs/construction/`.
+6. ~~Author the three construction prompt files in `aidlc-docs/construction/`.~~ Done — review and ratify at G0.
 7. Onboard the first approved requirement and run S0.
+
+Items 4 and 5 both need input this process cannot generate: the module taxonomy is a product decision, and the framework is an engineering one. Everything that could be derived from the rules alone is now in place.
