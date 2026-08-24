@@ -41,7 +41,11 @@ const bddTestDir = defineBddConfig({
 });
 
 export default defineConfig({
-  testDir: "./tests",
+  // Rooted at the repository, because the two projects live in sibling
+  // directories: tests/ for the sign-in setup and the generated .features-gen/
+  // for the scenarios. Rooting at ./tests instead would resolve the latter as
+  // ../.features-gen. Each project narrows this to its own directory below.
+  testDir: ".",
 
   // aidlc-e2e-rules.md §17: tests must not depend on execution order. Running
   // fully parallel makes an order dependency fail immediately rather than
@@ -93,6 +97,7 @@ export default defineConfig({
     // avoids that without giving up parallelism in the tests themselves.
     {
       name: "setup",
+      testDir: "./tests",
       testMatch: /auth\.setup\.ts/,
     },
     {
