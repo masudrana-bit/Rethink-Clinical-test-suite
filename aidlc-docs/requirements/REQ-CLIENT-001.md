@@ -90,9 +90,10 @@ Authentication and authorization are separate concerns. The fact that a user can
 | 3 | User | Accesses Skills Programs for the selected client. | The Skills Programs area is displayed with client-specific program information. | User-provided application screenshot |
 | 4 | User | Accesses Behavior Support for the selected client. | The Behavior Support area is displayed with client-specific plan information. | User-provided application screenshot |
 | 5 | User | Accesses Analyze Data for the selected client. | The Analyze Data area is displayed with client-specific analysis controls and data. | User-provided application screenshot |
-| 6 | User | Uses client-specific clinical functionality. | The operation is performed in the context of the selected client, subject to the approved workflow and authorization rules. | Client workflow description; exact clinical behavior `NOT SPECIFIED` |
 
 **Scope note:** Creating a Clinical Session, completing a Clinical Session, and finalizing a Clinical Session are separate workflows unless the approved requirements explicitly combine them. Their detailed behavior is not defined in this requirement.
+
+**Split note:** A former step 6, covering the use of client-specific clinical functionality, moved to `REQ-CLIENT-002`. This requirement now covers establishing and propagating client context only, not acting within it.
 
 ---
 
@@ -105,7 +106,8 @@ Authentication and authorization are separate concerns. The fact that a user can
 | AC-003 | The selected client provides the active context for Skills Programs. | Skills Programs displays information for the selected client. | User-provided application screenshot |
 | AC-004 | The selected client provides the active context for Behavior Support. | Behavior Support displays information for the selected client. | User-provided application screenshot |
 | AC-005 | The selected client provides the active context for Analyze Data. | Analyze Data displays information and controls for the selected client. | User-provided application screenshot |
-| AC-006 | Client-specific clinical actions operate against the selected client. | The exact observable outcome and supported clinical actions are `NOT SPECIFIED`. | Approved clinical/product requirement required |
+
+A former AC-006, covering client-specific clinical actions, moved to `REQ-CLIENT-002` AC-001. Its observable outcome was `NOT SPECIFIED`, making it untestable and blocking the five criteria above. AC-001 to AC-005 are not renumbered, per the deterministic-ID rule in `aidlc-e2e-rules.md` §12.
 
 ---
 
@@ -113,11 +115,19 @@ Authentication and authorization are separate concerns. The fact that a user can
 
 | Rule ID | Rule statement | Approved source (document + location) | Affects AC |
 |---|---|---|---|
-| CL-001 | The selected client is the context for client-specific clinical functionality. | User-provided application screenshots and workflow description; formal approved rule `NOT SPECIFIED` | AC-002 to AC-006 |
-| CL-002 | Clinical data must remain associated with the correct patient/client. | `clinical-rules.md` §21 | AC-006 |
-| CL-003 | AI must not infer or invent clinical behavior when an approved clinical rule is unavailable. | `clinical-rules.md` §2 | AC-006 |
-| CL-004 | Exact authorization rules for client-specific clinical actions are `NOT SPECIFIED`. | Approved authorization specification required | AC-006 |
+| CL-001 | The selected client is the context for client-specific clinical functionality. | User-provided application screenshots and workflow description; formal approved rule `NOT SPECIFIED` | AC-002 to AC-005 |
+| CL-002 | Clinical data must remain associated with the correct patient/client. | `clinical-rules.md` §21 | See note below |
+| CL-003 | AI must not infer or invent clinical behavior when an approved clinical rule is unavailable. | `clinical-rules.md` §2 | Process rule; applies throughout |
+| CL-004 | Exact authorization rules for client-specific clinical actions are `NOT SPECIFIED`. | Approved authorization specification required | Moved to `REQ-CLIENT-002` |
 | CL-005 | Exact Clinical Session lifecycle and transition rules are `NOT SPECIFIED` in the available requirement sources. | Approved Clinical Session specification required | Not directly applicable to AC-001 to AC-005; affects future session requirement |
+
+**Note on CL-002.** As originally written this rule was scoped to the former AC-006, which has moved to `REQ-CLIENT-002`. Whether it *also* governs AC-003 to AC-005 — that is, whether displaying another client's data in Skills Programs, Behavior Support, or Analyze Data constitutes a §21 association failure — is not stated in any approved source and is not a determination AI should make.
+
+```text
+NEEDS SME CONFIRMATION
+```
+
+Tracked as GAP-010. The answer changes what AC-003 to AC-005 must assert: read-only context correctness, or a data integrity guarantee.
 
 ---
 
@@ -269,12 +279,13 @@ Status tokens use the approved vocabulary defined in `aidlc-docs/workflows/e2e-t
 |---|---|---|---|---|---|---|---|
 | GAP-001 | `NEEDS SME CONFIRMATION` | What is the approved module taxonomy value for this requirement? | Identification | Product/QA | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | GAP-002 | `NEEDS SME CONFIRMATION` | What is the approved authorization matrix for Client access and client-specific clinical actions? | §4, §10 | Product/Security | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
-| GAP-003 | `NEEDS SME CONFIRMATION` | What is the required behavior when no Client is selected? | AC-006, §11 | Product/QA | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
+| GAP-003 | `NEEDS SME CONFIRMATION` | What is the required behavior when no Client is selected? | §11 | Product/QA | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | GAP-004 | `NEEDS SME CONFIRMATION` | What is the required behavior when a selected Client is unavailable or invalid? | §11 | Product/QA | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | GAP-005 | `MISSING API CONTRACT` | What is the approved API contract for Client selection/client context? | §12.1 | Engineering | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | GAP-006 | `NEEDS SME CONFIRMATION` | Is Client selection/access required to be audited, and what must the audit event contain? | §12.3 | Product/Clinical | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
-| GAP-007 | `NEEDS SME CONFIRMATION` | What exact clinical/business rule defines the Client → clinical workflow association? | AC-006, §9.6 | Clinical SME | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
+| GAP-007 | `NEEDS SME CONFIRMATION` | What exact clinical/business rule defines the Client → clinical workflow association? | §9.6; primarily `REQ-CLIENT-002` | Clinical SME | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | GAP-008 | `NEEDS SME CONFIRMATION` | What is the exact Create Clinical Session workflow after Client selection? | Future session requirement | Product/QA | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
+| GAP-010 | `NEEDS SME CONFIRMATION` | Does `clinical-rules.md` §21 data association govern AC-003 to AC-005, or only clinical actions? See the CL-002 note in §8. | AC-003 to AC-005, §8 | Clinical SME | 2026-08-24 | `NOT SPECIFIED` | `NOT SPECIFIED` |
 
 ---
 
@@ -302,6 +313,7 @@ This requirement does not cover:
 18. Patient Registration.
 19. Program Enrollment.
 20. Clinical Assessment.
+21. Performing client-specific clinical actions — see `REQ-CLIENT-002`.
 
 These should be represented by separate requirements unless the approved product specification explicitly combines them.
 
@@ -365,6 +377,7 @@ in this requirement or its automated tests.
 
 | Requirement ID | Relationship |
 |---|---|
+| `REQ-CLIENT-002` | Acts within the client context this requirement establishes; split from the former AC-006 |
 | `REQ-PROGRAM-001` | Create Program from Skills Programs |
 | `REQ-BEHAVIOR-001` | View/Manage Behavior Support |
 | `REQ-ANALYTICS-001` | Analyze Client Data |
@@ -388,6 +401,7 @@ These IDs are proposed relationships and must be aligned with the project's appr
 |---|---|---|---|---|---|
 | 1.0 | 2026-08-24 | `NOT SPECIFIED` | Initial requirement drafted from the supplied Client, Behavior Support, and Analyze Data screenshots and the user's workflow description. | `NOT SPECIFIED` | `NOT SPECIFIED` |
 | 1.0.1 | 2026-08-24 | AI | Formatting only: converted Pandoc tables to markdown, removed the enclosing code fence, corrected the document title, normalised §13 status tokens to the approved vocabulary, and moved `MISSING API CONTRACT` in GAP-005 from the Resolution column to the Status token column. No requirement content changed. | `NOT SPECIFIED` | Not applicable — no tests exist |
+| 1.1 | 2026-08-24 | AI | Scope change: AC-006 and workflow step 6 moved to `REQ-CLIENT-002`, because the criterion had no observable outcome and was blocking five testable criteria. CL-004 moved with it; CL-001 rescoped to AC-002 to AC-005. GAP-010 raised on whether §21 data association governs AC-003 to AC-005. AC-001 to AC-005 unchanged and not renumbered. | `NOT SPECIFIED` | Not applicable — no tests exist |
 
 ---
 
@@ -399,7 +413,7 @@ These IDs are proposed relationships and must be aligned with the project's appr
 [  ] Status is Approved, with a named approver and date
 [  ] Clinical SME sign-off obtained where required
 [X] At least one acceptance criterion, each with an AC-<NNN> ID
-[X] Every acceptance criterion is independently testable
+[X] Every acceptance criterion is independently testable   (true since AC-006 moved to REQ-CLIENT-002)
 [X] Every behavioural statement carries a source citation
 [X] All applicable conditional sections completed or marked Not applicable with a reason
 [X] Every NOT SPECIFIED entry recorded in §13 with an owner
@@ -409,8 +423,16 @@ These IDs are proposed relationships and must be aligned with the project's appr
 
 ### Gate G0 status
 
-**BLOCKED**
+**BLOCKED — on approval only**
 
-The requirement is not yet an approved input to AIDLC stage S0 because the template requires approval information and because unresolved gaps remain around authorization, validation, API behavior, audit behavior, and the exact Clinical Session workflow.
+Following the AC-006 split, the remaining blockers are narrower than before. All five acceptance criteria are now observable and testable, and no `NOT SPECIFIED` entry blocks their expected results.
+
+What still blocks the gate:
+
+1. **Approval.** §2 remains `Draft` with no named approver or date, and Clinical SME sign-off is marked required but not obtained.
+2. **Module taxonomy.** `CLIENT` is unratified — see `aidlc-docs/requirements/module-taxonomy.md`, which also raises whether `CLIENT` and `PATIENT` are the same entity.
+3. **GAP-010.** Whether §21 data association governs AC-003 to AC-005 determines what those criteria must assert. This affects test design, not whether the criteria are testable.
+
+Gaps that no longer block this requirement, having moved to `REQ-CLIENT-002`: GAP-007 in its acceptance-criterion aspect, and the authorization detail behind CL-004. GAP-006 (audit) and GAP-008 (session workflow) do not affect AC-001 to AC-005.
 
 See `aidlc-docs/intake/REQ-CLIENT-001/intake-record.md` for the full S0 assessment.

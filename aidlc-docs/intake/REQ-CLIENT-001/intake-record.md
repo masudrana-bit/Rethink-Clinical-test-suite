@@ -122,6 +122,27 @@ Tokens above are normalised to the approved vocabulary; the source document uses
 
 ---
 
+## Addendum — 2026-08-24, after the AC-006 split
+
+The assessment above describes `REQ-CLIENT-001` as originally received and is retained unchanged for audit. Recommendation 3 has since been actioned: AC-006 moved to `REQ-CLIENT-002`.
+
+What changed:
+
+| Item | Before | After |
+|---|---|---|
+| Acceptance criteria | AC-001 to AC-006 | AC-001 to AC-005; AC-006 now `REQ-CLIENT-002` AC-001 |
+| "Every criterion independently testable" | Partial | Pass |
+| Blocking gaps on this requirement | 8 | Approval, taxonomy, and GAP-010 |
+| Gate G0 verdict | BLOCKED | BLOCKED — on approval only |
+
+What did **not** change: the requirement is still unapproved, so the gate is still closed. The split narrowed the blockers; it did not open the gate.
+
+One new gap was raised in the process. CL-002, the `clinical-rules.md` §21 data-association rule, was originally scoped only to AC-006. Whether it also governs AC-003 to AC-005 — whether showing another client's data in Skills Programs, Behavior Support, or Analyze Data is an association failure or merely a context error — is unstated in every available source. It is recorded as GAP-010 and is not a determination AI should make. The answer decides whether those three criteria assert read-only context correctness or a data integrity guarantee, which changes both the test design and the two-client data requirement described in Finding 3.
+
+`REQ-CLIENT-002` is blocked more deeply than its parent and has its own intake pending. Its single criterion has no observable outcome, and GAP-009 records that the set of clinical actions it governs is not enumerated anywhere. Approval alone would not unblock it.
+
+---
+
 ## Sign-off
 
 Gate G0 requires a human decision. AI does not sign.

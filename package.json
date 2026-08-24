@@ -3,13 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Clinical E2E test suite. This manifest currently supports AIDLC documentation tooling only; the Playwright framework is not yet established (see prerequisite P-04 in aidlc-docs/workflows/e2e-test-generation-workflow.md).",
+  "description": "Clinical E2E test suite governed by the AIDLC process in aidlc-docs/.",
   "scripts": {
     "validate:traceability": "node scripts/validate-traceability.mjs",
-    "validate:traceability:gate": "node scripts/validate-traceability.mjs --gate"
+    "validate:traceability:gate": "node scripts/validate-traceability.mjs --gate",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:p0": "playwright test --grep @P0",
+    "report": "playwright show-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
     "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "typescript": "^7.0.2"
   }
 }

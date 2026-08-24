@@ -64,9 +64,9 @@ MISSING INFORMATION
 | P-01 | No approved requirements exist in `aidlc-docs/requirements/` | S1 onward | Product / BA |
 | ~~P-02~~ | ~~`requirement-template.md` is empty~~ — **RESOLVED**, template authored; pending ratification at G0 | S0 onward | QA Lead / BA |
 | ~~P-03~~ | ~~`traceability.schema.json` is empty~~ — **RESOLVED**, JSON Schema authored and validator-verified; pending ratification at G0 | S10 (and validation at every gate) | QA Lead / Eng Lead |
-| P-04 | No Playwright framework exists (no Playwright config, no fixtures, no Page Objects, no API clients, no auth utilities). A root `package.json` exists, but only for documentation tooling — it does not constitute a test framework | S6, S7 | Eng Lead / Automation Lead |
+| P-04 | Partially addressed — framework infrastructure exists as a proposal (`playwright.config.ts`, `tsconfig.json`, layout and conventions in `tests/README.md`), but there are still no fixtures, Page Objects, API clients, or authentication utilities, because building them requires application access and an API contract that do not exist. Five architecture decisions (F-01 to F-05) remain open | S6, S7 | Eng Lead / Automation Lead |
 | P-05 | Partially addressed — a dev frontend URL is recorded in `README.md`, but there is still no API contract, no credential/role provisioning for test accounts, and no defined test environment policy | S5, S9 | Eng Lead / Product |
-| P-06 | No module taxonomy is approved, so the `<MODULE>` token in `REQ-<MODULE>-<NNN>` / `TC-<MODULE>-<NNN>` cannot be populated | S1 onward | Product / QA Lead |
+| P-06 | No module taxonomy is approved, so the `<MODULE>` token in `REQ-<MODULE>-<NNN>` / `TC-<MODULE>-<NNN>` cannot be populated. A candidate list awaits ratification at `aidlc-docs/requirements/module-taxonomy.md`, including an unresolved question on whether `CLIENT` and `PATIENT` are the same entity | S1 onward | Product / QA Lead |
 | P-07 | No clinical lifecycle/state model, enum set, or role-and-permission matrix is available in an approved source | S3, S4 | Clinical SME / Product |
 
 **Consequence:** stages S1 through S10 remain blocked while P-01, P-04, P-05, P-06, and P-07 are open. Stage S0 is the only executable stage, and even it cannot run against a real requirement until P-01 and P-06 are closed. This is the intended behaviour of the rules, not a workflow defect.
@@ -313,7 +313,7 @@ See conflict **C-01** — BDD scenarios and test cases are co-produced and revie
 
 **Purpose:** satisfy the mandatory inspect-before-build step of `aidlc-e2e-rules.md` §14 and §22.
 
-**Inputs:** existing automation framework (**currently non-existent — P-04**).
+**Inputs:** existing automation framework — currently infrastructure only (config and conventions); no reusable components yet exist to inspect (**P-04**).
 
 **AI actions**
 - Inventory existing fixtures, Page Objects, components, API clients, auth utilities, and conventions.
@@ -579,7 +579,7 @@ This workflow cannot be executed against any requirement until the prerequisites
 1. ~~Approve or amend this workflow at **G0**, including a decision on conflict **C-01**.~~ C-01 decided: BDD and test cases are co-produced in S4. Formal G0 ratification still outstanding.
 2. ~~Author `aidlc-docs/requirements/requirement-template.md` (P-02).~~ Done — review and ratify at G0.
 3. ~~Author `aidlc-docs/schemas/traceability.schema.json` (P-03).~~ Done — review and ratify at G0.
-4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06). **This is now the critical path**: without it, no requirement or test case ID can be issued.
+4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06). **This is now the critical path**: without it, no requirement or test case ID can be issued. A proposal is ready for ratification at `aidlc-docs/requirements/module-taxonomy.md`.
 5. Establish and approve the Playwright framework — architecture, fixtures, Page Objects, API clients, auth utilities (P-04, P-05).
 6. ~~Author the three construction prompt files in `aidlc-docs/construction/`.~~ Done — review and ratify at G0.
 7. Onboard the first approved requirement and run S0.

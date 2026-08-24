@@ -7,7 +7,7 @@
 **Gate this feeds:** G6 (Code Quality)
 **Governed by:** `aidlc-docs/rules/aidlc-e2e-rules.md` + `aidlc-docs/rules/clinical-rules.md`
 
-> **Currently not runnable.** Prerequisite P-04 is open: no Playwright framework exists in this repository. Stage S6 cannot produce a reuse plan against a framework that is absent, so G5 cannot be signed. Establish and approve the framework before using this prompt.
+> **Currently not runnable.** Prerequisite P-04 is only partially closed. Framework infrastructure exists (`playwright.config.ts`, `tsconfig.json`, conventions in `tests/README.md`), but there are no fixtures, Page Objects, API clients, or authentication utilities to inspect or reuse, so stage S6 cannot produce a meaningful reuse plan and G5 cannot be signed. Complete and approve the framework before using this prompt.
 
 ---
 
