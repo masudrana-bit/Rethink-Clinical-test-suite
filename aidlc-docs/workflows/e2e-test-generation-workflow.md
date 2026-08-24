@@ -61,15 +61,15 @@ MISSING INFORMATION
 
 | # | Missing input | Blocks from | Required from |
 |---|---|---|---|
-| P-01 | No approved requirements exist in `aidlc-docs/requirements/` | S1 onward | Product / BA |
+| ~~P-01~~ | Partially resolved — `REQ-CLIENT-001` was approved on 2026-08-24 and passed G0 for AC-001 and AC-002, so S1 onward is open for those two criteria. AC-003 to AC-005 are held at S3 pending GAP-010, and `REQ-CLIENT-002` remains blocked at S0 by GAP-009 | S1 onward, per criterion | Product / BA |
 | ~~P-02~~ | ~~`requirement-template.md` is empty~~ — **RESOLVED**, template authored; pending ratification at G0 | S0 onward | QA Lead / BA |
 | ~~P-03~~ | ~~`traceability.schema.json` is empty~~ — **RESOLVED**, JSON Schema authored and validator-verified; pending ratification at G0 | S10 (and validation at every gate) | QA Lead / Eng Lead |
 | P-04 | Partially addressed — framework infrastructure exists as a proposal (`playwright.config.ts`, `tsconfig.json`, layout and conventions in `tests/README.md`), but there are still no fixtures, Page Objects, API clients, or authentication utilities, because building them requires application access and an API contract that do not exist. Five architecture decisions (F-01 to F-05) remain open | S6, S7 | Eng Lead / Automation Lead |
 | P-05 | Partially addressed — a dev frontend URL is recorded in `README.md`, but there is still no API contract, no credential/role provisioning for test accounts, and no defined test environment policy | S5, S9 | Eng Lead / Product |
-| P-06 | No module taxonomy is approved, so the `<MODULE>` token in `REQ-<MODULE>-<NNN>` / `TC-<MODULE>-<NNN>` cannot be populated. A candidate list awaits ratification at `aidlc-docs/requirements/module-taxonomy.md`, including an unresolved question on whether `CLIENT` and `PATIENT` are the same entity | S1 onward | Product / QA Lead |
+| ~~P-06~~ | ~~No module taxonomy is approved~~ — **RESOLVED** 2026-08-24. Seven modules ratified at `aidlc-docs/requirements/module-taxonomy.md`. Client and Patient were decided to be the same entity, so `PATIENT` merged into `CLIENT`. `<MODULE>` tokens can now be populated | S1 onward | Product / QA Lead |
 | P-07 | No clinical lifecycle/state model, enum set, or role-and-permission matrix is available in an approved source | S3, S4 | Clinical SME / Product |
 
-**Consequence:** stages S1 through S10 remain blocked while P-01, P-04, P-05, P-06, and P-07 are open. Stage S0 is the only executable stage, and even it cannot run against a real requirement until P-01 and P-06 are closed. This is the intended behaviour of the rules, not a workflow defect.
+**Consequence:** the blockage has moved downstream. With P-06 closed and `REQ-CLIENT-001` approved, stages S0 through S4 have executed for AC-001 and AC-002, producing analysis, coverage design, test cases, and BDD scenarios. Stages S5 through S10 remain blocked while P-04 and P-05 are open — specifically on the authentication mechanism and synthetic test accounts, without which nothing can be seeded, automated, or executed. P-07 continues to block any session or observation requirement at S3 and S4. This is the intended behaviour of the rules, not a workflow defect.
 
 The construction prompts (`generate-bdd.md`, `generate-testcase.md`, `generate-playwright.md`) are now authored and are the operational instructions for stages S4 and S7. They are subject to ratification at Gate G0 along with this workflow. Note that `generate-playwright.md` is written but **not runnable**, because P-04 leaves it with no framework to inspect or reuse.
 
@@ -574,14 +574,30 @@ Test quantity is not a quality measure. The goal is the smallest set of reliable
 
 ## 13. Next Actions
 
-This workflow cannot be executed against any requirement until the prerequisites in §3 are closed. Recommended order:
+The workflow is now running against its first requirement. Remaining order:
 
-1. ~~Approve or amend this workflow at **G0**, including a decision on conflict **C-01**.~~ C-01 decided: BDD and test cases are co-produced in S4. Formal G0 ratification still outstanding.
+1. ~~Approve or amend this workflow at **G0**, including a decision on conflict **C-01**.~~ C-01 decided: BDD and test cases are co-produced in S4. Formal G0 ratification of the workflow itself is still outstanding.
 2. ~~Author `aidlc-docs/requirements/requirement-template.md` (P-02).~~ Done — review and ratify at G0.
 3. ~~Author `aidlc-docs/schemas/traceability.schema.json` (P-03).~~ Done — review and ratify at G0.
-4. Approve the module taxonomy that populates `<MODULE>` in requirement and test IDs (P-06). **This is now the critical path**: without it, no requirement or test case ID can be issued. A proposal is ready for ratification at `aidlc-docs/requirements/module-taxonomy.md`.
-5. Establish and approve the Playwright framework — architecture, fixtures, Page Objects, API clients, auth utilities (P-04, P-05).
-6. ~~Author the three construction prompt files in `aidlc-docs/construction/`.~~ Done — review and ratify at G0.
-7. Onboard the first approved requirement and run S0.
+4. ~~Approve the module taxonomy (P-06).~~ Done — ratified 2026-08-24, seven modules.
+5. ~~Author the three construction prompt files in `aidlc-docs/construction/`.~~ Done — review and ratify at G0.
+6. ~~Onboard the first approved requirement and run S0.~~ Done — `REQ-CLIENT-001` passed G0 for AC-001 and AC-002.
+7. ~~Review and sign gates G1, G2, and G3 for `REQ-CLIENT-001`.~~ Done — all three signed 2026-08-24 by Masud Rana. `TC-CLIENT-001` and `TC-CLIENT-002` have crossed the `Approved → Automation` boundary.
+8. ~~Supply the authentication mechanism and synthetic test accounts (P-04, P-05).~~ **Resolved 2026-08-24** by reconnaissance: `/temp-dev-login` authenticates without credentials.
+9. ~~Confirm whether client selection persists server-side.~~ It does not. `fullyParallel: true` is safe.
+10. ~~Decide the data mode the suite may run against (BLK-010).~~ Option 2 taken at G4: tolerate any mode, record it as execution evidence.
+11. ~~Sign G4 and G5.~~ G4 signed 2026-08-24. G5 signed twice — round 2 after the framework changed.
+12. ~~Run S8~~ — static validation and code review complete; artifacts in `validation/REQ-CLIENT-001/`.
+13. ~~Sign G6.~~ Signed 2026-08-24.
+14. ~~Run S9~~ — executed post-G6 as `run-2026-08-24T1204Z`; both scenarios passed first attempt.
+15. **Run S10** — build the traceability record and validate it with `npm run validate:traceability`.
+16. Answer GAP-010 to release AC-003 to AC-005 for test case writing.
+17. Configure a linter and formatter (F-06), so the lint half of S8 stops being reported as NOT RUN.
 
-Items 4 and 5 both need input this process cannot generate: the module taxonomy is a product decision, and the framework is an engineering one. Everything that could be derived from the rules alone is now in place.
+Stages S0 through S9 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
+
+The two approved scenarios execute from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`, compiled by `playwright-bdd` and bound to step definitions in `src/steps/`. Both passed on their first attempt in the post-G6 evidence run, with results, traces, and a PHI statement in `aidlc-docs/evidence/run-2026-08-24T1204Z/`.
+
+Two caveats travel with that result and should not be separated from it. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the user interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria, with AC-003 to AC-005 held on GAP-010.
+
+The remaining gate is G7, at the end of S10.

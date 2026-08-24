@@ -21,33 +21,50 @@ The workflow document is the operational centre. Everything else is either an in
 | `rules/clinical-rules.md` | Clinical-specific rules. Stricter; wins on conflict. |
 | `workflows/e2e-test-generation-workflow.md` | Stages S0–S11, gates G0–G7, artifact register, status vocabulary. |
 | `requirements/requirement-template.md` | The shape an approved requirement must take to enter stage S0. |
-| `requirements/module-taxonomy.md` | Candidate module tokens for requirement and test case IDs. Proposal, not approved. |
+| `requirements/module-taxonomy.md` | The seven approved module tokens used in requirement and test case IDs. Ratified 2026-08-24. |
+| `requirements/REQ-CLIENT-001.md` | First approved requirement. Client selection and active client context. |
+| `requirements/REQ-CLIENT-002.md` | Split from the above. Blocked at S0 by GAP-009. |
 | `construction/generate-testcase.md` | Procedure for authoring test cases (stage S4). |
 | `construction/generate-bdd.md` | Procedure for authoring BDD scenarios (stage S4). |
 | `construction/generate-playwright.md` | Procedure for authoring automation (stage S7). |
 | `schemas/traceability.schema.json` | JSON Schema (draft 2020-12) validating the traceability record at stage S10. |
 
-Directories for per-requirement artifacts — `analysis/`, `design/`, `bdd/`, `testcases/`, `testdata/`, `automation/`, `validation/`, `results/`, `evidence/`, `traceability/`, `change-impact/` — are created on first use. Their contents and owners are listed in the workflow's artifact register.
+Per-requirement artifact directories are created on first use. Those now populated for `REQ-CLIENT-001`:
+
+| Path | Stage | What it holds |
+|---|---|---|
+| `intake/REQ-CLIENT-001/` | S0 | Intake record and the signed G0 decision |
+| `analysis/REQ-CLIENT-001/` | S1, S2 | Requirement analysis, clinical rule register, conflict register, clarification log, blocked register |
+| `design/REQ-CLIENT-001/` | S3 | Coverage matrix, scenario inventory, duplication report |
+| `testcases/REQ-CLIENT-001/` | S4 | `TC-CLIENT-001`, `TC-CLIENT-002` |
+| `bdd/client/` | S4 | `REQ-CLIENT-001.feature` |
+| `testdata/REQ-CLIENT-001/` | S5 | Test data plan and PHI safety attestation |
+| `automation/REQ-CLIENT-001/` | S6, S7 | Framework reuse plan with live reconnaissance, and implementation notes |
+
+Still unused: `validation/`, `results/`, `evidence/`, `traceability/`, `change-impact/`. Their contents and owners are listed in the workflow's artifact register.
+
+The scenarios in `bdd/client/REQ-CLIENT-001.feature` are executable, not just documentation: `playwright-bdd` compiles them into Playwright tests, bound to step definitions in `src/steps/`. So the artifact reviewed at Gate G3 is the artifact that runs. Supporting page objects and fixtures live under `src/`; see `tests/README.md`.
 
 ## Current status
 
-The process documentation is complete. The project inputs it needs are not.
+The process is running. `REQ-CLIENT-001` passed Gate G0 on 2026-08-24, and gates G1, G2, and G3 were signed the same day. Test cases for two of its five acceptance criteria are approved for automation.
 
 **Every open decision is consolidated in `OPEN-DECISIONS.md`**, grouped by owner. Start there rather than assembling the picture from individual documents.
 
-**Ready:** workflow, both rules documents, requirement template, all three construction prompts, traceability schema.
+**Done and signed:** workflow, both rules documents, requirement template, all three construction prompts, traceability schema, ratified module taxonomy, and stages S0 through S4 for `REQ-CLIENT-001` AC-001 and AC-002.
+
+**Stages S0 through S7 are complete for AC-001 and AC-002.** Gates G0 through G5 are signed. Reconnaissance against the live application on 2026-08-24 resolved the authentication blocker — `/temp-dev-login` signs in without credentials — and two runnable Playwright tests now exist. They have not been executed; first execution is stage S9.
 
 **Blocking, and not derivable from the rules:**
 
 | Item | Blocks | Needed from |
 |---|---|---|
-| Approved requirements (P-01) | everything from S1 | Product / BA |
-| Playwright framework (P-04) — infrastructure proposed, reusable components absent | S6, S7 | Engineering |
-| API contracts, test accounts, environment policy (P-05) | S5, S9 | Engineering / Product |
-| Module taxonomy (P-06) — proposal ready to ratify in `requirements/module-taxonomy.md` | all ID assignment, so S0 in practice | Product / QA |
-| Clinical lifecycle, enums, role matrix (P-07) | S3, S4 | Clinical SME / Product |
+| GAP-010 — severity of a wrong-client read-only view | test cases for AC-003 to AC-005 | Clinical SME |
+| GAP-002, GAP-003, GAP-004 | the validation, authorization, and recovery scenario categories, all currently uncovered | Product / Security / QA |
+| Environment policy, and whether `/temp-dev-login` is permanent | CI execution; the auth fixture's shelf life | Engineering |
+| Clinical lifecycle, enums, role matrix (P-07) | S3, S4 for any session or observation requirement | Clinical SME / Product |
 
-Everything in this directory is Draft pending ratification at Gate G0, including the C-01 decision recorded in the workflow's conflict register.
+The process documents themselves remain Draft pending ratification at Gate G0, including the C-01 decision recorded in the workflow's conflict register.
 
 ## Two rules worth knowing before you contribute
 

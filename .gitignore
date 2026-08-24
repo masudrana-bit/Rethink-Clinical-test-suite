@@ -5,6 +5,10 @@
 /playwright/.cache/
 /playwright/.auth/
 
+# Playwright tests compiled from the feature files by bddgen. Generated on every
+# run; the feature files under aidlc-docs/bdd/ are the source.
+/.features-gen/
+
 # Logs
 logs
 *.log

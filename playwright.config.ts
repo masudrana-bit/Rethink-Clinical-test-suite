@@ -1,4 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
+import { defineBddConfig } from "playwright-bdd";
+import { STORAGE_STATE } from "./src/fixtures/auth.fixture.js";
 
 /**
  * Playwright configuration for the Clinical E2E suite.
@@ -7,12 +9,36 @@ import { defineConfig, devices } from "@playwright/test";
  * Playwright convention. Each is annotated with the rule it implements, so the
  * reason survives future edits.
  *
- * Status: proposal, pending Gate G0 ratification and the framework decisions
- * recorded in tests/README.md.
+ * Scenarios come from Gherkin. Decisions F-01 and F-02 settled on playwright-bdd,
+ * so the feature files execute rather than merely documenting; see
+ * aidlc-docs/OPEN-DECISIONS.md.
  */
 
-const baseURL = process.env.BASE_URL ?? "https://clinical.dev.rethinkbhtech.com/clinical-ui/";
+// The /clinical-ui/ path this previously defaulted to redirects to the site
+// root; the segment is stale. Verified against the dev environment 2026-08-24.
+const baseURL = process.env.BASE_URL ?? "https://clinical.dev.rethinkbhtech.com/";
 const isCI = !!process.env.CI;
+
+/**
+ * The feature files under aidlc-docs/bdd/ are compiled into Playwright tests in
+ * .features-gen, which is generated and git-ignored. Point the runner at the
+ * feature files themselves, never at the generated output.
+ *
+ * They are read in place rather than copied into tests/, so the artifact
+ * reviewed at Gate G3 is the same file that executes. A copy would be free to
+ * drift from the approved one.
+ *
+ * missingSteps: "fail-on-gen" makes an unimplemented step break `bddgen`
+ * immediately. The alternative is a scenario that silently never runs, which is
+ * a coverage claim the traceability record could not detect as false.
+ */
+const bddTestDir = defineBddConfig({
+  features: "aidlc-docs/bdd/**/*.feature",
+  featuresRoot: "aidlc-docs/bdd",
+  steps: ["src/steps/**/*.ts", "src/fixtures/test.ts"],
+  outputDir: ".features-gen",
+  missingSteps: "fail-on-gen",
+});
 
 export default defineConfig({
   testDir: "./tests",
@@ -61,9 +87,19 @@ export default defineConfig({
   outputDir: "test-results",
 
   projects: [
+    // Signs in once and saves the session. The dev login route cannot handle
+    // concurrent sign-ins — two workers exchanging a transferToken at the same
+    // time collide, and one is bounced to /sign-in. Authenticating once here
+    // avoids that without giving up parallelism in the tests themselves.
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      testDir: bddTestDir,
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
+      dependencies: ["setup"],
     },
   ],
 });

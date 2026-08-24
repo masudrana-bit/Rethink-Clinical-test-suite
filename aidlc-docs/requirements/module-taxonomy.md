@@ -1,19 +1,16 @@
 # Module Taxonomy — PROPOSAL
 
-**Status:** `NOT APPROVED` — proposal for ratification
-**Addresses:** prerequisite P-06, and GAP-001 in `REQ-CLIENT-001`
-**Required from:** Product / QA Lead
+**Status:** `APPROVED WITH AMENDMENT` — ratified 2026-08-24 by Masud Rana, Sr. QA Automation Engineer
+**Addresses:** prerequisite P-06 (resolved), and GAP-001 in `REQ-CLIENT-001` (closed)
 **Governed by:** `aidlc-docs/rules/aidlc-e2e-rules.md` §12
 
 ---
 
-## What this is, and what it is not
+## Status
 
-This is a **candidate list assembled by AI**, not an approved taxonomy. Every token below was taken from `REQ-CLIENT-001` — `CLIENT` from its §1, the rest from the related-requirements table in its §16. That document is itself unapproved and was drafted from screenshots, so nothing here carries authority.
+Ratified on 2026-08-24 with one amendment: **`PATIENT` is removed and merged into `CLIENT`**, following the identity decision recorded below. Seven modules are approved.
 
-It exists to make ratification cheap: reviewing and correcting a list is faster than authoring one. Approve it, amend it, or replace it.
-
-Until it is approved, no requirement or test case ID can be issued, because `<MODULE>` has no valid value. That makes this the critical path for the whole process.
+The list originated as an AI-assembled proposal drawn from `REQ-CLIENT-001`. It now carries approval and may be used to issue requirement and test case IDs.
 
 ## Format constraint
 
@@ -32,63 +29,65 @@ Module tokens become permanent. `aidlc-e2e-rules.md` §12 requires deterministic
 
 So the tokens should name **stable business domains**, not screens or features. A module that might be renamed in a UI refresh is the wrong granularity.
 
-## Candidate modules
+## Approved modules
 
-| Token | Proposed name | Scope | Provenance | Status |
-|---|---|---|---|---|
-| `CLIENT` | Client | Client selection and active client context | `REQ-CLIENT-001` §1 | Proposed |
-| `PROGRAM` | Skills Programs | Program creation, editing, enrolment | `REQ-CLIENT-001` §16 | Proposed |
-| `BEHAVIOR` | Behavior Support | Behavior support plans | `REQ-CLIENT-001` §16 | Proposed |
-| `ANALYTICS` | Analyze Data | Data analysis, graphs, reports | `REQ-CLIENT-001` §16 | Proposed |
-| `SESSION` | Clinical Session | Session create, complete, finalize | `REQ-CLIENT-001` §16 | Proposed |
-| `OBSERVATION` | Observation | Observation capture and correction | `REQ-CLIENT-001` §16 | Proposed |
-| `PATIENT` | Patient | Patient search and registration | `REQ-CLIENT-001` §16 | Proposed |
-| `ASSESSMENT` | Clinical Assessment | Clinical assessment workflows | `REQ-CLIENT-001` §16 | Proposed |
 
-Eight modules is a workable number — coarse enough to stay stable, fine enough for IDs to carry meaning.
+| Token | Name | Scope | Status |
+|---|---|---|---|
+| `CLIENT` | Client | Client selection, active client context, client search and registration | Approved |
+| `PROGRAM` | Skills Programs | Program creation, editing, enrolment | Approved |
+| `BEHAVIOR` | Behavior Support | Behavior support plans | Approved |
+| `ANALYTICS` | Analyze Data | Data analysis, graphs, reports | Approved |
+| `SESSION` | Clinical Session | Session create, complete, finalize | Approved |
+| `OBSERVATION` | Observation | Observation capture and correction | Approved |
+| `ASSESSMENT` | Clinical Assessment | Clinical assessment workflows | Approved |
 
-Not represented, and possibly needed: authentication and authorization. `aidlc-e2e-rules.md` §13 lists authentication among the P0 concerns, and `clinical-rules.md` §19 insists authentication and authorization are separate. Neither has a home in the list above. Whether that becomes an `AUTH` module or is distributed across the others is a decision for review.
+`PATIENT` was proposed but is **not** an approved module. Client and Patient are the same record (see below), so search and registration fall under `CLIENT`.
+
+Still not represented: authentication and authorization. `aidlc-e2e-rules.md` §13 lists authentication among the P0 concerns and `clinical-rules.md` §19 insists the two are distinct, yet neither has a home above. Whether an `AUTH` module is added or the concern is distributed remains open and is tracked in `OPEN-DECISIONS.md`.
+
+---
+
+
+
+## Resolved — Client and Patient are the same entity
+
+**Decision:** Client and Patient are the same underlying record. The application's UI says "Client"; `clinical-rules.md` uses the generic clinical term "Patient" for the same thing.
+
+**Decided by:** Masud Rana, Sr. QA Automation Engineer, 2026-08-24.
+
+Consequences, which are the reason this question mattered:
+
+1. **`PATIENT` is not a module.** Keeping both would have split one domain across two ID namespaces, scattering the association tests. Client search and registration are `CLIENT` requirements.
+2. **The patient rules in `clinical-rules.md` apply to Client directly.** §6 (no real patient data), §8 (verify patient identity, do not assume a search result is correct), and §21 (data belonging to one subject must not appear under another) all govern Client records without translation.
+3. **§8 becomes directly relevant to AC-002.** Selecting a client from the selector is a patient-identity step, so the test must verify the *correct* client became active, not merely that *a* client did.
+4. **Test data needs at least two distinct synthetic clients.** With one client, "the selected client is displayed" passes trivially and proves nothing about selection.
+
+Residual question, tracked as GAP-010 in `REQ-CLIENT-001`: whether displaying the wrong client's data in a read-only view — Skills Programs, Behavior Support, Analyze Data — counts as a §21 association failure or as a lesser context error. The identity decision makes §21 applicable in principle; the severity classification for read-only views is still open, and AC-003 to AC-005 are held until it is answered.
 
 ---
 
-## Open question — are `CLIENT` and `PATIENT` the same entity?
 
-This is the one item that should be settled before ratification, because getting it wrong is expensive to undo.
-
-`REQ-CLIENT-001` describes the application's primary subject as a **Client**, selected from a Client selector, providing context for Skills Programs, Behavior Support, and Analyze Data. Its §16 simultaneously proposes a separate `PATIENT` module for Patient Search and Patient Registration.
-
-Meanwhile `clinical-rules.md` consistently uses **Patient** — §8 on patient identity, §21 requiring that an observation belonging to Patient A never appear under Patient B, §6 on patient data privacy.
-
-Three possibilities, with different consequences:
-
-1. **Same entity, two names.** The UI says "Client" and the clinical rules say "Patient" for the same underlying record. Then two modules would split one domain across two ID namespaces, fragmenting coverage and making the §21 association tests hard to locate. One module should win.
-2. **Genuinely distinct.** A Client is, say, a billing or organisational entity and a Patient is the individual receiving care. Then both modules are correct and the relationship between them needs documenting, because every association assertion depends on it.
-3. **Client is the application's term for Patient in this product**, and `clinical-rules.md` is using generic clinical vocabulary. Then `CLIENT` should be the single module and the rules' patient-association requirements apply to it directly.
-
-This cannot be resolved from the available sources, and it is not a judgment AI should make:
-
-```text
-NEEDS SME CONFIRMATION
-```
-
-It matters beyond naming. `clinical-rules.md` §21 requires that clinical data stay associated with the correct subject, and AC-003 to AC-005 of `REQ-CLIENT-001` are exactly those association assertions. If Client and Patient are different entities, those tests must verify the correct *both*, not just the correct client.
-
----
 
 ## Ratification
 
 ```text
 [  ] Approved as proposed
-[  ] Approved with amendments (record below)
+[X] Approved with amendments (record below)
 [  ] Rejected — replaced by an existing approved taxonomy
 
 Client/Patient question resolved as:
+  Same entity. The UI term is "Client"; clinical-rules.md uses "Patient" for
+  the same record. Patient rules apply to Client directly.
 
 Amendments:
+  PATIENT removed and merged into CLIENT. Seven approved modules.
 
-Approver:
-Role:
-Date:
+Approver: Masud Rana
+Role: Sr. QA Automation Engineer
+Date: 2026-08-24
 ```
 
-Once approved, update the status header, close GAP-001 in `REQ-CLIENT-001`, and mark P-06 resolved in `aidlc-docs/workflows/e2e-test-generation-workflow.md` §3.
+Recorded as a consequence of ratification: GAP-001 closed in `REQ-CLIENT-001`, and P-06 marked resolved in `aidlc-docs/workflows/e2e-test-generation-workflow.md` §3.
+
+Amending this taxonomy after IDs have been issued requires an impact analysis under workflow stage S11, because module tokens are embedded in every requirement, test case, feature file, and execution record.

@@ -143,15 +143,33 @@ One new gap was raised in the process. CL-002, the `clinical-rules.md` §21 data
 
 ---
 
+## Addendum 2 — Gate G0 decision, 2026-08-24
+
+The gate is open, partially.
+
+Both blockers named in the original assessment closed on the same day. The module taxonomy was ratified, making `CLIENT` a valid token and closing GAP-001. The requirement was approved with a named approver and date. What remains from Addendum 1 is GAP-010, and the shape of that question changed: the ratification decided that Client and Patient are the same entity, so `clinical-rules.md` §21 demonstrably applies to Client records. The open part is narrower — whether showing another client's data in a read-only view is a §21 association failure or a lesser context error, which is a severity and assertion-strength question rather than an applicability one.
+
+That residual question touches AC-003, AC-004, and AC-005 and none of the others. So the gate was passed for **AC-001 and AC-002 only**, and those two proceeded to S1. The other three were carried through analysis and coverage design, then stopped before test case writing. Deferring them costs little; writing them against the wrong assertion strength and rewriting later costs more, and a test that asserts context correctness where data integrity was required is the kind of test that passes while the defect ships.
+
+Two things from the original findings were **not** resolved and should not be read as resolved by the approval.
+
+Finding 1 stands. The expected results still originate from screenshots of the running application, seventh of eight in the §3 source hierarchy. The approval did not characterise the requirement as a regression baseline, and no other source was supplied, so the tests derived from it record current behaviour rather than intended behaviour. They will catch a regression. They cannot catch a defect that is already present.
+
+The clinical sign-off was given by the same person who approved as QA lead. That is permissible under `clinical-rules.md` §5, which lists a QA lead among the appropriate authorities, and defensible under §35, which scales the required approval to the risk of the workflow — this requirement covers navigation and read-only context, not clinical data capture. It is recorded as GAP-011 rather than left implicit, because an audit would ask, and because `REQ-CLIENT-002` does write clinical data and should not inherit the same treatment by precedent.
+
+---
+
 ## Sign-off
 
 Gate G0 requires a human decision. AI does not sign.
 
 ```text
-[  ] G0 approved — requirement may enter S1
+[X] G0 approved — requirement may enter S1
+        Scope: AC-001 and AC-002 only.
+        AC-003 to AC-005 held at S3 pending GAP-010.
 [  ] G0 rejected — returned for the items above
 
-Approver:
-Role:
-Date:
+Approver: Masud Rana
+Role: Sr. QA Automation Engineer
+Date: 2026-08-24
 ```
