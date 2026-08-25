@@ -17,8 +17,8 @@
  *   2  could not run (missing schema, unreadable input)
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { resolve, dirname, relative } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -125,7 +125,7 @@ for (const req of requirements) {
       }
       if (!(tc.acceptanceCriterionIds ?? []).includes(ac.id)) {
         errors.push(
-          `${req.id}/${ac.id}: claims coverage by ${tcId}, but ${tcId} does not list ${ac.id}`
+          `${req.id}/${ac.id}: claims coverage by ${tcId}, but ${tcId} does not list ${ac.id}`,
         );
       }
       if (tc.requirementId !== req.id) {
@@ -189,7 +189,7 @@ for (const ex of executions) {
   const tc = testCaseById.get(ex.testCaseId);
   if (tc && requirementById.has(ex.requirementId) && tc.requirementId !== ex.requirementId) {
     errors.push(
-      `${ex.id}: recorded against ${ex.requirementId}, but ${tc.id} belongs to ${tc.requirementId}`
+      `${ex.id}: recorded against ${ex.requirementId}, but ${tc.id} belongs to ${tc.requirementId}`,
     );
   }
 
@@ -197,7 +197,7 @@ for (const ex of executions) {
   // then reported as passed. Repeated attempts ending green need an investigation.
   if (ex.result === "PASSED" && (ex.runCount ?? 1) > 1 && !ex.flakyInvestigation) {
     errors.push(
-      `${ex.id}: PASSED after ${ex.runCount} attempts with no flakyInvestigation recorded`
+      `${ex.id}: PASSED after ${ex.runCount} attempts with no flakyInvestigation recorded`,
     );
   }
 }
@@ -243,7 +243,7 @@ console.log(`Schema:  ${rel(schemaPath)}`);
 console.log(
   `Counts:  ${requirements.length} requirements, ${testCases.length} test cases, ` +
     `${bddScenarios.length} scenarios, ${automation.length} automation, ` +
-    `${executions.length} executions, ${blockers.length} blockers`
+    `${executions.length} executions, ${blockers.length} blockers`,
 );
 console.log("");
 
@@ -257,7 +257,7 @@ if (errors.length) {
 if (gateIssues.length) {
   console.log("");
   console.log(
-    `Gate G7 not ready — ${gateIssues.length} outstanding item${gateIssues.length === 1 ? "" : "s"}:`
+    `Gate G7 not ready — ${gateIssues.length} outstanding item${gateIssues.length === 1 ? "" : "s"}:`,
   );
   for (const g of gateIssues) console.log(`  - ${g}`);
   if (!gateMode) console.log("  (informational; pass --gate to fail the run on these)");

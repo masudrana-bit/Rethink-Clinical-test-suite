@@ -39,6 +39,10 @@ export const test = base.extend<{
     await use(new ClientsPage(page));
   },
 
+  // Playwright reads the destructured parameter to work out what a fixture depends
+  // on. An empty pattern is how the API says "nothing"; replacing it with _ would
+  // change that contract rather than tidy it.
+  // biome-ignore lint/correctness/noEmptyPattern: required by the Playwright fixture API
   scenario: async ({}, use) => {
     await use({ offeredClients: [] });
   },

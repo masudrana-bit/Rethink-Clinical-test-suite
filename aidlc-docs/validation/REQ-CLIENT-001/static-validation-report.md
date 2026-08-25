@@ -22,7 +22,7 @@ Every check below was executed. Nothing is reported as passing on inspection alo
 | 7 | No PHI-shaped literals | clinical §5, §6 | **PASS** |
 | 8 | Requirement and test-case tags present | §5, §12 | **PASS** |
 | 9 | Retries disabled | §25 | **PASS** |
-| 10 | Lint and formatting | §23 | **NOT RUN — no linter configured** |
+| 10 | Lint and formatting | §23 | **PASS** — Biome, added 2026-08-25; see §4 |
 
 Nine of ten pass. The tenth is an unmet tooling prerequisite, not a failure; see §4.
 
@@ -113,15 +113,23 @@ Three things the automated checks cannot see.
 
 ---
 
-## 4. The failing prerequisite
+## 4. The failing prerequisite — closed 2026-08-25
 
-**No linter or formatter is configured.** There is no ESLint, Prettier, or Biome configuration in the repository, and no `lint` script. §23 names lint and formatting as part of static validation, so this check did not run.
+**Originally:** no linter or formatter was configured, no `lint` script existed, and §23 names lint and formatting as part of static validation. The check was reported NOT RUN rather than PASS, because nothing was known about the code's conformance to a standard when no standard was defined. Raised as **F-06**.
 
-It is reported as NOT RUN rather than PASS. The distinction matters: nothing is known about the code's conformance to a standard, because no standard is defined.
+**Now resolved.** Biome 2.5.10 provides both linting and formatting, run by `npm run lint`. The check passes across all 12 source files.
 
-This is not a defect in `REQ-CLIENT-001`'s automation and does not block G6 on its own. It is a gap in the framework, and it will apply to every requirement that follows. Recommended for the next framework increment; it is cheap now, at two files and seven components, and grows more expensive with every test added.
+Biome rather than ESLint for a specific reason: the project is on TypeScript 7, and `typescript-eslint` currently supports up to TypeScript 6.1, so an ESLint setup would have meant downgrading the compiler to satisfy the linter. Biome parses TypeScript itself and has no such peer constraint. It also replaces Prettier, so F-06's two halves are met by one tool.
 
-Raised as **F-06** in `OPEN-DECISIONS.md`.
+Three things surfaced when it first ran, all now settled:
+
+| Finding | Disposition |
+|---|---|
+| `noEmptyPattern` on the `scenario` fixture in `src/fixtures/test.ts` | **Suppressed with a reason.** Playwright reads a fixture's destructured parameter to determine its dependencies, and an empty pattern is how the API expresses "no dependencies". Rewriting it would change the contract, not tidy it. |
+| Two import-ordering violations | Fixed automatically. |
+| Line endings across 11 files | Fixed, and prevented from recurring by a new `.gitattributes` declaring `eol=lf`. Without it, `core.autocrlf` on Windows gives CRLF locally while Linux CI sees LF, and the formatter contradicts itself depending on who ran it. |
+
+The formatting pass reflowed several statements to the configured 100-character width. Reviewed against `git diff -w`: cosmetic only, no logic altered, and the suite passes unchanged.
 
 ---
 
@@ -136,8 +144,10 @@ Raised as **F-06** in `OPEN-DECISIONS.md`.
 [X] No PHI in source or scenarios
 [X] Traceability tags present and functional
 [X] Retries disabled
-[ ] Lint and formatting — no tooling configured (F-06)
+[X] Lint and formatting — Biome, added 2026-08-25 (F-06 closed)
 [X] Manual inspection for conditional and absent assertions
 ```
+
+Every check now passes. The lint line was the sole outstanding item at the time G6 was signed, and it was signed with that gap recorded rather than hidden.
 
 The review record at `review-record.md` carries the QA and engineering judgements. G6 is signed there, not here.

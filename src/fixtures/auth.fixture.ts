@@ -67,9 +67,7 @@ export async function signIn(page: Page): Promise<void> {
 
   if (outcome === "refused") {
     const detail = (await page.locator("body").innerText()).trim();
-    throw new Error(
-      `The dev login refused to sign in. The application reported:\n\n${detail}`,
-    );
+    throw new Error(`The dev login refused to sign in. The application reported:\n\n${detail}`);
   }
 
   if (outcome === "no-response") {

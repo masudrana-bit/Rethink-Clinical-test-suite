@@ -1,5 +1,5 @@
 import { test as setup } from "@playwright/test";
-import { signIn, STORAGE_STATE } from "../src/fixtures/auth.fixture.js";
+import { STORAGE_STATE, signIn } from "../src/fixtures/auth.fixture.js";
 
 /**
  * Runs once before the test projects, as a Playwright setup dependency.

@@ -52,6 +52,24 @@ Two small corrections also surfaced. `BASE_URL` in `.env` and `.env.example` poi
 
 ---
 
+## REQ-CLIENT-002 — assessed at S0 on 2026-08-25, gate held
+
+Blocked differently from its parent. `REQ-CLIENT-001` was blocked on a signature; this one is blocked on content. Its single acceptance criterion has `NOT SPECIFIED` as its observable outcome, so approving it today would place an untestable requirement into S1.
+
+Reconnaissance did move it forward. GAP-009 asked which clinical actions are in scope and noted that no source enumerates them, which read as a blank page. It is not blank — the application implements a substantial action surface, and the intake record's Finding 1 lists ten observed controls across the three client tabs for Product and the Clinical SME to accept, trim, or reject. That list is observed behaviour, admissible for scoping and inadmissible as a source of expected results.
+
+**Scoped the same day.** The first action is **adding a target** to a program, and the clinical sign-off must be independent — the GAP-011 arrangement does not carry over to a requirement that writes clinical data.
+
+Adding a *program* was chosen first and then abandoned. Checking what it required revealed that it requires nothing: the control is present and enabled but produces no dialog, no navigation, and no state change. Three sibling controls on the same page all open working editors, so this is specific to Add. The environment was serving demonstration data at the time, so it may be inert for that reason rather than unimplemented — a question for the application team, recorded as Finding 5 in the intake record rather than filed as a confirmed defect.
+
+The gate now hangs on two items rather than an open-ended list: ratify an observable outcome for AC-001, and name a Clinical SME (GAP-013). A candidate outcome is proposed in the requirement's §7, marked unratified because it is derived from observed behaviour.
+
+Two things surfaced that were not previously recorded. A clinical calculation is already visible in the mastery review — "80% or better across 3 consecutive sessions, minimum 10 trials each" — which brings `clinical-rules.md` §11 into play with its boundary-behaviour requirements, now tracked as GAP-012. And GAP-011, parked as harmless for the read-only parent, becomes live here.
+
+Full assessment in `intake/REQ-CLIENT-002/intake-record.md`.
+
+---
+
 ## Product / Business
 
 | ID | Decision needed | Blocks | Recorded in |
@@ -60,15 +78,18 @@ Two small corrections also surfaced. `BASE_URL` in `.env` and `.env.example` poi
 | GAP-003 | Required behaviour when no client is selected | Negative scenarios for AC-001 and AC-002, currently absent | `REQ-CLIENT-001` §13 |
 | GAP-004 | Required behaviour when a selected client is invalid or unavailable | Negative scenarios | `REQ-CLIENT-001` §13 |
 | GAP-008 | The Create Clinical Session workflow after client selection | A future session requirement | `REQ-CLIENT-001` §13 |
-| GAP-009 | Which clinical actions `REQ-CLIENT-002` covers | Everything in `REQ-CLIENT-002`; it is that requirement's root blocker | `REQ-CLIENT-002` §13 |
+| GAP-009 | Which clinical actions `REQ-CLIENT-002` covers | Everything in `REQ-CLIENT-002`; it is that requirement's root blocker | `REQ-CLIENT-002` §13; candidate list in `intake/REQ-CLIENT-002/intake-record.md` Finding 1 |
+| — | Criticality rating for `REQ-CLIENT-002` | Nothing directly; it writes clinical data, so inheriting P1 from its parent by default is worth avoiding | `REQ-CLIENT-002` §3 |
 
 ## Clinical SME
 
 | ID | Decision needed | Blocks | Recorded in |
 |---|---|---|---|
 | GAP-010 | Is showing another client's data in a read-only view a §21 association failure, or a lesser context error? | Test case writing for AC-003 to AC-005, held at S3; assertion strength and defect severity | `REQ-CLIENT-001` §8 |
-| GAP-011 | Is a dedicated Clinical SME required, or is the QA lead sign-off sufficient? | Nothing today; accepted on risk grounds. Revisit for requirements that write clinical data | `REQ-CLIENT-001` §2 |
-| GAP-007 | The approved rule defining the client-to-clinical-action association | `REQ-CLIENT-002` AC-001 | Both requirements §13 |
+| GAP-011 | Is a dedicated Clinical SME required, or is the QA lead sign-off sufficient? | **Now live.** Accepted for `REQ-CLIENT-001` on read-only risk grounds; `REQ-CLIENT-002` writes clinical data, so the precedent should not carry over | `REQ-CLIENT-001` §2 |
+| GAP-012 | Mastery calculation: formula, inputs, precision, rounding, and boundary behaviour | Mastery confirmation only, which is currently out of scope — off the critical path, keep open | `intake/REQ-CLIENT-002/intake-record.md` Finding 2 |
+| GAP-013 | **Who is the Clinical SME for `REQ-CLIENT-002`?** An independent sign-off was required on 2026-08-25 and no SME is named | Gate G0 for `REQ-CLIENT-002` | `REQ-CLIENT-002` §13 |
+| GAP-007 | The approved rule defining the client-to-clinical-action association. Concretely now: ratify the candidate observable outcome for adding a target, or supply the approved one | Gate G0 for `REQ-CLIENT-002`; AC-001 is not testable without it | `REQ-CLIENT-002` §7 and §13 |
 | GAP-006 | Whether client selection and clinical actions must be audited, and what the event records | Audit coverage | Both requirements §13 |
 | P-07 | Approved clinical lifecycle, enum values, and role matrix | Stages S3 and S4 for any session or observation requirement | Workflow §3 |
 | — | Clinical SME sign-off on `REQ-CLIENT-002` | Its Gate G0 | `REQ-CLIENT-002` §2 |
@@ -87,7 +108,7 @@ Two small corrections also surfaced. `BASE_URL` in `.env` and `.env.example` poi
 | ~~F-02~~ | ~~Whether Gherkin is executable, or a reviewed specification only~~ | **Resolved 2026-08-24** — executable. `features/**/*.feature` compiles to Playwright tests; an unmatched step fails `bddgen` | `tests/README.md` |
 | F-03 | Browser coverage beyond Chromium | Config scope | `tests/README.md` |
 | F-05 | Test data lifecycle: API seeding, UI seeding, or a fixture pool | Stage S5 | `tests/README.md` |
-| F-06 | Linter and formatter — none configured, so the lint half of S8 cannot run | Nothing today; the S8 check is reported NOT RUN for every requirement until it exists | `validation/REQ-CLIENT-001/static-validation-report.md` §4 |
+| ~~F-06~~ | ~~Linter and formatter — none configured, so the lint half of S8 cannot run~~ | **Resolved 2026-08-25** — Biome, covering both. ESLint was not viable: `typescript-eslint` supports TypeScript up to 6.1 and the project is on 7. `npm run lint` passes | `validation/REQ-CLIENT-001/static-validation-report.md` §4 |
 
 ## QA
 
@@ -108,15 +129,19 @@ For contrast, these are done and need review rather than decisions:
 - Traceability JSON Schema, validated against a real validator
 - Traceability validator script, enforcing referential integrity and the §25 flaky rule
 - Playwright and TypeScript configuration, typechecking clean
-- `REQ-CLIENT-001` reformatted, assessed at S0, split, and approved
-- `REQ-CLIENT-002` created and assessed as deeply blocked
+- `REQ-CLIENT-001` reformatted, assessed at S0, split, approved, and carried through to S9
+- `REQ-CLIENT-002` created, and assessed at S0 on 2026-08-25 — gate held on missing content
 - Module taxonomy ratified
 - S1 analysis, S3 coverage design, and S4 test cases and BDD scenarios for AC-001 and AC-002
+- Executable BDD via `playwright-bdd`, with Page Objects, fixtures, a once-only sign-in, and Cucumber reporting
+- Two automated scenarios passing, with an S9 evidence bundle and G6 signed
 
 ## Deliberately not built
 
-No Page Objects, fixtures, authentication utilities, API clients, or Playwright tests exist.
+`src/api/` and `src/data/` are still absent, and no test seeds or cleans up data.
 
-Producing them would require inventing selectors, an authentication flow, and API endpoints for an application this repository has no contract for and no access to. `aidlc-e2e-rules.md` §4 prohibits exactly that. A plausible-looking stub is worse than an absent one, because it reads as a decision that has already been made.
+Producing them would require inventing API endpoints for an application this repository has no contract for; GAP-005 is unanswered. `aidlc-e2e-rules.md` §4 prohibits that, and a plausible-looking stub is worse than an absent one because it reads as a decision already made.
 
-The test cases and BDD scenarios that now exist stop deliberately at the boundary of what the approved sources support: business-level steps and observable outcomes, with no selector, endpoint, or credential named anywhere.
+The same restraint governs `REQ-CLIENT-002`. Reconnaissance established that a client-specific action surface exists and named its controls, but observing a button does not tell us what it is supposed to do. No scenario, expected result, or step definition will be written for any of those actions until the behaviour behind them is specified and approved.
+
+Page Objects, fixtures, and authentication utilities were in this section until 2026-08-24. They now exist, built against selectors and an auth route confirmed by live reconnaissance rather than assumed.

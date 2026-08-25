@@ -94,13 +94,10 @@ Then("the Client area should be displayed", async ({ clients }) => {
  * usable selector satisfies AC-001 literally while leaving the workflow dead,
  * because the requirement's §6 step 2 could not happen.
  */
-Then(
-  "the client selector should offer at least one client",
-  async ({ clients }) => {
-    const offered = await clients.switcher.optionNames();
-    expect(offered.length).toBeGreaterThan(0);
-  },
-);
+Then("the client selector should offer at least one client", async ({ clients }) => {
+  const offered = await clients.switcher.optionNames();
+  expect(offered.length).toBeGreaterThan(0);
+});
 
 // ---------------------------------------------------------------------------
 // TC-CLIENT-002 — selecting a client makes that client the active client
@@ -152,12 +149,9 @@ Given("the Client area is displayed", async ({ clients }) => {
   ).toBeNull();
 });
 
-When(
-  "the user selects Client B from the client selector",
-  async ({ clients, scenario }) => {
-    await clients.switcher.selectByName(required(scenario.clientB, "Client B"));
-  },
-);
+When("the user selects Client B from the client selector", async ({ clients, scenario }) => {
+  await clients.switcher.selectByName(required(scenario.clientB, "Client B"));
+});
 
 /**
  * AC-002 read with CL-006: the client that was chosen is the client that became

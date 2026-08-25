@@ -8,6 +8,9 @@
     "validate:traceability": "node scripts/validate-traceability.mjs",
     "validate:traceability:gate": "node scripts/validate-traceability.mjs --gate",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
     "bddgen": "bddgen",
     "test": "bddgen && playwright test",
     "test:p0": "bddgen && playwright test --grep @P0",
@@ -17,6 +20,7 @@
     "report:cucumber": "node scripts/open-cucumber-report.mjs"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.10",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "ajv": "^8.20.0",

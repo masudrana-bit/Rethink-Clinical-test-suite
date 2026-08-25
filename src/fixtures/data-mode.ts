@@ -35,10 +35,7 @@ export async function readDataMode(page: Page): Promise<DataMode> {
  * Records the data mode against the test result, so no result is reported
  * without stating what it ran against.
  */
-export async function recordDataMode(
-  page: Page,
-  testInfo: TestInfo,
-): Promise<DataMode> {
+export async function recordDataMode(page: Page, testInfo: TestInfo): Promise<DataMode> {
   const mode = await readDataMode(page);
 
   testInfo.annotations.push({

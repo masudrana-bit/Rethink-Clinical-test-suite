@@ -130,12 +130,25 @@ npm test                          # bddgen, then playwright test
 | `npm run ui` | Playwright UI mode with a file watcher that regenerates on save |
 | `npm run watch:bdd` | The watcher alone, for pairing with your own runner |
 | `npm run bddgen` | Checks that every Gherkin step still binds, without executing anything |
+| `npm run lint` | Biome — linting and formatting in one pass |
+| `npm run lint:fix` | The same, applying every safe fix |
+| `npm run validate:traceability` | Checks the S10 record's structure, references, and G7 readiness |
 | `npm run report:cucumber` | Opens the Cucumber HTML report |
 | `npm run report` | Opens Playwright's own report |
 
 The watcher is `scripts/watch-bdd.mjs`, written against Node built-ins so that watching costs no dependencies.
 
 **In UI mode, tick the `chromium` project.** The project filter sits behind the chevron next to the search box, and if only `setup` is ticked the scenarios are hidden and the tree looks empty. The setting persists once changed.
+
+## Linting and formatting
+
+Biome handles both, configured in `biome.json` and run by `npm run lint`.
+
+Biome rather than ESLint plus Prettier because the project is on TypeScript 7, and `typescript-eslint` supports up to 6.1 — an ESLint setup would have meant downgrading the compiler to satisfy the linter. Biome parses TypeScript itself, so the question does not arise, and it covers formatting too.
+
+One suppression exists, in `src/fixtures/test.ts`. Playwright reads a fixture's destructured parameter to work out its dependencies, so `async ({}, use)` is the API's way of saying "depends on nothing". Biome's `noEmptyPattern` flags it; the suppression carries that reason inline. If you hit the same rule on another fixture, suppress it the same way rather than switching to `_`, which would change what Playwright infers.
+
+`.gitattributes` pins line endings to LF. Without it, `core.autocrlf` gives Windows developers CRLF while Linux CI sees LF, and the formatter disagrees with itself depending on who ran it last.
 
 ## Reports
 

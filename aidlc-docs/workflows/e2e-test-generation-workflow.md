@@ -590,14 +590,15 @@ The workflow is now running against its first requirement. Remaining order:
 12. ~~Run S8~~ — static validation and code review complete; artifacts in `validation/REQ-CLIENT-001/`.
 13. ~~Sign G6.~~ Signed 2026-08-24.
 14. ~~Run S9~~ — executed post-G6 as `run-2026-08-24T1204Z`; both scenarios passed first attempt.
-15. **Run S10** — build the traceability record and validate it with `npm run validate:traceability`.
-16. Answer GAP-010 to release AC-003 to AC-005 for test case writing.
-17. Configure a linter and formatter (F-06), so the lint half of S8 stops being reported as NOT RUN.
+15. ~~Run S10~~ — record built at `aidlc-docs/traceability/traceability.json` and validated 2026-08-25. Structure and references OK; G7 correctly reports not ready.
+16. ~~Configure a linter and formatter (F-06)~~ — Biome added 2026-08-25; the S8 lint check now passes.
+17. **Answer GAP-010** to release AC-003 to AC-005 for test case writing. This is now the only thing standing between the requirement and G7.
+18. Settle a G6 addendum for the changes made after that signature, listed in `automation/REQ-CLIENT-001/implementation-notes.md` §8. G7 signs off the whole chain and would otherwise endorse an automation state G6 never reviewed.
 
-Stages S0 through S9 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
+Stages S0 through S10 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
 
 The two approved scenarios execute from `features/client/REQ-CLIENT-001.feature`, compiled by `playwright-bdd` and bound to step definitions in `src/steps/`. Both passed on their first attempt in the post-G6 evidence run, with results, traces, and a PHI statement in `aidlc-docs/evidence/run-2026-08-24T1204Z/`.
 
 Two caveats travel with that result and should not be separated from it. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the user interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria, with AC-003 to AC-005 held on GAP-010.
 
-The remaining gate is G7, at the end of S10.
+The remaining gate is G7. The S10 record is built and validates cleanly, and it reports G7 as not ready on four items — AC-003, AC-004, and AC-005 uncovered, plus GAP-010 open — which all reduce to that one unanswered clinical question. `node scripts/validate-traceability.mjs --gate` exits non-zero while they stand, so a pipeline can enforce it.
