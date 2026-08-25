@@ -140,6 +140,28 @@ The watcher is `scripts/watch-bdd.mjs`, written against Node built-ins so that w
 
 **In UI mode, tick the `chromium` project.** The project filter sits behind the chevron next to the search box, and if only `setup` is ticked the scenarios are hidden and the tree looks empty. The setting persists once changed.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs two jobs, and the split is deliberate.
+
+**`static` is the gate.** Lint, typecheck, `bddgen`, and traceability validation. It is deterministic, needs no network beyond npm, and should stay green — anything it catches is a fault in this repository. It runs on every push and pull request.
+
+**`e2e` is not a gate.** It drives the live dev environment, and that environment's credential service failed three times on 2026-08-24 alone. Wiring it to every push would produce red builds caused by someone else's outage, and a gate that fails for reasons the author cannot fix is one people learn to ignore. It runs on a weekday schedule and on demand, and reports into the job summary.
+
+The traceability step runs without `--gate`. G7 readiness is a project state, not a build failure, and it is legitimately not ready while GAP-010 is open. Switch to `npm run validate:traceability:gate` once the record is expected to be complete.
+
+### Evidence is filtered by data mode
+
+The `e2e` job uploads the Cucumber report unconditionally, because it records step names and outcomes rather than page content. Traces are different: they carry DOM snapshots, so they carry whatever the page displayed.
+
+`scripts/check-data-mode.mjs` reads the run's JSON report and decides. Every scenario on substituted example data means no real clinical record was rendered and the traces are uploaded. Anything else — `preview`, `mixed`, or no annotation at all — and they are withheld. This enforces the constraint written into `aidlc-docs/evidence/run-2026-08-24T1204Z/manifest.md`, rather than trusting someone to remember it.
+
+Run it yourself against any Playwright JSON report:
+
+```bash
+npm run check:datamode -- playwright-results.json --fail-on-real
+```
+
 ## Linting and formatting
 
 Biome handles both, configured in `biome.json` and run by `npm run lint`.
@@ -160,7 +182,13 @@ Two are produced on every run, because they answer different questions.
 
 Both are git-ignored and rewritten on every run. Copy what you need into `aidlc-docs/evidence/<run-id>/` when retaining a run as evidence — and check the data mode first, per that folder's manifest.
 
-Copy `.env.example` to `.env` and set `BASE_URL` if you are not targeting the default dev environment. `.env` is git-ignored and must never contain real credentials or PHI.
+## Pointing the suite at another environment
+
+Copy `.env.example` to `.env` and set `BASE_URL`. `.env` is git-ignored and must never contain real credentials or PHI.
+
+`playwright.config.ts` loads it with Node's built-in `process.loadEnvFile()`, guarded on the file existing because CI has none. A real environment variable already set in the shell wins over the file, which is what lets CI override without editing anything.
+
+This instruction was wrong until 2026-08-25: nothing read `.env`, so editing it did nothing and the default in `playwright.config.ts` always won. If you set a value before then and wondered why it had no effect, that is why.
 
 ## Conventions
 

@@ -1,6 +1,14 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 import { cucumberReporter, defineBddConfig } from "playwright-bdd";
 import { STORAGE_STATE } from "./src/fixtures/auth.fixture.js";
+
+// .env was documented as the way to point the suite at another environment, but
+// nothing read it — no dotenv, no --env-file — so editing it silently did
+// nothing. Node's built-in loader fixes that without adding a dependency. It
+// throws when the file is absent, which is the normal case in CI, hence the
+// guard. Real environment variables already set are not overwritten.
+if (existsSync(".env")) process.loadEnvFile(".env");
 
 /**
  * Playwright configuration for the Clinical E2E suite.
@@ -98,6 +106,13 @@ export default defineConfig({
 
     ["html", { open: "never", outputFolder: "playwright-report" }],
     ["junit", { outputFile: "test-results/junit.xml" }],
+
+    // Playwright's own JSON, which is a different shape from the Cucumber JSON
+    // above and carries the per-result annotations. scripts/check-data-mode.mjs
+    // reads it to decide whether a run's traces may be retained. Declared here
+    // rather than passed as --reporter on the command line, because that flag
+    // replaces this whole list and would silently drop the Cucumber reports.
+    ["json", { outputFile: "test-results/results.json" }],
   ],
 
   outputDir: "test-results",

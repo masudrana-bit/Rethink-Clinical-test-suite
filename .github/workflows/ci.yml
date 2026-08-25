@@ -1,0 +1,139 @@
+name: CI
+
+# Two jobs, deliberately separated.
+#
+# "static" is the gate. It is deterministic, needs no network beyond npm, and
+# should stay green. Anything it catches is a fault in this repository.
+#
+# "e2e" drives a live dev environment and is NOT a gate. That environment's
+# credential service failed three times on 2026-08-24 alone, and the application
+# serves substituted example data whenever its backend is unreachable. Wiring it
+# to every push would produce red builds caused by someone else's outage, and a
+# gate that is red for reasons the author cannot fix is a gate people learn to
+# ignore. It runs on demand and on a schedule, and reports rather than blocks.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    # Weekday mornings, UTC. Enough to notice drift without hammering dev.
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint and format
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Compiles the feature files. missingSteps is "fail-on-gen", so a Gherkin
+      # step with no matching definition fails here rather than silently never
+      # running — which would be a false coverage claim.
+      - name: Compile BDD scenarios
+        run: npm run bddgen
+
+      # Structure, referential integrity, and the section 25 flaky rule. Not
+      # --gate: G7 readiness is a project state, not a build failure, and it is
+      # legitimately not ready while GAP-010 is open.
+      - name: Validate traceability
+        run: npm run validate:traceability
+
+  e2e:
+    name: E2E against dev
+    runs-on: ubuntu-latest
+    # Scheduled and manual only. See the note at the top of this file.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # No --reporter flag: it would replace the reporter list in the config and
+      # drop the Cucumber output this job uploads.
+      - name: Run scenarios
+        id: run
+        continue-on-error: true
+        run: npm test
+
+      # Which data the run actually saw. A green suite against substituted data
+      # proves the UI and nothing behind it, and the answer also decides whether
+      # the traces are safe to keep.
+      - name: Check data mode
+        id: datamode
+        continue-on-error: true
+        run: npm run check:datamode -- test-results/results.json --fail-on-real
+
+      # Gherkin-shaped results. Safe regardless of data mode: it records step
+      # names and outcomes, not page content.
+      - name: Upload Cucumber report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: cucumber-report/
+          retention-days: 30
+
+      # Traces hold DOM snapshots, so they hold whatever the page displayed.
+      # Only uploaded when every scenario ran against substituted example data,
+      # which is the condition under which no real clinical record is present.
+      - name: Upload traces
+        if: steps.datamode.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: traces
+          path: test-results/**/*.zip
+          retention-days: 30
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "### E2E run"
+            echo ""
+            if [ "${{ steps.run.outcome }}" = "success" ]; then
+              echo "Scenarios: passed"
+            else
+              echo "Scenarios: FAILED — check the log before assuming a product defect."
+              echo "The dev credential service is known to flap; an outage looks like a test failure."
+            fi
+            echo ""
+            if [ "${{ steps.datamode.outcome }}" = "success" ]; then
+              echo "Data mode: substituted. The UI is proven; the data path behind it is not."
+              echo "Traces uploaded."
+            else
+              echo "Data mode: real data seen, or no annotation recorded."
+              echo "Traces withheld — they may contain real clinical records."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The suite's own result still decides the job, after the reporting above.
+      - name: Reflect the run result
+        if: steps.run.outcome != 'success'
+        run: exit 1
