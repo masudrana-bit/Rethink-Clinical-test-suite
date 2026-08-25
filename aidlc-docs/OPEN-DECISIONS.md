@@ -69,6 +69,22 @@ That made the stale value load-bearing for the first time, so it was corrected i
 
 `clinical-rules.md` §1 pointed at `aidlc/rules/AIDLC_E2E_RULES.md`, which is neither the directory nor the casing this repository uses. Corrected to `aidlc-docs/rules/aidlc-e2e-rules.md` and the target verified. A broken pointer only — no rule text or obligation changed.
 
+### Cross-suite review, 2026-08-25
+
+The sibling **NextGen Clinical** suite was reviewed and this suite aligned with it where alignment was right. Full findings in `analysis/cross-suite-review-2026-08-25.md`. Four things changed what we thought we knew:
+
+**A second environment exists and is primary there.** `dev2` is that suite's mandatory daily target; we had been pinned to `dev` without ever deciding to. Both now work here, both were verified, and `dev` stays the default because the S9 evidence was produced against it.
+
+**Substituted data has a named cause.** An Accounts-service trust key was removed, so every tenant-scoped endpoint returns `503 Accounts service returned status 401`. Their status table calls it the top blocker, unchanged for eleven days, with no fix in flight. This is a standing condition on both environments, not the intermittent one BLK-010 describes.
+
+**The inert "Add a program" control is explained by that same outage.** The whole treatment-plan surface, programs included, is 503. This does not prove the control is implemented, but it removes most of the case for filing a frontend defect.
+
+**GAP-005 was wrongly framed.** We recorded that no API contract exists. None exists *in this repository*; the organisation has live Swagger on three services, three Postman collections, and a working API client.
+
+**Decided the same day: build an API layer.** The foundation exists — configuration, route builders, an authenticated client. The part the decision was aimed at does not, and cannot yet: every tenant-scoped route returns `503 Unavailable/AccountsService`, verified with a valid bearer token while the gateway answered 200 on the same token. Seeding, cleanup, and verification have no surface to run against, so `F-05` stays open for a reason outside this suite. `npm run api:readiness` reports the day that changes. See `automation/api-layer-plan.md`.
+
+**Default environment switched to dev2**, matching the sibling suite. The S9 evidence still names `dev` and remains valid — both environments were verified to behave identically — but a future `dev2` run is a different run, not a repeat.
+
 ### Resolved: which data mode the suite may run against
 
 Tracked as BLK-010, closed at Gate G4. The suite may run against any mode, and the mode is recorded as an annotation on every result — so a green run against fallback data is visibly not the same as a green run against real data.
@@ -128,13 +144,14 @@ Full assessment in `intake/REQ-CLIENT-002/intake-record.md`.
 | ~~F-04~~ | ~~Authentication mechanism and test accounts~~ | **Resolved** — `/temp-dev-login`, no credentials | `automation/REQ-CLIENT-001/framework-reuse-plan.md` §2 |
 | — | Is `/temp-dev-login` permanent, and what replaces it? | The auth fixture's shelf life | `framework-reuse-plan.md` §2 |
 | ~~—~~ | ~~Correct `BASE_URL` — `/clinical-ui/` redirects to the site root~~ | **Resolved 2026-08-25** — corrected, and `.env` is now actually loaded; it never was | `tests/README.md`, `playwright.config.ts` |
-| — | Environment policy: is dev the intended target, and does it reset? | The scheduled CI run points at dev by default; confirm or redirect it | `tests/README.md` |
-| GAP-005 / P-05 | API contract for setup, cleanup, and verification | `src/api/`, test data lifecycle, stage S5 | Both requirements §12.1 |
+| — | Environment policy: is dev the intended target, and does it reset? **Sharpened 2026-08-25** — `dev2` is the sibling suite's mandatory daily environment and now runs here too; both behave identically today | The scheduled CI run points at dev by default; confirm or redirect it | `tests/README.md` |
+| — | **Can a GitHub-hosted runner reach the Clinical WebApp?** Unverified. The sibling suite uses a self-hosted runner because its API hosts are internal-only. We need only the WebApp host, which resolves publicly, but every run so far has been from a possibly-VPN'd machine | The scheduled CI e2e job. If not, it needs `runs-on: self-hosted` | `.github/workflows/ci.yml` |
+| GAP-005 / P-05 | API contract for setup, cleanup, and verification. **Reframed 2026-08-25** — the contract exists (Swagger on three services, three Postman collections, a working client in the sibling suite). The open question is no longer "is there one" but "should this suite take on an API layer", which is a scope decision needing its own gate | `src/api/`, test data lifecycle, stage S5 | `analysis/cross-suite-review-2026-08-25.md` §2.4 |
 | — | Test environment policy: which environments are testable, and reset expectations | Data isolation strategy | `tests/README.md` |
 | ~~F-01~~ | ~~BDD tooling: `playwright-bdd`, `@cucumber/cucumber`, or none~~ | **Resolved 2026-08-24** — `playwright-bdd`, chosen to keep the Playwright runner, the once-only sign-in, and the trace/video evidence | `tests/README.md` |
 | ~~F-02~~ | ~~Whether Gherkin is executable, or a reviewed specification only~~ | **Resolved 2026-08-24** — executable. `features/**/*.feature` compiles to Playwright tests; an unmatched step fails `bddgen` | `tests/README.md` |
 | F-03 | Browser coverage beyond Chromium | Config scope | `tests/README.md` |
-| F-05 | Test data lifecycle: API seeding, UI seeding, or a fixture pool | Stage S5 | `tests/README.md` |
+| F-05 | Test data lifecycle: API seeding, UI seeding, or a fixture pool. **Blocked externally 2026-08-25** — API seeding was chosen and is unbuildable while the tenant surface returns 503; UI seeding is unavailable for the same reason (the write controls are inert). Not a decision anyone can take today | Stage S5 | `automation/api-layer-plan.md` |
 | ~~F-06~~ | ~~Linter and formatter — none configured, so the lint half of S8 cannot run~~ | **Resolved 2026-08-25** — Biome, covering both. ESLint was not viable: `typescript-eslint` supports TypeScript up to 6.1 and the project is on 7. `npm run lint` passes | `validation/REQ-CLIENT-001/static-validation-report.md` §4 |
 
 ## QA
@@ -168,7 +185,9 @@ For contrast, these are done and need review rather than decisions:
 
 `src/api/` and `src/data/` are still absent, and no test seeds or cleans up data.
 
-Producing them would require inventing API endpoints for an application this repository has no contract for; GAP-005 is unanswered. `aidlc-e2e-rules.md` §4 prohibits that, and a plausible-looking stub is worse than an absent one because it reads as a decision already made.
+Until 2026-08-25 the reason was that producing them would require inventing API endpoints for an application this repository has no contract for. **That reason no longer holds.** The cross-suite review found live Swagger on three services, three Postman collections covering 86 requests, and a working API client with a documented bearer-token flow.
+
+The restraint now rests on something narrower: taking on an API layer is a scope increase that changes what this suite is, and it should pass a gate rather than arrive as a side effect of discovering that it is possible. `aidlc-e2e-rules.md` §4 still prohibits inventing endpoints, but nobody would be inventing them any more. Recorded as decision 1 in `analysis/cross-suite-review-2026-08-25.md` §7.
 
 The same restraint governs `REQ-CLIENT-002`. Reconnaissance established that a client-specific action surface exists and named its controls, but observing a button does not tell us what it is supposed to do. No scenario, expected result, or step definition will be written for any of those actions until the behaviour behind them is specified and approved.
 

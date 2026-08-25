@@ -182,6 +182,10 @@ Editors were opened to enumerate fields and the page was reloaded without saving
 
 **Caveat, and it is a real one.** The environment was serving `demo-banner-substituted` throughout, meaning the backend returned no records for these screens. The Add control may be inert *because* of that rather than being unimplemented. Distinguishing the two requires either a working backend or someone who knows the build. This is recorded as an observation for the application team, not as a confirmed defect.
 
+**Addendum, 2026-08-25 — the caveat now has evidence behind it.** The cross-suite review of the sibling NextGen Clinical API suite found that the entire treatment-plan Build surface, programs included, returns `503` on both dev and dev2, caused by a removed Accounts-service trust key that yields `Accounts service returned status 401 for account 18421`. Their status table records it as the top blocker, unchanged for eleven days, with no fix in flight. The nested behavior-plan surface additionally returns `404` for want of a seeded program.
+
+So an inert Add control is exactly what a working frontend would look like against that backend. This still does not prove the control is implemented — a frontend can be missing *and* the backend down — but it removes most of the case for filing a frontend defect, and it means the question cannot be settled on these environments until the Accounts key is restored. See `analysis/cross-suite-review-2026-08-25.md` §2.3.
+
 Either way the consequence for testing is the same: an action with no observable behaviour cannot be automated, however well it is specified.
 
 ### Re-scope
