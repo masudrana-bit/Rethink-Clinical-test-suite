@@ -145,3 +145,55 @@ Date: 2026-08-24
 ```
 
 Approving G6 accepts R-01 and R-02 as recorded, and releases S9 — first evidence-producing execution.
+
+---
+
+
+
+## 7. G6 addendum — changes after signature
+
+**Date:** 2026-08-25
+
+Sections 1 to 6 describe the code as reviewed on 2026-08-24. Code changed after that date, and because G7 signs off the whole chain, those changes need a disposition rather than an implicit inheritance of the original signature.
+
+The changes are enumerated in `aidlc-docs/automation/REQ-CLIENT-001/implementation-notes.md` §8. This addendum records the review of them, not a re-review of the original automation.
+
+### What changed, and what it touches
+
+| Change | Touches reviewed code? | Alters what a scenario asserts? |
+|---|---|---|
+| Cucumber HTML and JSON reporters | No — config only | No |
+| Sign-in surfaces the application's refusal message | Yes — `src/fixtures/auth.fixture.ts` | No. A failure that was a bare timeout now names its cause |
+| `AfterScenario` hook given a name | Yes — `src/steps/client.steps.ts` | No — reporting label only |
+| Feature files moved to `features/` | Path only, moved with `git mv` | No |
+| Watcher script and editor settings | No — tooling | No |
+| Biome configured (F-06 resolved) | Yes — reformatted reviewed files | No — whitespace, import order, one suppression |
+| Playwright `json` reporter and data-mode gate | No — config plus a new script | No |
+| CI workflow | No — new file | No |
+
+### The two worth naming
+
+**The Biome pass reformatted files reviewed in their pre-format shape.** Whitespace and import order, plus one suppression in `src/fixtures/test.ts` for `noEmptyPattern`, which flags Playwright's `async ({}, use)` idiom for a fixture that declares no dependencies. The suppression is narrow and carries its reason inline. No logic was altered, and the suite passes unchanged.
+
+This also closes **R-02**, the finding accepted at the original signature on the grounds that a missing linter was a framework gap rather than a defect here. All ten static checks now pass; the checklist item left open above is therefore satisfied.
+
+**The reporter changes affect what S9 evidence contains.** This is the substantive one. The Cucumber JSON keeps each result tied to the Gherkin line that produced it, and Playwright's JSON carries the per-result data-mode annotation. `scripts/check-data-mode.mjs` reads the latter and withholds traces unless every scenario ran against substituted data.
+
+That last point is a tightening, not a relaxation. Section 5 above notes that the data mode "has to be read" — a caveat that depended on a person remembering. It is now enforced mechanically, and a `preview` run's traces cannot reach an artifact store by default.
+
+### Not re-established
+
+This addendum does not revisit what §5 says a signed G6 does not establish. In particular, expected results still derive from screenshots and the suite still detects change rather than incorrectness. Nothing in these changes affects that.
+
+```text
+G6 addendum sign-off
+
+[X] Approved — post-signature changes accepted as recorded; G6 stands
+[  ] Rejected — automation returned for re-review
+
+Lint and formatting — F-06 resolved, all ten static checks pass. R-02 closed.
+
+Approver: Masud Rana
+Role: Sr. QA Automation Engineer
+Date: 2026-08-25
+```

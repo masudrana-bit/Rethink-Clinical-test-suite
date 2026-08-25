@@ -74,24 +74,23 @@ Three items are recorded as non-blocking blockers rather than omitted. Each is a
 
 ## 5. Gate history
 
-All seven signatures are recorded in the `approvals` array with their scope. Two carry notes worth surfacing:
+All signatures are recorded in the `approvals` array with their scope. Two carry notes worth surfacing:
 
 **G5 was signed twice.** The first signature covered a hand-written Playwright spec. That approach was replaced by executable BDD, and the gate was reopened and re-signed rather than amended quietly.
 
-**G6 has changes after it.** Cucumber reporting, the sign-in failure handling, and the feature file relocation all landed after the signature. They are recorded in `automation/REQ-CLIENT-001/implementation-notes.md` §8 as requiring a G6 addendum. The reporting change in particular alters what S9 evidence looks like, so it should not be absorbed silently.
+**G6 has an addendum.** Cucumber reporting, the sign-in failure handling, the feature file relocation, Biome, the data-mode trace gate, and CI all landed after the original signature. Rather than let them ride on it, they were dispositioned separately and signed on 2026-08-25 as §7 of `validation/REQ-CLIENT-001/review-record.md`. Two were reviewed in substance: the reporter changes alter what S9 evidence contains, and the Biome pass reformatted files reviewed in their pre-format shape. The addendum also closes review finding R-02.
 
 ---
 
 ## 6. What closes G7
 
-One decision, then one run.
+One appointment, one decision, then one run.
 
-1. **Answer GAP-010.** Is showing another client's data in a read-only view a §21 association failure or a lesser context error? This releases AC-003 to AC-005 for test case writing at S4.
-2. **Carry those three criteria through S4 to S9**, then add their test cases, scenarios, automation, and executions to the record.
+1. **Name an independent Clinical SME.** GAP-010 was routed out of QA on 2026-08-25, so the decision below now has an owner that no one holds. The same role also owns GAP-007 on `REQ-CLIENT-002`.
+2. **Answer GAP-010.** Is showing another client's data in a read-only view a §21 association failure or a lesser context error? This releases AC-003 to AC-005 for test case writing at S4.
+3. **Carry those three criteria through S4 to S9**, then add their test cases, scenarios, automation, and executions to the record.
 
-Nothing else is outstanding. The two covered criteria are complete through to evidence.
-
-A G6 addendum for the post-signature changes should be settled before G7 as well, since G7 signs off the whole chain and would otherwise be endorsing an automation state that G6 never reviewed.
+Nothing else is outstanding. The two covered criteria are complete through to evidence, and the G6 addendum that previously stood between this record and G7 was signed on 2026-08-25.
 
 ---
 

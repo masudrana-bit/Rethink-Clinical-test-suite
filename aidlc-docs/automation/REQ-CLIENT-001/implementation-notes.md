@@ -183,7 +183,17 @@ The G3 property is intact: there is still exactly one copy of each feature file 
 
 **Watcher and editor settings.** `scripts/watch-bdd.mjs` regenerates on save, and `.vscode/settings.json` hides `.features-gen` and marks it read-only. Both exist to keep the compile step out of the way; neither affects execution. The watcher uses Node built-ins so it adds no dependencies.
 
-These should be covered by a G6 addendum rather than left implicit. The reporter change in particular affects what S9 evidence looks like.
+**Linter and formatter configured (F-06).** Biome, covering both. This reformatted the reviewed step definitions and page objects — whitespace and import order only, no logic — and added one suppression in `src/fixtures/test.ts` for `noEmptyPattern`, which flags Playwright's `async ({}, use)` idiom for a fixture with no dependencies.
+
+**A second reporter and a data-mode gate, 2026-08-25.** `playwright.config.ts` gains Playwright's own `json` reporter, writing `test-results/results.json`. It carries the per-result annotations that the Cucumber JSON does not, and `scripts/check-data-mode.mjs` reads it to decide whether a run's traces may be kept.
+
+That decision was previously a sentence in the evidence manifest asking whoever collected evidence to check the data mode first. It is now enforced: traces are retained only when every scenario ran against substituted example data, and withheld on `preview`, `mixed`, or a missing annotation, because a trace holds DOM snapshots and therefore whatever the page displayed.
+
+The reporter is declared in the config rather than passed as `--reporter` on the command line. That flag replaces the whole reporter list, which would have silently dropped the Cucumber output.
+
+**CI added.** `.github/workflows/ci.yml`. Static checks — lint, typecheck, `bddgen`, traceability validation — gate every push. The live E2E run is scheduled and manual only, and does not gate, because the dev credential service failed three times on 2026-08-24 and a gate that reddens on someone else's outage is one people learn to ignore.
+
+**Settled.** These are covered by a G6 addendum signed 2026-08-25, recorded as §7 of `aidlc-docs/validation/REQ-CLIENT-001/review-record.md`. Two of them changed what a reviewer was looking at — the reporter changes affect what S9 evidence contains, and the Biome pass reformatted files reviewed in their pre-format shape — so both are dispositioned there rather than inherited from the original signature. The addendum also closes review finding R-02.
 
 ---
 
@@ -191,6 +201,12 @@ These should be covered by a G6 addendum rather than left implicit. The reporter
 
 **G5 was signed a second time** on 2026-08-24, covering the revised seven-component inventory and the two corrections.
 
-**S8 is complete.** Static validation and code review are recorded in `aidlc-docs/validation/REQ-CLIENT-001/`. Nine of ten automated checks pass; lint did not run because no linter is configured, tracked as F-06. Two review findings, both accepted. **G6 awaits signature.**
+**S8 is complete.** Static validation and code review are recorded in `aidlc-docs/validation/REQ-CLIENT-001/`. Two review findings, both accepted. At review time nine of ten automated checks passed; lint did not run because no linter was configured, accepted as the framework gap F-06. F-06 was resolved on 2026-08-25 and all ten now pass — one of the post-signature changes in §8.
 
-Execution has run ahead of G6, which the workflow does not contemplate. It was diagnostic: the tests were run to find out whether they worked, and twice they did not. The S9 evidence bundle is still owed and should come from a run made **after** G6 sign-off, so the recorded evidence corresponds to reviewed code. Every run described in this document is a working note, not evidence.
+**G6 was signed** on 2026-08-24, accepting R-01 and R-02 and releasing S9.
+
+Every run described earlier in this document predates that signature. Those were diagnostic — the tests were run to find out whether they worked, and twice they did not — and none of them is evidence. The S9 bundle comes from a later run, recorded in `aidlc-docs/results/REQ-CLIENT-001/execution-report.md`, so the evidence corresponds to reviewed code.
+
+**S10 produced the traceability record.** The §8 changes were settled by a G6 addendum on 2026-08-25.
+
+G7 is not ready, and now for one reason only: AC-003 to AC-005 are uncovered while GAP-010 is open. GAP-010 was routed to an independent Clinical SME on 2026-08-25, so the requirement's remaining path runs through a person who has not yet been named.

@@ -16,7 +16,7 @@ Clinical workflows require additional controls because incorrect assumptions abo
 These rules supplement:
 
 ```text
-aidlc/rules/AIDLC_E2E_RULES.md
+aidlc-docs/rules/aidlc-e2e-rules.md
 ```
 
 If a general E2E rule and a clinical rule conflict, the stricter clinical rule applies.

@@ -170,7 +170,7 @@
       "description": "Is showing another client's data in a read-only view a clinical-rules.md section 21 association failure, or a lesser context error? The answer decides whether AC-003 to AC-005 assert data integrity or context correctness, and therefore the assertion strength and defect severity.",
       "blocking": true,
       "affects": ["REQ-CLIENT-001/AC-003", "REQ-CLIENT-001/AC-004", "REQ-CLIENT-001/AC-005"],
-      "owner": "Clinical SME",
+      "owner": "Independent Clinical SME - not yet named. Routed out of QA on 2026-08-25: the sign-off precedent set for this requirement covered read-only scope, not the clinical severity of cross-client data exposure. The same unnamed role also owns GAP-007 on REQ-CLIENT-002.",
       "raisedOn": "2026-08-24"
     },
     {
@@ -257,7 +257,15 @@
       "approvedBy": "Masud Rana",
       "role": "Sr. QA Automation Engineer",
       "approvedOn": "2026-08-24",
-      "notes": "Changes were made after this signature — Cucumber reporting, sign-in failure handling, the feature file relocation — and are recorded in aidlc-docs/automation/REQ-CLIENT-001/implementation-notes.md section 8 as requiring a G6 addendum."
+      "notes": "Changes were made after this signature and are enumerated in aidlc-docs/automation/REQ-CLIENT-001/implementation-notes.md section 8. They are dispositioned by the G6 addendum below rather than inherited from this signature."
+    },
+    {
+      "gate": "G6",
+      "scope": "Addendum covering changes made after the 2026-08-24 signature: Cucumber and JSON reporters, sign-in failure handling, feature file relocation to features/, Biome linting and formatting, the data-mode trace gate, and CI",
+      "approvedBy": "Masud Rana",
+      "role": "Sr. QA Automation Engineer",
+      "approvedOn": "2026-08-25",
+      "notes": "No change alters what any scenario asserts and the suite passes unchanged. Two were reviewed in substance: the Biome pass reformatted files reviewed in their pre-format shape, and the reporter changes affect what S9 evidence contains. Recorded as section 7 of aidlc-docs/validation/REQ-CLIENT-001/review-record.md. Closes review finding R-02, so all ten static checks now pass."
     }
   ]
 }

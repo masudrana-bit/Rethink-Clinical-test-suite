@@ -53,18 +53,23 @@ The process is running. `REQ-CLIENT-001` passed Gate G0 on 2026-08-24, and gates
 
 **Every open decision is consolidated in `OPEN-DECISIONS.md`**, grouped by owner. Start there rather than assembling the picture from individual documents.
 
-**Done and signed:** workflow, both rules documents, requirement template, all three construction prompts, traceability schema, ratified module taxonomy, and stages S0 through S4 for `REQ-CLIENT-001` AC-001 and AC-002.
+**Done and signed:** workflow, both rules documents, requirement template, all three construction prompts, traceability schema, ratified module taxonomy.
 
-**Stages S0 through S7 are complete for AC-001 and AC-002.** Gates G0 through G5 are signed. Reconnaissance against the live application on 2026-08-24 resolved the authentication blocker — `/temp-dev-login` signs in without credentials — and two runnable Playwright tests now exist. They have not been executed; first execution is stage S9.
+**Stages S0 through S10 are complete for `REQ-CLIENT-001` AC-001 and AC-002, and gates G0 through G6 are signed** — G6 with an addendum on 2026-08-25 covering changes made after its signature. Reconnaissance on 2026-08-24 resolved the authentication blocker, `/temp-dev-login` signs in without credentials, and two scenarios execute from Gherkin via `playwright-bdd`. Both passed on their first attempt in the post-G6 evidence run; results, traces, and a PHI statement are in `evidence/run-2026-08-24T1204Z/`. The traceability record is built and validates.
+
+Two caveats belong with that result. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria.
 
 **Blocking, and not derivable from the rules:**
 
 | Item | Blocks | Needed from |
 |---|---|---|
-| GAP-010 — severity of a wrong-client read-only view | test cases for AC-003 to AC-005 | Clinical SME |
+| GAP-010 — severity of a wrong-client read-only view | test cases for AC-003 to AC-005, and **Gate G7** | Clinical SME — routed out of QA 2026-08-25 |
+| GAP-007 — the observable outcome for adding a target | **Gate G0** on `REQ-CLIENT-002`, and the whole requirement | Clinical SME |
 | GAP-002, GAP-003, GAP-004 | the validation, authorization, and recovery scenario categories, all currently uncovered | Product / Security / QA |
-| Environment policy, and whether `/temp-dev-login` is permanent | CI execution; the auth fixture's shelf life | Engineering |
+| Environment policy, and whether `/temp-dev-login` is permanent | the scheduled CI run's target; the auth fixture's shelf life | Engineering |
 | Clinical lifecycle, enums, role matrix (P-07) | S3, S4 for any session or observation requirement | Clinical SME / Product |
+
+The first two are the critical path, and they share one owner. **`CLINICAL-SME-BRIEF.md` puts both questions, plus the standing sign-off question, on a single page an SME can answer without reading this repository.**
 
 The process documents themselves remain Draft pending ratification at Gate G0, including the C-01 decision recorded in the workflow's conflict register.
 

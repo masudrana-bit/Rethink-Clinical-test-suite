@@ -97,9 +97,11 @@ CONFLICTING REQUIREMENTS
 
 The underlying inconsistency between §2 and §5/§31 still exists in `aidlc-e2e-rules.md` and SHOULD be corrected at source so future readers are not misled. If a reviewing authority later prefers a strict sequence, S4 splits into S4a and S4b with an added gate.
 
-### C-02 — Rules path reference
+### C-02 — Rules path reference — RESOLVED 2026-08-25
 
-`clinical-rules.md` §1 references the general rules at `aidlc/rules/AIDLC_E2E_RULES.md`. The actual path in this repository is `aidlc-docs/rules/aidlc-e2e-rules.md` (different directory, different casing). Cosmetic, but it should be corrected in one place or the other so tooling can resolve references.
+`clinical-rules.md` §1 referenced the general rules at `aidlc/rules/AIDLC_E2E_RULES.md`, which is neither the directory nor the casing used in this repository. Corrected in `clinical-rules.md` to `aidlc-docs/rules/aidlc-e2e-rules.md`, and the target verified to exist.
+
+The edit changes a document whose status is Active, so the scope is worth stating: it corrects a broken pointer and nothing else. No rule text, numbering, or obligation was touched, and the sentence containing it — that these rules supplement the general ones — means exactly what it meant before.
 
 ---
 
@@ -592,8 +594,9 @@ The workflow is now running against its first requirement. Remaining order:
 14. ~~Run S9~~ — executed post-G6 as `run-2026-08-24T1204Z`; both scenarios passed first attempt.
 15. ~~Run S10~~ — record built at `aidlc-docs/traceability/traceability.json` and validated 2026-08-25. Structure and references OK; G7 correctly reports not ready.
 16. ~~Configure a linter and formatter (F-06)~~ — Biome added 2026-08-25; the S8 lint check now passes.
-17. **Answer GAP-010** to release AC-003 to AC-005 for test case writing. This is now the only thing standing between the requirement and G7.
-18. Settle a G6 addendum for the changes made after that signature, listed in `automation/REQ-CLIENT-001/implementation-notes.md` §8. G7 signs off the whole chain and would otherwise endorse an automation state G6 never reviewed.
+17. ~~Settle a G6 addendum for the changes made after that signature.~~ Signed 2026-08-25 as §7 of `validation/REQ-CLIENT-001/review-record.md`; it also closes review finding R-02.
+18. ~~Add CI.~~ `.github/workflows/ci.yml`, 2026-08-25. Static checks gate every push; the live run is scheduled and manual, because the dev environment is not reliable enough to gate on.
+19. **Name an independent Clinical SME, then answer GAP-010.** This is the only thing standing between the requirement and G7. GAP-010 was routed out of QA on 2026-08-25, so the path now runs through a role nobody holds.
 
 Stages S0 through S10 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
 
@@ -602,3 +605,5 @@ The two approved scenarios execute from `features/client/REQ-CLIENT-001.feature`
 Two caveats travel with that result and should not be separated from it. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the user interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria, with AC-003 to AC-005 held on GAP-010.
 
 The remaining gate is G7. The S10 record is built and validates cleanly, and it reports G7 as not ready on four items — AC-003, AC-004, and AC-005 uncovered, plus GAP-010 open — which all reduce to that one unanswered clinical question. `node scripts/validate-traceability.mjs --gate` exits non-zero while they stand, so a pipeline can enforce it.
+
+Since 2026-08-25 that question has an owner outside QA. GAP-010 was routed to an independent Clinical SME rather than answered under the sign-off precedent set for this requirement, on the grounds that the precedent covered read-only scope and not the clinical severity of cross-client data exposure. The same unnamed SME is also required for GAP-007 on `REQ-CLIENT-002`, so both open requirements now wait on one appointment.

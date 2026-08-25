@@ -35,20 +35,47 @@ Details in `automation/REQ-CLIENT-001/framework-reuse-plan.md` §2.
 
 ---
 
-## The one thing left that blocks S7
+## The one thing left — name a Clinical SME
 
-**Decide which data mode the suite may run against.**
-Owner: Product + QA. Tracked as BLK-010.
+Everything now converges on a single unfilled role. Both open requirements are waiting on the same person, and neither can move until someone is named.
 
-The application declares its data source in a banner with three states. On `/clients` it currently reads *"The backend did not return clients for this screen, so example data is shown instead. These are not real clinical records."* On the root route it read *"Showing real data."*
+| Waiting on the SME | Releases |
+|---|---|
+| **GAP-010** — is a wrong-client read-only view a §21 association failure, or a lesser context error? | AC-003 to AC-005 of `REQ-CLIENT-001`, and with them Gate G7 |
+| **GAP-007** — ratify, amend, or reject the candidate observable outcome for adding a target | Gate G0 for `REQ-CLIENT-002`, and the whole requirement behind it |
+| **GAP-013 / GAP-011** — the sign-off authority itself | Every clinical sign-off from here on |
 
-Both approved tests pass identically in either mode, because they assert that selection works rather than that particular clients exist. So a complete backend outage would produce a green suite — a false pass no retry policy catches, because nothing is intermittent.
+**GAP-010 was routed out on 2026-08-25** by Masud Rana, Sr. QA Automation Engineer, who declined to answer it under the precedent set for `REQ-CLIENT-001`. That precedent covered signing off a read-only requirement; it did not extend to classifying the clinical severity of cross-client data exposure. Routing it rather than absorbing it is the more conservative reading, and it means `REQ-CLIENT-001` will finish at 2 of 5 acceptance criteria until the SME answers.
 
-Three options are set out in `testdata/REQ-CLIENT-001/test-data-plan.md` §5. The recommendation is to tolerate any mode but record it as execution evidence: the suite stays runnable today, and a green run against fallback data is visibly not the same as a green run against real data.
+This is the whole critical path. Nothing else in this register blocks a stage.
 
-Then **GAP-010**, which releases AC-003 to AC-005 for test case writing.
+**A briefing note is ready for them:** `aidlc-docs/CLINICAL-SME-BRIEF.md`. It puts all three questions on one page, answerable in about ten minutes without repository access, with a sign-off block under each.
 
-Two small corrections also surfaced. `BASE_URL` in `.env` and `.env.example` points at `/clinical-ui/`, which redirects to the site root. And the `temp-` in `temp-dev-login` suggests the auth route is not permanent, so the fixture that uses it should stay isolated.
+It also carries a correction that changes how GAP-010 should be read. Several of our documents summarise `clinical-rules.md` §21 as *"data belonging to one subject must not appear under another."* The rule is actually titled *Patient-to-Session Association* and covers Patient → Clinical Session → Observations, prefaced by *"Where applicable."* None of the three read-only views is a session or an observation. The broader reading may still be correct, but it is an interpretation for the SME to make rather than something our paraphrase can settle — and the brief presents the rule's real text so the decision is made against it.
+
+### Also outstanding, but blocking nothing
+
+The `temp-` in `temp-dev-login` suggests the auth route is not permanent, so the fixture that uses it should stay isolated. Whether it survives, and what replaces it, is still unanswered.
+
+### Resolved 2026-08-25: `.env` was never loaded
+
+The `BASE_URL` correction turned out to sit on top of a larger problem. `tests/README.md` told you to copy `.env.example` to `.env` and set `BASE_URL`, but nothing in the project read that file — no `dotenv`, no `--env-file`, no loader of any kind. Editing `.env` did nothing, silently, which is worse than the stale value the register was tracking.
+
+`playwright.config.ts` now loads it with Node's built-in `process.loadEnvFile()`, guarded on the file existing because it is absent in CI. No dependency added.
+
+That made the stale value load-bearing for the first time, so it was corrected in the same change: `.env.example` was already right, and the local `.env` pointed at `/clinical-ui/`. The suite passes either way — the path redirects to the site root, which is why this went unnoticed — but it no longer costs a redirect on every navigation.
+
+### Resolved 2026-08-25: C-02, the rules path reference
+
+`clinical-rules.md` §1 pointed at `aidlc/rules/AIDLC_E2E_RULES.md`, which is neither the directory nor the casing this repository uses. Corrected to `aidlc-docs/rules/aidlc-e2e-rules.md` and the target verified. A broken pointer only — no rule text or obligation changed.
+
+### Resolved: which data mode the suite may run against
+
+Tracked as BLK-010, closed at Gate G4. The suite may run against any mode, and the mode is recorded as an annotation on every result — so a green run against fallback data is visibly not the same as a green run against real data.
+
+This matters because both approved tests pass identically either way: they assert that selection works, not that particular clients exist. A complete backend outage would therefore produce a green suite, a false pass that no retry policy catches because nothing is intermittent. The annotation is what keeps that visible.
+
+As of 2026-08-25 the decision is also enforced rather than merely recorded. `scripts/check-data-mode.mjs` reads the annotation and withholds traces from any run that saw real data, because a trace carries DOM snapshots and therefore whatever the page displayed.
 
 ---
 
@@ -85,7 +112,7 @@ Full assessment in `intake/REQ-CLIENT-002/intake-record.md`.
 
 | ID | Decision needed | Blocks | Recorded in |
 |---|---|---|---|
-| GAP-010 | Is showing another client's data in a read-only view a §21 association failure, or a lesser context error? | Test case writing for AC-003 to AC-005, held at S3; assertion strength and defect severity | `REQ-CLIENT-001` §8 |
+| GAP-010 | Is showing another client's data in a read-only view a §21 association failure, or a lesser context error? **Routed to an independent Clinical SME on 2026-08-25** — declined by QA as outside the read-only precedent | Test case writing for AC-003 to AC-005, held at S3; assertion strength and defect severity; **Gate G7** | `REQ-CLIENT-001` §8 |
 | GAP-011 | Is a dedicated Clinical SME required, or is the QA lead sign-off sufficient? | **Now live.** Accepted for `REQ-CLIENT-001` on read-only risk grounds; `REQ-CLIENT-002` writes clinical data, so the precedent should not carry over | `REQ-CLIENT-001` §2 |
 | GAP-012 | Mastery calculation: formula, inputs, precision, rounding, and boundary behaviour | Mastery confirmation only, which is currently out of scope — off the critical path, keep open | `intake/REQ-CLIENT-002/intake-record.md` Finding 2 |
 | GAP-013 | **Who is the Clinical SME for `REQ-CLIENT-002`?** An independent sign-off was required on 2026-08-25 and no SME is named | Gate G0 for `REQ-CLIENT-002` | `REQ-CLIENT-002` §13 |
@@ -100,8 +127,8 @@ Full assessment in `intake/REQ-CLIENT-002/intake-record.md`.
 |---|---|---|---|
 | ~~F-04~~ | ~~Authentication mechanism and test accounts~~ | **Resolved** — `/temp-dev-login`, no credentials | `automation/REQ-CLIENT-001/framework-reuse-plan.md` §2 |
 | — | Is `/temp-dev-login` permanent, and what replaces it? | The auth fixture's shelf life | `framework-reuse-plan.md` §2 |
-| — | Correct `BASE_URL` — `/clinical-ui/` redirects to the site root | Nothing today; a stale value invites confusion | `.env.example` |
-| — | Environment policy: is dev the intended target, and does it reset? | CI execution | `tests/README.md` |
+| ~~—~~ | ~~Correct `BASE_URL` — `/clinical-ui/` redirects to the site root~~ | **Resolved 2026-08-25** — corrected, and `.env` is now actually loaded; it never was | `tests/README.md`, `playwright.config.ts` |
+| — | Environment policy: is dev the intended target, and does it reset? | The scheduled CI run points at dev by default; confirm or redirect it | `tests/README.md` |
 | GAP-005 / P-05 | API contract for setup, cleanup, and verification | `src/api/`, test data lifecycle, stage S5 | Both requirements §12.1 |
 | — | Test environment policy: which environments are testable, and reset expectations | Data isolation strategy | `tests/README.md` |
 | ~~F-01~~ | ~~BDD tooling: `playwright-bdd`, `@cucumber/cucumber`, or none~~ | **Resolved 2026-08-24** — `playwright-bdd`, chosen to keep the Playwright runner, the once-only sign-in, and the trace/video evidence | `tests/README.md` |
@@ -117,7 +144,7 @@ Full assessment in `intake/REQ-CLIENT-002/intake-record.md`.
 | — | Ratify the workflow and its supporting documents at Gate G0 | Formal process adoption; everything currently operates as Draft | Workflow §13 |
 | GAP-002 | Approved authorization matrix, jointly with Security | Permission scenarios, currently absent from coverage | Both requirements §13 |
 | — | Whether authentication and authorization need their own module | Taxonomy completeness; the ratified taxonomy has no home for either | `requirements/module-taxonomy.md` |
-| C-02 | Correct the stale path reference in `clinical-rules.md` §1 | Nothing functionally; tooling cannot resolve the link | Workflow §4 |
+| ~~C-02~~ | ~~Correct the stale path reference in `clinical-rules.md` §1~~ | **Resolved 2026-08-25** — corrected to `aidlc-docs/rules/aidlc-e2e-rules.md`; broken pointer only, no rule text changed | Workflow §4 |
 
 ---
 
@@ -128,6 +155,7 @@ For contrast, these are done and need review rather than decisions:
 - Workflow, rules, requirement template, three construction prompts, docs index
 - Traceability JSON Schema, validated against a real validator
 - Traceability validator script, enforcing referential integrity and the §25 flaky rule
+- CI: static checks gate every push; the live E2E run is scheduled and manual, and withholds traces unless the run saw substituted data only
 - Playwright and TypeScript configuration, typechecking clean
 - `REQ-CLIENT-001` reformatted, assessed at S0, split, approved, and carried through to S9
 - `REQ-CLIENT-002` created, and assessed at S0 on 2026-08-25 — gate held on missing content
