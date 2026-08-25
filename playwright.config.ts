@@ -1,14 +1,8 @@
-import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 import { cucumberReporter, defineBddConfig } from "playwright-bdd";
+// Imported first: it loads .env before anything below reads process.env.
+import { baseURL, envLabel } from "./src/config/environments.js";
 import { STORAGE_STATE } from "./src/fixtures/auth.fixture.js";
-
-// .env was documented as the way to point the suite at another environment, but
-// nothing read it — no dotenv, no --env-file — so editing it silently did
-// nothing. Node's built-in loader fixes that without adding a dependency. It
-// throws when the file is absent, which is the normal case in CI, hence the
-// guard. Real environment variables already set are not overwritten.
-if (existsSync(".env")) process.loadEnvFile(".env");
 
 /**
  * Playwright configuration for the Clinical E2E suite.
@@ -22,10 +16,14 @@ if (existsSync(".env")) process.loadEnvFile(".env");
  * aidlc-docs/OPEN-DECISIONS.md.
  */
 
-// The /clinical-ui/ path this previously defaulted to redirects to the site
-// root; the segment is stale. Verified against the dev environment 2026-08-24.
-const baseURL = process.env.BASE_URL ?? "https://clinical.dev.rethinkbhtech.com/";
 const isCI = !!process.env.CI;
+
+/**
+ * Recorded into every report, so a result states where it came from. Evidence
+ * that does not name its environment cannot be compared against a later run,
+ * and the suite can now target more than one host.
+ */
+const metadata = { environment: envLabel, baseURL };
 
 /**
  * The feature files under features/ are compiled into Playwright tests in
@@ -49,6 +47,8 @@ const bddTestDir = defineBddConfig({
 });
 
 export default defineConfig({
+  metadata,
+
   // Rooted at the repository, because the two projects live in sibling
   // directories: tests/ for the sign-in setup and the generated .features-gen/
   // for the scenarios. Rooting at ./tests instead would resolve the latter as

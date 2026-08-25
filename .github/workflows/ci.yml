@@ -59,6 +59,17 @@ jobs:
 
   e2e:
     name: E2E against dev
+    # UNVERIFIED ASSUMPTION: that a GitHub-hosted runner can reach the Clinical
+    # WebApp at all. The sibling NextGen Clinical suite targets a *self-hosted*
+    # runner because its API hosts (*.internal.rethinkbhtech.com) are reachable
+    # only from inside the RethinkFirst network. We need the WebApp host rather
+    # than those, and clinical.dev*.rethinkbhtech.com resolves publicly — but
+    # resolving is not reaching, and every run so far has been from a machine
+    # that may be on the VPN.
+    #
+    # If the first scheduled run fails to reach the host, this needs
+    # `runs-on: self-hosted` and a runner registered on a network-connected
+    # machine. Tracked in aidlc-docs/OPEN-DECISIONS.md under environment policy.
     runs-on: ubuntu-latest
     # Scheduled and manual only. See the note at the top of this file.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

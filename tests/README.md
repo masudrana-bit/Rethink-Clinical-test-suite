@@ -182,13 +182,56 @@ Two are produced on every run, because they answer different questions.
 
 Both are git-ignored and rewritten on every run. Copy what you need into `aidlc-docs/evidence/<run-id>/` when retaining a run as evidence — and check the data mode first, per that folder's manifest.
 
-## Pointing the suite at another environment
+## Choosing an environment
 
-Copy `.env.example` to `.env` and set `BASE_URL`. `.env` is git-ignored and must never contain real credentials or PHI.
+The Clinical WebApp is deployed once per environment. Pick one with `ENV`:
 
-`playwright.config.ts` loads it with Node's built-in `process.loadEnvFile()`, guarded on the file existing because CI has none. A real environment variable already set in the shell wins over the file, which is what lets CI override without editing anything.
+```bash
+npm run test:dev2    # https://clinical.dev2.rethinkbhtech.com  (default)
+npm run test:dev     # https://clinical.dev.rethinkbhtech.com
+```
 
-This instruction was wrong until 2026-08-25: nothing read `.env`, so editing it did nothing and the default in `playwright.config.ts` always won. If you set a value before then and wondered why it had no effect, that is why.
+**`dev2` is the default as of 2026-08-25**, matching the mandatory daily environment of the sibling NextGen Clinical suite. Before that this suite ran on `dev` — not by decision, but because that is what the first screenshots happened to show.
+
+The S9 evidence for `REQ-CLIENT-001` was produced on `dev` and still names it. That evidence is not invalidated: reconnaissance on 2026-08-25 found both environments serving identical substituted data with the same four example clients, and the suite was re-run green on both. But a future run on `dev2` is a run against a different host and should be recorded as such rather than treated as a repeat.
+
+An unrecognised `ENV` throws rather than falling back, because a typo that silently tests the default host produces a green run that means nothing. `qas` is deliberately absent: the sibling suite maps it to the `dev` host with a note that the QAS UI is not deployed, which is a placeholder rather than an environment.
+
+`BASE_URL` still overrides everything when set, so a one-off target needs no code change.
+
+Every report now records which environment and URL produced it, as Playwright `metadata`. Evidence that does not name its environment cannot be compared against a later run.
+
+### `.env`
+
+Copy `.env.example` to `.env` and set `ENV` or `BASE_URL`. `.env` is git-ignored and must never contain real credentials or PHI.
+
+It is loaded by `src/config/load-env.ts`, which exists as a separate module for an ordering reason. ES imports are evaluated before any statement in the importing module, so calling `process.loadEnvFile()` at the top of `playwright.config.ts` would run *after* every module it imports had already read `process.env` — making `.env` work for some settings and not others. Importing the loader first from the modules that read env vars makes that ordering explicit.
+
+This instruction was wrong until 2026-08-25: nothing read `.env` at all, so editing it did nothing and the default always won.
+
+## Clinical API
+
+There is an API layer foundation in `src/api/`, and **no test uses it.**
+
+The tenant-scoped surface — everything under `/accounts/{id}/`, which is everything setup and cleanup would need — returns `503 Unavailable/AccountsService`. Verified with a valid bearer token on 2026-08-25, so it is not an auth problem; the gateway answers 200 on the same token. It is the Accounts outage that also explains the substituted UI data and the inert program control.
+
+```bash
+npm run api:readiness     # reports whether the surface has recovered
+```
+
+The probe needs credentials, which are **not** in this repository. `.env.example` names the variables and supplies none of them. The day the probe prints `READY`, `aidlc-docs/automation/api-layer-plan.md` describes what to build.
+
+## Known defects
+
+Adopted from the sibling suite. A scenario tagged `@known-defect` asserts the behaviour we *want* against a defect that is live right now, so it fails by design. It is excluded from `npm test` and run on its own:
+
+```bash
+npm run test:defects
+```
+
+The point is to check whether a defect has been fixed without turning the default run red — and, more importantly, to stop a live defect from being quietly encoded as expected behaviour, which is the failure mode when a test is written against what the application currently does.
+
+**There are no `@known-defect` scenarios yet, and one candidate is deliberately not written.** Reconnaissance found the "Add New" program control (`program-rail-add`) enabled but inert — no dialog, no navigation, no state change. That looks like exactly this pattern, but writing the scenario would require asserting what the control *should* do, and no approved source says. That is `GAP-007`, the same gap that blocks `REQ-CLIENT-002` at its first gate. `aidlc-e2e-rules.md` §4 forbids inventing the expectation, so the observation stays in `aidlc-docs/intake/REQ-CLIENT-002/intake-record.md` until a Clinical SME supplies the behaviour. The tag and the script are in place for when they do.
 
 ## Conventions
 
