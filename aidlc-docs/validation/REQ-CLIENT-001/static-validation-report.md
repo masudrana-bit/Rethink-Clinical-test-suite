@@ -151,3 +151,39 @@ The formatting pass reflowed several statements to the configured 100-character 
 Every check now passes. The lint line was the sole outstanding item at the time G6 was signed, and it was signed with that gap recorded rather than hidden.
 
 The review record at `review-record.md` carries the QA and engineering judgements. G6 is signed there, not here.
+
+---
+
+## 6. Static-validation addendum — cross-suite alignment
+
+**Date:** 2026-08-25  
+**Scope:** `src/config/`, `src/api/`, `src/fixtures/data-mode.ts`, `scripts/api-readiness.mjs`, `playwright.config.ts`, and associated package scripts
+
+The cross-suite alignment changed framework code after the G6 addendum was signed. The original report remains the record of what was checked then; this section records the checks against the new state.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | **PASS** — 19 files checked |
+| `npm run typecheck` | **PASS** |
+| `npm run bddgen` | **PASS** — both approved scenarios still bind |
+| `npm run validate:traceability` | **PASS** for structure and references; G7 remains not ready |
+| Full suite on default `dev2` | **PASS** — setup plus both scenarios, first attempt, retries disabled |
+| Full suite on `dev` | **PASS** — setup plus both scenarios, first attempt, retries disabled |
+| Environment metadata | **PASS** — dev2 run reports `dev2` and its actual dev2 URL |
+| Unknown `ENV` | **PASS** — fails configuration rather than falling back |
+| Conflicting `ENV` / `BASE_URL` | **PASS** — fails configuration rather than mislabelling the run |
+| Data-mode settle behavior | **PASS** — both hosts settle from the optimistic preview banner to `substituted`; the fixture waits for the client-switcher loading indicator to clear before reading |
+| No elapsed-time waits in `src/` | **PASS** — searched the original §16 patterns, no matches |
+| No banned selector patterns in `src/` | **PASS** — searched the original §15 patterns, no matches |
+| No known credential values | **PASS** — searched for all values observed in the supplied sibling suite, no matches |
+| No observed demo-client names or ids in `src/` | **PASS** |
+
+### Review-relevant findings
+
+**The data-mode change is substantive.** The old implementation read the first banner it found. Reconnaissance showed that both environments initially render `demo-banner-preview` and switch to `demo-banner-substituted` only after the backend request fails. The old `AfterScenario` timing happened to read after settlement in recorded runs, and a premature preview reading would have withheld traces rather than released them, so no unsafe evidence retention was found. The new implementation removes reliance on timing by waiting for the application's own loading indicator.
+
+**The API layer is a dormant capability, not coverage.** No scenario imports it, no traceability edge points to it, and no acceptance criterion is claimed for it. Its authenticated client was probed against dev2: gateway access succeeds, while tenant-scoped routes return `503 Unavailable/AccountsService`. The readiness probe reports that state without retrying or treating it as a test failure.
+
+**The default environment change does not rewrite historical evidence.** The S9 bundle remains a `dev` run. New reports identify `dev2` through metadata derived from the actual URL. A dev2 result must be recorded as a new execution, not attached to the old run.
+
+This addendum passes static validation. G5 round 3 and the G6 second addendum were approved by Masud Rana, Sr. QA Automation Engineer, on 2026-08-25.

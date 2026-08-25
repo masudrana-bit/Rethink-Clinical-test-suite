@@ -35,9 +35,9 @@ Details in `automation/REQ-CLIENT-001/framework-reuse-plan.md` §2.
 
 ---
 
-## The one thing left — name a Clinical SME
+## The critical path
 
-Everything now converges on a single unfilled role. Both open requirements are waiting on the same person, and neither can move until someone is named.
+The requirements converge on a single unfilled role. The separate framework-review branch raised by the cross-suite alignment closed on 2026-08-25 with G5 round 3 and the G6 second addendum.
 
 | Waiting on the SME | Releases |
 |---|---|
@@ -45,9 +45,14 @@ Everything now converges on a single unfilled role. Both open requirements are w
 | **GAP-007** — ratify, amend, or reject the candidate observable outcome for adding a target | Gate G0 for `REQ-CLIENT-002`, and the whole requirement behind it |
 | **GAP-013 / GAP-011** — the sign-off authority itself | Every clinical sign-off from here on |
 
+| Resolved QA / Engineering review | Outcome |
+|---|---|
+| **G5 round 3** — API foundation and multi-environment configuration | Approved 2026-08-25 by Masud Rana |
+| **G6 second addendum** — deterministic data-mode synchronization, environment changes, dormant API capability | Approved 2026-08-25 by Masud Rana; `GATE-REV-001` closed |
+
 **GAP-010 was routed out on 2026-08-25** by Masud Rana, Sr. QA Automation Engineer, who declined to answer it under the precedent set for `REQ-CLIENT-001`. That precedent covered signing off a read-only requirement; it did not extend to classifying the clinical severity of cross-client data exposure. Routing it rather than absorbing it is the more conservative reading, and it means `REQ-CLIENT-001` will finish at 2 of 5 acceptance criteria until the SME answers.
 
-This is the whole critical path. Nothing else in this register blocks a stage.
+The SME branch is now the only branch left before G7.
 
 **A briefing note is ready for them:** `aidlc-docs/CLINICAL-SME-BRIEF.md`. It puts all three questions on one page, answerable in about ten minutes without repository access, with a sign-off block under each.
 

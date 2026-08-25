@@ -209,4 +209,29 @@ Every run described earlier in this document predates that signature. Those were
 
 **S10 produced the traceability record.** The §8 changes were settled by a G6 addendum on 2026-08-25.
 
-G7 is not ready, and now for one reason only: AC-003 to AC-005 are uncovered while GAP-010 is open. GAP-010 was routed to an independent Clinical SME on 2026-08-25, so the requirement's remaining path runs through a person who has not yet been named.
+G7 is not ready. AC-003 to AC-005 are uncovered while GAP-010 is open, and GAP-010 was routed to an independent Clinical SME on 2026-08-25.
+
+The cross-suite alignment later on 2026-08-25 also reopened G5 and G6. It was reviewed and approved the same day as G5 round 3 and the G6 second addendum rather than inheriting signatures given to an earlier framework state.
+
+---
+
+## 10. Cross-suite alignment after the G6 addendum
+
+The supplied NextGen Clinical suite exposed three framework gaps relevant here:
+
+1. `dev2` is its mandatory daily environment, while this suite had been pinned to `dev` without a recorded decision.
+2. The banner renders an optimistic preview state before settling to substituted data, so reading it without application-state synchronization is timing-dependent.
+3. An API contract exists outside this repository, contrary to the reason originally given for excluding an API client at G5.
+
+Changes made:
+
+- `src/config/` selects `dev` or `dev2`, makes dev2 the default, rejects unknown environments, and rejects conflicting `ENV` / `BASE_URL` values.
+- Playwright reports carry environment and URL metadata derived from the URL actually used.
+- `readDataMode` waits for the client switcher's loading indicator to clear before reading the banner.
+- `src/api/` contains environment-driven configuration, route builders, and an authenticated client.
+- `scripts/api-readiness.mjs` checks whether tenant-scoped setup and cleanup have become possible.
+- `npm test` excludes `@known-defect`, while `npm run test:defects` runs those scenarios; none exists yet.
+
+No approved scenario changed, and no scenario imports the API layer. The full suite passes on dev and dev2. The API foundation is dormant because tenant-scoped routes return `503 Unavailable/AccountsService` even with a valid bearer token.
+
+**Gate impact:** `framework-reuse-plan.md` G5 round 3 and `review-record.md` G6 second addendum were approved on 2026-08-25 by Masud Rana, Sr. QA Automation Engineer. The current framework state is therefore human-approved. The API foundation remains infrastructure rather than coverage; a scenario may not use it without a further reuse-plan revision and traceability.

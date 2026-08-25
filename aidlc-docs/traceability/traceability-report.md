@@ -9,7 +9,7 @@
 
 ## 1. Verdict
 
-The traceability record is structurally valid and referentially sound. Gate G7 is not ready, on four outstanding items that all reduce to one open decision.
+The traceability record is structurally valid and referentially sound. Gate G7 is not ready on four requirement items that reduce to GAP-010. The separate framework-review blocker raised during the cross-suite alignment was closed by G5 round 3 and the G6 second addendum on 2026-08-25.
 
 ```text
 Structure and references: OK
@@ -78,7 +78,9 @@ All signatures are recorded in the `approvals` array with their scope. Two carry
 
 **G5 was signed twice.** The first signature covered a hand-written Playwright spec. That approach was replaced by executable BDD, and the gate was reopened and re-signed rather than amended quietly.
 
-**G6 has an addendum.** Cucumber reporting, the sign-in failure handling, the feature file relocation, Biome, the data-mode trace gate, and CI all landed after the original signature. Rather than let them ride on it, they were dispositioned separately and signed on 2026-08-25 as §7 of `validation/REQ-CLIENT-001/review-record.md`. Two were reviewed in substance: the reporter changes alter what S9 evidence contains, and the Biome pass reformatted files reviewed in their pre-format shape. The addendum also closes review finding R-02.
+**G6 has two signed addenda.** Cucumber reporting, sign-in failure handling, feature relocation, Biome, the first data-mode gate, and CI were dispositioned in the first. Later that day, multi-environment configuration, deterministic data-mode synchronization, and an API foundation changed the framework again; those changes were accepted in `validation/REQ-CLIENT-001/review-record.md` §8.
+
+**G5 was signed a third time.** G5 round 2 explicitly excluded an API client. Round 3 accepts the new foundation while keeping it outside all approved scenarios and coverage claims.
 
 ---
 
@@ -90,7 +92,7 @@ One appointment, one decision, then one run.
 2. **Answer GAP-010.** Is showing another client's data in a read-only view a §21 association failure or a lesser context error? This releases AC-003 to AC-005 for test case writing at S4.
 3. **Carry those three criteria through S4 to S9**, then add their test cases, scenarios, automation, and executions to the record.
 
-Nothing else is outstanding. The two covered criteria are complete through to evidence, and the G6 addendum that previously stood between this record and G7 was signed on 2026-08-25.
+The two covered criteria remain complete through to their 2026-08-24 evidence. The current framework state has passed static validation and the reopened human gates.
 
 ---
 

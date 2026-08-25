@@ -5,7 +5,7 @@ name: CI
 # "static" is the gate. It is deterministic, needs no network beyond npm, and
 # should stay green. Anything it catches is a fault in this repository.
 #
-# "e2e" drives a live dev environment and is NOT a gate. That environment's
+# "e2e" drives the live dev2 environment and is NOT a gate. That environment's
 # credential service failed three times on 2026-08-24 alone, and the application
 # serves substituted example data whenever its backend is unreachable. Wiring it
 # to every push would produce red builds caused by someone else's outage, and a
@@ -58,7 +58,7 @@ jobs:
         run: npm run validate:traceability
 
   e2e:
-    name: E2E against dev
+    name: E2E against dev2
     # UNVERIFIED ASSUMPTION: that a GitHub-hosted runner can reach the Clinical
     # WebApp at all. The sibling NextGen Clinical suite targets a *self-hosted*
     # runner because its API hosts (*.internal.rethinkbhtech.com) are reachable

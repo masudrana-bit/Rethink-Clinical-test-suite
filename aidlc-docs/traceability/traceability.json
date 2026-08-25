@@ -266,6 +266,22 @@
       "role": "Sr. QA Automation Engineer",
       "approvedOn": "2026-08-25",
       "notes": "No change alters what any scenario asserts and the suite passes unchanged. Two were reviewed in substance: the Biome pass reformatted files reviewed in their pre-format shape, and the reporter changes affect what S9 evidence contains. Recorded as section 7 of aidlc-docs/validation/REQ-CLIENT-001/review-record.md. Closes review finding R-02, so all ten static checks now pass."
+    },
+    {
+      "gate": "G5",
+      "scope": "Round 3: dormant API foundation, API readiness probe, dev/dev2 environment selection, dev2 as the default, configuration conflict guards, and actual-target report metadata",
+      "approvedBy": "Masud Rana",
+      "role": "Sr. QA Automation Engineer",
+      "approvedOn": "2026-08-25",
+      "notes": "Foundation only. Does not approve API scenarios, UI setup through the API, seeding, cleanup, or credential values. Recorded in aidlc-docs/automation/REQ-CLIENT-001/framework-reuse-plan.md."
+    },
+    {
+      "gate": "G6",
+      "scope": "Second addendum: deterministic data-mode synchronization, multi-environment configuration, dev2 default, actual-target metadata, known-defect script convention, dormant API foundation, and CI label update",
+      "approvedBy": "Masud Rana",
+      "role": "Sr. QA Automation Engineer",
+      "approvedOn": "2026-08-25",
+      "notes": "Accepts R-03 and R-04. No approved scenario changed. The API foundation remains infrastructure rather than coverage and requires a further plan before scenario use. Recorded in aidlc-docs/validation/REQ-CLIENT-001/review-record.md section 8."
     }
   ]
 }

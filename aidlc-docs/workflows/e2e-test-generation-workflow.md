@@ -596,7 +596,9 @@ The workflow is now running against its first requirement. Remaining order:
 16. ~~Configure a linter and formatter (F-06)~~ — Biome added 2026-08-25; the S8 lint check now passes.
 17. ~~Settle a G6 addendum for the changes made after that signature.~~ Signed 2026-08-25 as §7 of `validation/REQ-CLIENT-001/review-record.md`; it also closes review finding R-02.
 18. ~~Add CI.~~ `.github/workflows/ci.yml`, 2026-08-25. Static checks gate every push; the live run is scheduled and manual, because the dev environment is not reliable enough to gate on.
-19. **Name an independent Clinical SME, then answer GAP-010.** This is the only thing standing between the requirement and G7. GAP-010 was routed out of QA on 2026-08-25, so the path now runs through a role nobody holds.
+19. ~~Review the sibling NextGen Clinical suite.~~ Completed 2026-08-25; findings in `analysis/cross-suite-review-2026-08-25.md`.
+20. ~~Sign G5 round 3 and the G6 second addendum.~~ Approved 2026-08-25 by Masud Rana, covering the API foundation, multi-environment configuration, and deterministic data-mode synchronization.
+21. **Name an independent Clinical SME, then answer GAP-010.** GAP-010 was routed out of QA on 2026-08-25, so the path runs through a role nobody holds.
 
 Stages S0 through S10 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
 
@@ -604,6 +606,6 @@ The two approved scenarios execute from `features/client/REQ-CLIENT-001.feature`
 
 Two caveats travel with that result and should not be separated from it. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the user interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria, with AC-003 to AC-005 held on GAP-010.
 
-The remaining gate is G7. The S10 record is built and validates cleanly, and it reports G7 as not ready on four items — AC-003, AC-004, and AC-005 uncovered, plus GAP-010 open — which all reduce to that one unanswered clinical question. `node scripts/validate-traceability.mjs --gate` exits non-zero while they stand, so a pipeline can enforce it.
+The remaining terminal gate is G7. The S10 record is built and validates cleanly, and it reports G7 as not ready on four requirement items — AC-003, AC-004, and AC-005 uncovered, plus GAP-010 open. The framework-review blocker raised by the cross-suite alignment closed with G5 round 3 and the G6 second addendum.
 
 Since 2026-08-25 that question has an owner outside QA. GAP-010 was routed to an independent Clinical SME rather than answered under the sign-off precedent set for this requirement, on the grounds that the precedent covered read-only scope and not the clinical severity of cross-client data exposure. The same unnamed SME is also required for GAP-007 on `REQ-CLIENT-002`, so both open requirements now wait on one appointment.

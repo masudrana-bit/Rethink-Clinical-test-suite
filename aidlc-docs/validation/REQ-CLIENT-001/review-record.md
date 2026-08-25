@@ -197,3 +197,52 @@ Approver: Masud Rana
 Role: Sr. QA Automation Engineer
 Date: 2026-08-25
 ```
+
+---
+
+## 8. G6 second addendum — approved
+
+**Raised:** 2026-08-25
+
+The signed addendum above covered changes through CI and the first data-mode gate. The later cross-suite alignment changed reviewed framework code again:
+
+| Change | Touches reviewed code? | Alters what a scenario asserts? |
+|---|---|---|
+| Wait for the data-mode banner to settle | Yes — `src/fixtures/data-mode.ts` | No. It makes the evidence annotation deterministic |
+| Add `dev` / `dev2` environment selection and guards | Yes — config | No |
+| Make `dev2` the default | Yes — execution target | No, but it changes where future evidence is produced |
+| Record actual environment and URL as report metadata | Yes — config/reporting | No |
+| Add `@known-defect` script convention | Package scripts only | No; no scenario carries the tag |
+| Add API configuration, paths, authenticated client, and readiness probe | New framework components | No; no approved scenario imports them |
+| Amend scheduled CI labeling from dev to dev2 | CI only | No |
+
+Static validation is recorded in `static-validation-report.md` §6 and passes. Two findings need explicit human disposition.
+
+### Finding R-03 — the data-mode annotation previously depended on timing
+
+Both dev and dev2 render `demo-banner-preview` first and switch to `demo-banner-substituted` once the backend request fails. The prior implementation read the current DOM without waiting.
+
+The recorded S9 run is not shown to be wrong: it says `substituted`, matching the settled state, because the annotation was taken after each scenario. A premature read would also have erred safe by withholding traces. The defect was nevertheless real because later CI made that reading decide evidence retention. The fixture now waits for the client-switcher loading indicator to detach before reading.
+
+**Proposed disposition:** accept the correction. It strengthens evidence integrity without changing business assertions.
+
+### Finding R-04 — the framework now contains an API capability with no traced behavior
+
+The API foundation is intentionally unused by scenarios. It cannot support the selected setup/cleanup goal while tenant-scoped endpoints return `503 Unavailable/AccountsService`.
+
+That makes the code infrastructure, not coverage. It must not acquire requirement, test-case, or automation ids; doing so would create a false traceability claim. The readiness probe is a diagnostic and reports the external blocker without retries.
+
+**Proposed disposition:** accept the foundation as dormant framework capability, conditional on G5 round-3 approval. Require a new reuse-plan revision and traced behavior before any scenario calls it.
+
+```text
+G6 second-addendum sign-off
+
+[X] Approved — R-03 and R-04 accepted as proposed; G6 stands
+[ ] Rejected — returned for changes
+
+Approver: Masud Rana
+Role: Sr. QA Automation Engineer
+Date: 2026-08-25
+```
+
+This signature and G5 round 3 approve the current framework state. `GATE-REV-001` is closed. The API foundation remains infrastructure rather than coverage, and using it from a scenario still requires a new reuse-plan revision and a traced behavior.

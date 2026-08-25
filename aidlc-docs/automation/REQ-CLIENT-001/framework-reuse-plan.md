@@ -247,3 +247,45 @@ Date: 2026-08-24
 
 Approval covers the revised inventory in §4 and §4.1 — seven components — together with the corrections in 3.4 and 4.1. The round 1 exclusions still stand: no API client, and no Page Object for Skills Programs, Behavior Support, or Analyze Data while GAP-010 is open.
 
+---
+
+### G5 round 3 — approved
+
+**Raised:** 2026-08-25
+
+Round 2 explicitly excluded an API client because no contract was known and adding one would have been speculative. The cross-suite review found live Swagger, Postman collections, and a working sibling API client, and Masud Rana subsequently chose to add an API layer.
+
+That decision invalidates the exclusion on which round 2 was signed. It does **not** silently expand that signature.
+
+The proposed inventory change is deliberately smaller than “API coverage”:
+
+| Component | Purpose | Used by an approved scenario? |
+|---|---|---|
+| `src/api/config.ts` | Reads API configuration from environment variables; no credentials have defaults | No |
+| `src/api/paths.ts` | Route builders for the limited surfaces this suite has reason to probe | No |
+| `src/api/client.ts` | Security login and authenticated Playwright request context | No |
+| `scripts/api-readiness.mjs` | Reports whether tenant-scoped setup and cleanup are possible yet | No |
+
+No scenario calls the layer. With a valid bearer token, reference data and the gateway respond, while tenant-scoped routes return `503 Unavailable/AccountsService`. Building seed, cleanup, or verification fixtures against that surface would create code that has never executed successfully. The readiness probe is therefore the complete deliverable until the outage clears.
+
+The environment configuration also changed:
+
+- `dev2` is now the default, matching the sibling suite's mandatory daily environment.
+- `dev` remains selectable.
+- Unknown environments fail instead of falling back.
+- `ENV` and `BASE_URL` must agree when both are set.
+- Report metadata is derived from the URL actually used, preventing evidence from naming an environment the run did not target.
+
+```text
+G5 sign-off — round 3
+
+[X] Approved — API foundation and multi-environment configuration accepted
+[ ] Rejected — returned with comments
+
+Approver: Masud Rana
+Role: Sr. QA Automation Engineer
+Date: 2026-08-25
+```
+
+Approval covers the foundation and readiness probe only. It does **not** approve API scenarios, UI setup through the API, seed/cleanup behavior, or any credential value. Those need a further plan once the tenant-scoped surface is available.
+
