@@ -19,7 +19,7 @@
 | `src/pages/ClientsPage.ts` | The Client area at `/clients`: loaded state, list, search fields |
 | `tests/auth.setup.ts` | Signs in once and saves the session for the test project |
 
-The two approved scenarios are **not** implemented as a TypeScript spec. They execute directly from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`, compiled by `bddgen` into `.features-gen/`. See §7.
+The two approved scenarios are **not** implemented as a TypeScript spec. They execute directly from `features/client/REQ-CLIENT-001.feature`, compiled by `bddgen` into `.features-gen/`. See §7.
 
 The G5 plan approved five components; seven exist. The two additions — `src/fixtures/test.ts` and `src/steps/client.steps.ts` — are what the BDD runner requires, and they replace rather than supplement the approved `tests/client/REQ-CLIENT-001.spec.ts`, which has been deleted. This is a framework change, not scope creep, and it is why G5 needs signing again.
 
@@ -149,7 +149,7 @@ This should not have been decided by default. F-01 and F-02 in `OPEN-DECISIONS.m
 
 ### What changed
 
-`playwright-bdd` now compiles `aidlc-docs/bdd/**/*.feature` into `.features-gen/`, and Playwright runs the result. `tests/client/REQ-CLIENT-001.spec.ts` was deleted; its assertions moved into `src/steps/client.steps.ts` unchanged in substance.
+`playwright-bdd` now compiles `features/**/*.feature` into `.features-gen/`, and Playwright runs the result. `tests/client/REQ-CLIENT-001.spec.ts` was deleted; its assertions moved into `src/steps/client.steps.ts` unchanged in substance.
 
 The feature files are read where they live rather than copied, so the file reviewed at G3 is the file that executes. `missingSteps: "fail-on-gen"` makes a step that stops matching break the build instead of quietly skipping the scenario.
 
@@ -167,7 +167,27 @@ Neither changes what the scenario claims. If the reviewer at G6 would rather see
 
 ---
 
-## 8. Gate status and next stage
+## 8. Changes made after G6
+
+Recorded because they touch code that was already reviewed. None alters what any scenario asserts, and the suite passes unchanged.
+
+**Cucumber reporting added.** `playwright.config.ts` gains `cucumberReporter("html")` and `cucumberReporter("json")`, writing to `cucumber-report/`. Playwright's own report shows a scenario as one test with the steps buried in the trace, which is the wrong granularity for reviewing behaviour against a requirement. The JSON output is the better source for the S9 bundle and the S10 record, because it keeps each result tied to the Gherkin line that produced it.
+
+**Sign-in failures now carry the application's message.** A run on 2026-08-24 failed with a bare `page.waitForURL` timeout while the page itself displayed "We couldn't sign you in — the preview sign-in could not reach the credential service." `signIn` now races the redirect against that refusal and reports whichever arrives, so an environment outage names itself instead of looking like a hung test. The environment recovered on its own; the credential service outage is transient and is not a defect in this automation.
+
+**The `AfterScenario` hook is named.** It appeared as "After undefined" in the Cucumber report.
+
+**Feature files relocated to `features/`.** They were at `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` and are now at `features/client/REQ-CLIENT-001.feature`, moved with `git mv` so the history follows. Co-locating them with the requirement and test cases made the trace easy to follow on paper but hid the file in practice — the generated output under `.features-gen/` was easier to stumble across than the source, which is what prompted the move.
+
+The G3 property is intact: there is still exactly one copy of each feature file and the runner reads it in place, so the reviewed artifact remains the executed one. Traceability is by tag rather than by path, so no scenario reference changed in substance; the path references in the test cases, the review record, and the static validation report were updated to match. The review record and static validation report are signed artifacts, so this note is the record of why their paths differ from what was signed.
+
+**Watcher and editor settings.** `scripts/watch-bdd.mjs` regenerates on save, and `.vscode/settings.json` hides `.features-gen` and marks it read-only. Both exist to keep the compile step out of the way; neither affects execution. The watcher uses Node built-ins so it adds no dependencies.
+
+These should be covered by a G6 addendum rather than left implicit. The reporter change in particular affects what S9 evidence looks like.
+
+---
+
+## 9. Gate status and next stage
 
 **G5 was signed a second time** on 2026-08-24, covering the revised seven-component inventory and the two corrections.
 

@@ -10,7 +10,7 @@
 | Location searched | Contents found |
 |---|---|
 | `aidlc-docs/testcases/` | Did not exist before this stage |
-| `aidlc-docs/bdd/` | Did not exist before this stage |
+| `features/` | Did not exist before this stage |
 | `tests/` | Framework configuration and README only; no test files |
 | `src/` | Does not exist |
 

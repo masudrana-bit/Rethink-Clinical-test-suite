@@ -49,7 +49,7 @@ Creating a second implementation of something that already exists is a defect, n
 | Input | Source |
 |---|---|
 | Approved test case | `aidlc-docs/testcases/<REQ-ID>/TC-<MODULE>-<NNN>.md` |
-| Approved BDD scenario | `aidlc-docs/bdd/<module>/<REQ-ID>.feature` |
+| Approved BDD scenario | `features/<module>/<REQ-ID>.feature` |
 | Approved test data plan | `aidlc-docs/testdata/<REQ-ID>/test-data-plan.md` |
 | Approved reuse plan | `aidlc-docs/automation/<REQ-ID>/framework-reuse-plan.md` |
 

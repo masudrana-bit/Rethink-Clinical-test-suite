@@ -1,10 +1,10 @@
 # Test Framework
 
-**Status:** In use — G5 signed 2026-08-24 (round 2, post-BDD migration); G6 pending
-**Stack:** Playwright + TypeScript + BDD/Cucumber via `playwright-bdd`
+**Status:** In use — G0 to G6 signed 2026-08-24
+**Stack:** Playwright + TypeScript + BDD/Cucumber via `playwright-bdd`, with Cucumber HTML and JSON reporting
 **Governed by:** `aidlc-docs/rules/aidlc-e2e-rules.md` + `aidlc-docs/rules/clinical-rules.md`
 
-The framework covers one requirement. The two G3-approved scenarios execute directly from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`, bound to step definitions in `src/steps/` and supported by two fixtures and two Page Objects. Details in `aidlc-docs/automation/REQ-CLIENT-001/implementation-notes.md`.
+The framework covers one requirement. The two G3-approved scenarios execute directly from `features/client/REQ-CLIENT-001.feature`, bound to step definitions in `src/steps/` and supported by two fixtures and two Page Objects. Details in `aidlc-docs/automation/REQ-CLIENT-001/implementation-notes.md`.
 
 ---
 
@@ -14,16 +14,26 @@ The framework covers one requirement. The two G3-approved scenarios execute dire
 
 Three properties of this arrangement are deliberate.
 
-**The feature files are read where they live**, under `aidlc-docs/bdd/`, not copied into `tests/`. The artifact reviewed at Gate G3 is therefore the same file that executes; a copy would be free to drift from the approved one.
+**There is exactly one copy of each feature file**, at `features/<module>/<REQ-ID>.feature`, and the runner reads it in place. The artifact reviewed at Gate G3 is therefore the same file that executes; a second copy would be free to drift from the approved one. The feature files sat under `aidlc-docs/bdd/` until 2026-08-24, alongside the requirement and test cases they trace to; they were moved to the top level because that is where a reader familiar with Cucumber looks first, and burying them made the generated output easier to stumble across than the source. The traceability is unchanged — every test case names its scenario by tag, and the tags live in the feature file.
 
 **An unmatched step fails the build.** `missingSteps: "fail-on-gen"` means renaming a step in either the Gherkin or the TypeScript breaks `bddgen` with a message naming the step. The alternative — a scenario that silently never runs — is a false coverage claim the traceability record has no way to detect.
 
-**`.features-gen/` is generated and git-ignored.** Never edit it, and never point the runner at it.
+**`.features-gen/` is generated and git-ignored.** Never edit it, and never point the runner at it. It is hidden in the editor via `.vscode/settings.json` and marked read-only, so it should stay out of your way.
+
+### Why there is a compile step at all
+
+Feature files are not read at run time; they are compiled first. This surprises people coming from cucumber-js, so the reason is worth stating.
+
+playwright-bdd tried on-the-fly generation and abandoned it. The Playwright config is loaded repeatedly — by each worker, by the VS Code extension, by UI mode — so generating during config load meant doing the work many times over. Worse, UI mode watches test files, so regenerating a test file triggered a run that reloaded the config that regenerated the file. Decoupling generation from execution is the maintainer's answer to that loop.
+
+The step is therefore not removable while we use playwright-bdd. It is, however, invisible: `npm test` runs it, and `npm run ui` regenerates on every save. You should never need to type `bddgen` yourself.
+
+If a genuinely compile-free setup is ever required, that means `@cucumber/cucumber`, which parses `.feature` files at run time. It was considered and rejected under F-01 — it would cost the Playwright runner, and with it the setup-project sign-in, the parallelism, and the trace evidence.
 
 ## Layout
 
 ```text
-aidlc-docs/bdd/
+features/
   client/
     REQ-CLIENT-001.feature    The scenarios — reviewed at G3, and executable
 src/
@@ -45,7 +55,7 @@ tests/
 
 Directories are created on first use rather than committed empty. Path aliases (`@pages/*`, `@fixtures/*`, `@api/*`, `@data/*`) are configured in `tsconfig.json`, but the current code uses relative imports, which need no resolver support at runtime.
 
-Both `aidlc-docs/bdd/` and `src/steps/` mirror the approved module taxonomy, so `client/` corresponds to the `CLIENT` module.
+Both `features/` and `src/steps/` mirror the approved module taxonomy, so `client/` corresponds to the `CLIENT` module.
 
 ## Sign-in happens once, in a setup project
 
@@ -113,7 +123,29 @@ npm run typecheck
 npm test                          # bddgen, then playwright test
 ```
 
-`npm test` regenerates before running, so an edited feature file always takes effect. Run `npm run bddgen` alone to check that every step still binds without executing anything.
+| Script | What it does |
+|---|---|
+| `npm test` | Regenerates, then runs everything |
+| `npm run test:p0` | The same, filtered to `@P0` — currently matches nothing, since both cases are `@P1` |
+| `npm run ui` | Playwright UI mode with a file watcher that regenerates on save |
+| `npm run watch:bdd` | The watcher alone, for pairing with your own runner |
+| `npm run bddgen` | Checks that every Gherkin step still binds, without executing anything |
+| `npm run report:cucumber` | Opens the Cucumber HTML report |
+| `npm run report` | Opens Playwright's own report |
+
+The watcher is `scripts/watch-bdd.mjs`, written against Node built-ins so that watching costs no dependencies.
+
+**In UI mode, tick the `chromium` project.** The project filter sits behind the chevron next to the search box, and if only `setup` is ticked the scenarios are hidden and the tree looks empty. The setting persists once changed.
+
+## Reports
+
+Two are produced on every run, because they answer different questions.
+
+**`cucumber-report/index.html`** presents results as Feature, Scenario, and Step, each step with its own status and duration, searchable by text or tag. This is the one to read when checking behaviour against the requirement, and the one to show someone who does not work in Playwright. `cucumber-report/report.json` is the machine-readable equivalent, and it is what the S9 evidence bundle and the S10 traceability record should be built from, since it preserves the tie between a step and the Gherkin line that produced it.
+
+**`playwright-report/`** presents results as Playwright tests, with traces attached. This is the one to read when a test fails and you need the DOM snapshots.
+
+Both are git-ignored and rewritten on every run. Copy what you need into `aidlc-docs/evidence/<run-id>/` when retaining a run as evidence — and check the data mode first, per that folder's manifest.
 
 Copy `.env.example` to `.env` and set `BASE_URL` if you are not targeting the default dev environment. `.env` is git-ignored and must never contain real credentials or PHI.
 

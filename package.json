@@ -11,7 +11,10 @@
     "bddgen": "bddgen",
     "test": "bddgen && playwright test",
     "test:p0": "bddgen && playwright test --grep @P0",
-    "report": "playwright show-report"
+    "ui": "node scripts/watch-bdd.mjs --ui",
+    "watch:bdd": "node scripts/watch-bdd.mjs",
+    "report": "playwright show-report",
+    "report:cucumber": "node scripts/open-cucumber-report.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

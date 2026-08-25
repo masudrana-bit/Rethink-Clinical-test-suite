@@ -6,8 +6,12 @@
 /playwright/.auth/
 
 # Playwright tests compiled from the feature files by bddgen. Generated on every
-# run; the feature files under aidlc-docs/bdd/ are the source.
+# run; the feature files under features/ are the source.
 /.features-gen/
+
+# Cucumber HTML and JSON reports, regenerated on every run. Copy into
+# aidlc-docs/evidence/<run-id>/ when a run needs to be retained as evidence.
+/cucumber-report/
 
 # Logs
 logs

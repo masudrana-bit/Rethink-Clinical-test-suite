@@ -37,13 +37,15 @@ Per-requirement artifact directories are created on first use. Those now populat
 | `analysis/REQ-CLIENT-001/` | S1, S2 | Requirement analysis, clinical rule register, conflict register, clarification log, blocked register |
 | `design/REQ-CLIENT-001/` | S3 | Coverage matrix, scenario inventory, duplication report |
 | `testcases/REQ-CLIENT-001/` | S4 | `TC-CLIENT-001`, `TC-CLIENT-002` |
-| `bdd/client/` | S4 | `REQ-CLIENT-001.feature` |
+| `../features/client/` | S4 | `REQ-CLIENT-001.feature` — outside this folder, at the repository root |
 | `testdata/REQ-CLIENT-001/` | S5 | Test data plan and PHI safety attestation |
 | `automation/REQ-CLIENT-001/` | S6, S7 | Framework reuse plan with live reconnaissance, and implementation notes |
 
 Still unused: `validation/`, `results/`, `evidence/`, `traceability/`, `change-impact/`. Their contents and owners are listed in the workflow's artifact register.
 
-The scenarios in `bdd/client/REQ-CLIENT-001.feature` are executable, not just documentation: `playwright-bdd` compiles them into Playwright tests, bound to step definitions in `src/steps/`. So the artifact reviewed at Gate G3 is the artifact that runs. Supporting page objects and fixtures live under `src/`; see `tests/README.md`.
+The scenarios in `features/client/REQ-CLIENT-001.feature` are executable, not just documentation: `playwright-bdd` compiles them into Playwright tests, bound to step definitions in `src/steps/`. So the artifact reviewed at Gate G3 is the artifact that runs. Supporting page objects and fixtures live under `src/`; see `tests/README.md`.
+
+Feature files are the one S4 artifact that does not live in this folder. They sat at `aidlc-docs/bdd/` until 2026-08-24 and were moved to `features/` at the repository root, the conventional location for Gherkin and the first place a reader looks. Nothing about the traceability changed: each test case names its scenario by tag, and the tags are in the feature file.
 
 ## Current status
 

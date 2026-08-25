@@ -161,7 +161,7 @@ Every one is new. The plan is the smallest set that covers both approved test ca
 
 ### 4.1 Corrected after the BDD migration *(2026-08-24)*
 
-This plan assumed the approved cases would be written as a Playwright spec. They are not. `playwright-bdd` compiles `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` into runnable tests, so the G3-approved Gherkin executes directly and the spec file was deleted.
+This plan assumed the approved cases would be written as a Playwright spec. They are not. `playwright-bdd` compiles `features/client/REQ-CLIENT-001.feature` into runnable tests, so the G3-approved Gherkin executes directly and the spec file was deleted.
 
 Two components take its place:
 

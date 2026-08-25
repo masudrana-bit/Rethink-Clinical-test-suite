@@ -277,7 +277,7 @@ See conflict **C-01** — BDD scenarios and test cases are co-produced and revie
 - Ensure each test case is independently executable (§17).
 
 **Outputs / artifacts**
-- `aidlc-docs/bdd/<module>/<REQ-ID>.feature`
+- `features/<module>/<REQ-ID>.feature`
 - `aidlc-docs/testcases/<REQ-ID>/TC-<MODULE>-<NNN>.md`
 
 **Gate:** G3 — this is the `Approved → Automation` boundary of `clinical-rules.md` §35. No automation may begin before it.
@@ -466,7 +466,7 @@ Escalation: a gate rejection returns work to the named stage, never forward. A g
 | Coverage matrix | `aidlc-docs/design/<REQ-ID>/coverage-matrix.md` | S3 | AI → QA Lead |
 | Scenario inventory | `aidlc-docs/design/<REQ-ID>/scenario-inventory.md` | S3 | AI → QA Lead |
 | Duplication report | `aidlc-docs/design/<REQ-ID>/duplication-report.md` | S3 | AI → QA Lead |
-| BDD feature | `aidlc-docs/bdd/<module>/<REQ-ID>.feature` | S4 | AI → QA + Clinical SME |
+| BDD feature | `features/<module>/<REQ-ID>.feature` | S4 | AI → QA + Clinical SME |
 | Test case | `aidlc-docs/testcases/<REQ-ID>/TC-<MODULE>-<NNN>.md` | S4 | AI → QA Lead |
 | Test data plan | `aidlc-docs/testdata/<REQ-ID>/test-data-plan.md` | S5 | AI → QA Lead |
 | PHI safety attestation | `aidlc-docs/testdata/<REQ-ID>/phi-safety-attestation.md` | S5 | QA Lead / Privacy |
@@ -596,7 +596,7 @@ The workflow is now running against its first requirement. Remaining order:
 
 Stages S0 through S9 are complete for AC-001 and AC-002, and gates G0 through G6 are all signed.
 
-The two approved scenarios execute from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`, compiled by `playwright-bdd` and bound to step definitions in `src/steps/`. Both passed on their first attempt in the post-G6 evidence run, with results, traces, and a PHI statement in `aidlc-docs/evidence/run-2026-08-24T1204Z/`.
+The two approved scenarios execute from `features/client/REQ-CLIENT-001.feature`, compiled by `playwright-bdd` and bound to step definitions in `src/steps/`. Both passed on their first attempt in the post-G6 evidence run, with results, traces, and a PHI statement in `aidlc-docs/evidence/run-2026-08-24T1204Z/`.
 
 Two caveats travel with that result and should not be separated from it. The run recorded `data-mode: substituted`, meaning the backend served no clients and the application substituted example data — the user interface behaviour is proven, the data path behind it is not. And coverage is 2 of 5 acceptance criteria, with AC-003 to AC-005 held on GAP-010.
 

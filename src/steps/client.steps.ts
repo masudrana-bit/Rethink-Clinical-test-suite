@@ -4,7 +4,7 @@ import { AfterScenario, expect, Given, Then, When } from "../fixtures/test.js";
 import { ClientSwitcher } from "../pages/ClientSwitcher.js";
 
 /**
- * Step definitions for aidlc-docs/bdd/client/REQ-CLIENT-001.feature.
+ * Step definitions for features/client/REQ-CLIENT-001.feature.
  *
  * The feature file is the G3-approved specification and the executable source
  * both — it is not restated in TypeScript anywhere. A step that stops matching
@@ -190,6 +190,6 @@ Then(
  * against. Recorded in a hook rather than a step so that it applies to every
  * scenario, including ones that fail before reaching an assertion.
  */
-AfterScenario(async ({ page, $testInfo }) => {
+AfterScenario({ name: "record the data mode" }, async ({ page, $testInfo }) => {
   await recordDataMode(page, $testInfo);
 });

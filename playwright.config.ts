@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { defineBddConfig } from "playwright-bdd";
+import { cucumberReporter, defineBddConfig } from "playwright-bdd";
 import { STORAGE_STATE } from "./src/fixtures/auth.fixture.js";
 
 /**
@@ -20,21 +20,21 @@ const baseURL = process.env.BASE_URL ?? "https://clinical.dev.rethinkbhtech.com/
 const isCI = !!process.env.CI;
 
 /**
- * The feature files under aidlc-docs/bdd/ are compiled into Playwright tests in
+ * The feature files under features/ are compiled into Playwright tests in
  * .features-gen, which is generated and git-ignored. Point the runner at the
  * feature files themselves, never at the generated output.
  *
- * They are read in place rather than copied into tests/, so the artifact
- * reviewed at Gate G3 is the same file that executes. A copy would be free to
- * drift from the approved one.
+ * There is exactly one copy of each feature file and the runner reads it where
+ * it lives, so the artifact reviewed at Gate G3 is the same file that executes.
+ * A second copy would be free to drift from the approved one.
  *
  * missingSteps: "fail-on-gen" makes an unimplemented step break `bddgen`
  * immediately. The alternative is a scenario that silently never runs, which is
  * a coverage claim the traceability record could not detect as false.
  */
 const bddTestDir = defineBddConfig({
-  features: "aidlc-docs/bdd/**/*.feature",
-  featuresRoot: "aidlc-docs/bdd",
+  features: "features/**/*.feature",
+  featuresRoot: "features",
   steps: ["src/steps/**/*.ts", "src/fixtures/test.ts"],
   outputDir: ".features-gen",
   missingSteps: "fail-on-gen",
@@ -84,6 +84,18 @@ export default defineConfig({
 
   reporter: [
     ["list"],
+
+    // Cucumber reports, in the shape a BDD reader expects: Feature, Scenario,
+    // Step, each step pass or fail. Playwright's own report shows a scenario as
+    // a single test with the steps buried in the trace, which is the wrong
+    // granularity for reviewing behaviour against the requirement.
+    //
+    // The JSON is the machine-readable one, and it is what the S9 evidence
+    // bundle and the S10 traceability record should be built from, because it
+    // keeps the tie between a step and the Gherkin line that produced it.
+    cucumberReporter("html", { outputFile: "cucumber-report/index.html" }),
+    cucumberReporter("json", { outputFile: "cucumber-report/report.json" }),
+
     ["html", { open: "never", outputFolder: "playwright-report" }],
     ["junit", { outputFile: "test-results/junit.xml" }],
   ],

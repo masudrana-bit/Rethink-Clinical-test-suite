@@ -3,7 +3,7 @@
 **Stage:** S8 — Static Validation & Code Review
 **Feeds:** Gate G6
 **Date:** 2026-08-24
-**Scope:** `src/`, `tests/`, `playwright.config.ts`, `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`
+**Scope:** `src/`, `tests/`, `playwright.config.ts`, `features/client/REQ-CLIENT-001.feature`
 
 Every check below was executed. Nothing is reported as passing on inspection alone, and the one check that could not run is recorded as such rather than as a pass.
 
@@ -78,7 +78,7 @@ Searched `src/` case-insensitively for `password`, `passwd`, `secret`, `apiKey`,
 
 ### 7. No PHI-shaped literals — clinical §5, §6
 
-Searched `src/` and `aidlc-docs/bdd/` for every client name and identifier observed in the dev environment — `Ava`, `Martinez`, `Noah`, `Reed`, `Lily`, `Nguyen`, `Eli`, `Brooks`, `872364`, `481957`, `635208`, `794126` — and for `DOB`, `MRN`, `SSN`. **No matches in either location.**
+Searched `src/` and `features/` for every client name and identifier observed in the dev environment — `Ava`, `Martinez`, `Noah`, `Reed`, `Lily`, `Nguyen`, `Eli`, `Brooks`, `872364`, `481957`, `635208`, `794126` — and for `DOB`, `MRN`, `SSN`. **No matches in either location.**
 
 This follows from the data-agnostic design rather than from careful redaction: client names are read from the switcher at runtime and referred to symbolically as "Client A" and "Client B". There is nothing to leak because nothing is written down.
 

@@ -18,7 +18,7 @@ This is the highest-value case in the requirement. It reduces the stated busines
 | Scenario | SC-002 — Selecting a client makes that client the active client |
 | Priority | `P1` — see §10, there is a case for `P0` |
 | Test Type | `POSITIVE` |
-| Automation Status | `AUTOMATED` — executes from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` via `src/steps/client.steps.ts` |
+| Automation Status | `AUTOMATED` — executes from `features/client/REQ-CLIENT-001.feature` via `src/steps/client.steps.ts` |
 | Last Execution | `PASSED`, first attempt, run `run-2026-08-24T1204Z`. Data mode `substituted` |
 | Clinical rule refs | CL-001, CL-006, CL-007, CL-008 |
 | Blockers | None blocking this case. BLK-007 and BLK-008 block its execution |
@@ -133,9 +133,9 @@ AC-002
     ↓
 TC-CLIENT-002
     ↓
-BDD: aidlc-docs/bdd/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-002
+BDD: features/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-002
     ↓
-Automation: aidlc-docs/bdd/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-002
+Automation: features/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-002
             steps in src/steps/client.steps.ts
     ↓
 Execution: not yet run — stage S9
@@ -146,9 +146,9 @@ Execution: not yet run — stage S9
 | Requirement | `aidlc-docs/requirements/REQ-CLIENT-001.md` |
 | Acceptance criterion | AC-002 |
 | Scenario | SC-002, `aidlc-docs/design/REQ-CLIENT-001/scenario-inventory.md` |
-| BDD scenario | `@TC-CLIENT-002` in `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` |
+| BDD scenario | `@TC-CLIENT-002` in `features/client/REQ-CLIENT-001.feature` |
 | Clinical rules | CL-001, CL-006, CL-007, CL-008 |
-| Automation | `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` (`@TC-CLIENT-002`) + `src/steps/client.steps.ts` |
+| Automation | `features/client/REQ-CLIENT-001.feature` (`@TC-CLIENT-002`) + `src/steps/client.steps.ts` |
 
 ---
 

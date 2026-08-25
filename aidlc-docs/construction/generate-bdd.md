@@ -36,7 +36,7 @@ This is the single most useful check in this document. A scenario that only an a
 
 ## 4. Structure
 
-Write one feature file per requirement at `aidlc-docs/bdd/<module>/<REQ-ID>.feature`.
+Write one feature file per requirement at `features/<module>/<REQ-ID>.feature`.
 
 ```gherkin
 @REQ-<MODULE>-<NNN>
@@ -113,7 +113,7 @@ Implementation detail belongs in step definitions, not in the scenario (`aidlc-e
 - **State outcomes as observable facts.** "Then the session should be marked as completed" is observable; "Then the system processes correctly" is not.
 - **Use `Scenario Outline`** only when the same behaviour genuinely repeats across values, and only with approved values. Do not use it to inflate the scenario count.
 - **Keep `Background` minimal.** If a precondition applies to only some scenarios, it belongs in those scenarios.
-- **Reuse existing step phrasing** wherever an equivalent step already exists in `aidlc-docs/bdd/`. Gratuitous rephrasing of an existing step multiplies step definitions for no benefit.
+- **Reuse existing step phrasing** wherever an equivalent step already exists in `features/`. Gratuitous rephrasing of an existing step multiplies step definitions for no benefit.
 
 ## 8. Clinical language checks
 
@@ -144,7 +144,7 @@ Implementation detail belongs in step definitions, not in the scenario (`aidlc-e
 
 | Artifact | Path |
 |---|---|
-| Feature files | `aidlc-docs/bdd/<module>/<REQ-ID>.feature` |
+| Feature files | `features/<module>/<REQ-ID>.feature` |
 | Blocker entries | `aidlc-docs/analysis/<REQ-ID>/blocked-register.md` |
 
 Hand off to G3 together with the test cases. No automation may begin until G3 is signed.

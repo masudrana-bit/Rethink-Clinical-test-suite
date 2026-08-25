@@ -84,7 +84,7 @@ Two small corrections also surfaced. `BASE_URL` in `.env` and `.env.example` poi
 | GAP-005 / P-05 | API contract for setup, cleanup, and verification | `src/api/`, test data lifecycle, stage S5 | Both requirements §12.1 |
 | — | Test environment policy: which environments are testable, and reset expectations | Data isolation strategy | `tests/README.md` |
 | ~~F-01~~ | ~~BDD tooling: `playwright-bdd`, `@cucumber/cucumber`, or none~~ | **Resolved 2026-08-24** — `playwright-bdd`, chosen to keep the Playwright runner, the once-only sign-in, and the trace/video evidence | `tests/README.md` |
-| ~~F-02~~ | ~~Whether Gherkin is executable, or a reviewed specification only~~ | **Resolved 2026-08-24** — executable. `aidlc-docs/bdd/**/*.feature` compiles to Playwright tests; an unmatched step fails `bddgen` | `tests/README.md` |
+| ~~F-02~~ | ~~Whether Gherkin is executable, or a reviewed specification only~~ | **Resolved 2026-08-24** — executable. `features/**/*.feature` compiles to Playwright tests; an unmatched step fails `bddgen` | `tests/README.md` |
 | F-03 | Browser coverage beyond Chromium | Config scope | `tests/README.md` |
 | F-05 | Test data lifecycle: API seeding, UI seeding, or a fixture pool | Stage S5 | `tests/README.md` |
 | F-06 | Linter and formatter — none configured, so the lint half of S8 cannot run | Nothing today; the S8 check is reported NOT RUN for every requirement until it exists | `validation/REQ-CLIENT-001/static-validation-report.md` §4 |

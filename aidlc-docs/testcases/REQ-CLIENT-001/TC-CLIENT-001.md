@@ -16,7 +16,7 @@
 | Scenario | SC-001 — A user reaches the Client area |
 | Priority | `P1` |
 | Test Type | `POSITIVE` |
-| Automation Status | `AUTOMATED` — executes from `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` via `src/steps/client.steps.ts` |
+| Automation Status | `AUTOMATED` — executes from `features/client/REQ-CLIENT-001.feature` via `src/steps/client.steps.ts` |
 | Last Execution | `PASSED`, first attempt, run `run-2026-08-24T1204Z`. Data mode `substituted` |
 | Clinical rule refs | CL-007, CL-008 |
 | Blockers | None blocking this case. BLK-007 blocks its execution |
@@ -117,9 +117,9 @@ AC-001
     ↓
 TC-CLIENT-001
     ↓
-BDD: aidlc-docs/bdd/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-001
+BDD: features/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-001
     ↓
-Automation: aidlc-docs/bdd/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-001
+Automation: features/client/REQ-CLIENT-001.feature, scenario tagged @TC-CLIENT-001
             steps in src/steps/client.steps.ts
     ↓
 Execution: not yet run — stage S9
@@ -130,9 +130,9 @@ Execution: not yet run — stage S9
 | Requirement | `aidlc-docs/requirements/REQ-CLIENT-001.md` |
 | Acceptance criterion | AC-001 |
 | Scenario | SC-001, `aidlc-docs/design/REQ-CLIENT-001/scenario-inventory.md` |
-| BDD scenario | `@TC-CLIENT-001` in `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` |
+| BDD scenario | `@TC-CLIENT-001` in `features/client/REQ-CLIENT-001.feature` |
 | Clinical rules | CL-007, CL-008 |
-| Automation | `aidlc-docs/bdd/client/REQ-CLIENT-001.feature` (`@TC-CLIENT-001`) + `src/steps/client.steps.ts` |
+| Automation | `features/client/REQ-CLIENT-001.feature` (`@TC-CLIENT-001`) + `src/steps/client.steps.ts` |
 
 ---
 

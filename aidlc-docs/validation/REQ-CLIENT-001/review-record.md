@@ -3,7 +3,7 @@
 **Stage:** S8 — Static Validation & Code Review
 **Gate:** G6 — Code Quality
 **Date:** 2026-08-24
-**Reviewing:** `src/steps/client.steps.ts`, `src/fixtures/`, `src/pages/`, `tests/auth.setup.ts`, `playwright.config.ts`, `aidlc-docs/bdd/client/REQ-CLIENT-001.feature`
+**Reviewing:** `src/steps/client.steps.ts`, `src/fixtures/`, `src/pages/`, `tests/auth.setup.ts`, `playwright.config.ts`, `features/client/REQ-CLIENT-001.feature`
 
 `aidlc-e2e-rules.md` §23 requires that AI-generated code is never presumed correct. This record states what was checked and what was found, including the things that are wrong.
 

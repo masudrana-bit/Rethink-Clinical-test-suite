@@ -34,6 +34,9 @@ export const STORAGE_STATE = "playwright/.auth/user.json";
 /** localStorage key holding the session. Used to verify sign-in actually took. */
 export const SESSION_STORAGE_KEY = "bh_clinical_auth_session";
 
+/** Upper bound on sign-in, per aidlc-e2e-rules.md §16 — a bound, not a wait. */
+const SIGN_IN_TIMEOUT_MS = 30_000;
+
 /**
  * Establishes an authenticated session.
  *
@@ -42,7 +45,39 @@ export const SESSION_STORAGE_KEY = "bh_clinical_auth_session";
  */
 export async function signIn(page: Page): Promise<void> {
   await page.goto(DEV_LOGIN_PATH);
-  await page.waitForURL((url) => url.pathname.startsWith(POST_LOGIN_PATH));
+
+  // The route either redirects or renders its own refusal. Waiting only for the
+  // redirect turns the second case into a bare 30s timeout, when the page is
+  // sitting there explaining exactly what went wrong. Race the two so the
+  // failure carries the application's own words.
+  const refusal = page.getByRole("heading", { name: /couldn't sign you in/i });
+
+  const outcome = await Promise.race([
+    page
+      .waitForURL((url) => url.pathname.startsWith(POST_LOGIN_PATH), {
+        timeout: SIGN_IN_TIMEOUT_MS,
+      })
+      .then(() => "signed-in" as const)
+      .catch(() => "no-response" as const),
+    refusal
+      .waitFor({ state: "visible", timeout: SIGN_IN_TIMEOUT_MS })
+      .then(() => "refused" as const)
+      .catch(() => "no-response" as const),
+  ]);
+
+  if (outcome === "refused") {
+    const detail = (await page.locator("body").innerText()).trim();
+    throw new Error(
+      `The dev login refused to sign in. The application reported:\n\n${detail}`,
+    );
+  }
+
+  if (outcome === "no-response") {
+    throw new Error(
+      `${DEV_LOGIN_PATH} neither redirected to ${POST_LOGIN_PATH} nor reported ` +
+        `a failure within ${SIGN_IN_TIMEOUT_MS}ms. Current URL: ${page.url()}`,
+    );
+  }
 
   const hasSession = await page.evaluate(
     (key) => window.localStorage.getItem(key) !== null,
