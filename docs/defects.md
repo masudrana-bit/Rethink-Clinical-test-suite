@@ -89,6 +89,19 @@ The `staff-role` response carries `apiKey`, `password`, `passwordQuestion` and
 
 This is a mitigation in our harness, not a fix — the API still sends them.
 
+## DEF-6 — Add-target and record-data do not open a write UI
+
+**Severity:** high for the write-flow program — the buttons exist (`program-details-add-target`,
+`program-details-record-data`) and are clickable, but no dialog, toast, or navigation
+occurs. Clinicians cannot add a target from Skills Programs. Record-data is the same
+no-op; **Add Data Collection** instead leaves the clinical shell for `/sessions/new`.
+
+The targets **API** does accept `POST { description }` (201), so the gap is the UI, not
+the backend create.
+
+**Covered by:** `Add target opens a form for a new target` (`@write @bug`). Companion
+WR-2 asserts the click also does not silently POST (target count unchanged).
+
 ---
 
 # Data anomalies (not defects, but they shape the tests)

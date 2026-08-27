@@ -751,10 +751,70 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 
 ---
 
+## 7. Write flows (Phase 2b)
+
+**Feature:** `features/write/write.feature`  
+**Tags:** `@write` — requires `TEST_CLIENT_ID`. Not in `npm test`. `npm run test:write`.
+
+### WR-1 — Creating a target via the API lists it
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `POST .../targets` with `{ description }` creates a row the GET list includes. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Preconditions** | `TEST_CLIENT_ID` dedicated client with a program that has targets. |
+| **Test data** | Description `ZZZ-SUITE-{timestamp}-target`. Deleted in After (`If-Match: *`). |
+| **Steps** | 1. POST the description. 2. GET targets for that program. |
+| **Expected result** | HTTP 201. GET items include that description. |
+| **Automation** | *Creating a target via the API lists it for the dedicated client* |
+| **Status** | Pass (when `TEST_CLIENT_ID` is set) |
+
+### WR-2 — Clicking add-target does not create a target without a form
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The stub add-target click must not silently POST. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Steps** | 1. Open dedicated workspace and program. 2. Note target count. 3. Click add-target. |
+| **Expected result** | No dialog. Target count unchanged. |
+| **Automation** | *Clicking add-target does not create a target without a form* |
+| **Status** | Pass (when `TEST_CLIENT_ID` is set) |
+
+### WR-2b — Add target opens a form
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Add-target should open a create form. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Defect** | **DEF-6** — click is a no-op. |
+| **Automation** | *Add target opens a form for a new target* — `@bug` |
+| **Status** | Known fail (`@bug`) |
+
+### WR-3 / WR-4 / WR-5 — Record data and mastery confirm/dismiss
+
+| Field | Detail |
+|-------|--------|
+| **Status** | `@wip` — no session POST captured; cannot create flagged evaluations without recording. |
+
+### WR-6 — Saving a report lists it in the same session
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Named save on this device appears in saved-report controls in this context. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Save report as `ZZZ-SUITE-{timestamp}-report`. |
+| **Expected result** | That name is visible. Empty-state is gone. |
+| **Automation** | *Saving a report on this device lists it in the same session* |
+| **Status** | Pass (when `TEST_CLIENT_ID` is set) |
+
+---
+
 ## Out of scope (not in this catalog)
 
-These are **not** covered as test cases yet:
-
-- Write flows: add target, confirm/dismiss mastery, save report, record data (decision D4).
 - Nav areas never crawled: Staff, Supervision, Settings, Training, Reporting, Template, Schedule, Notifications, Billing.
 - CI pipeline (decision D5).
+- WR-3–WR-5 until session/mastery write APIs are reconned.

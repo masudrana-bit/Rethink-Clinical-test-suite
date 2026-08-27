@@ -23,6 +23,7 @@
 | `@network` | Asserts the right XHRs fire on a page. |
 | `@negative` | Expected error paths. |
 | `@bug` | Asserts correct behaviour the app does not yet have. Excluded from `npm test`; run with `-p bugs`. Passes when the defect is fixed. |
+| `@write` | Mutates the dedicated `TEST_CLIENT_ID` client. Excluded from `npm test`; `npm run test:write`. |
 | `@auth` `@clients` `@programs` `@analyze-data` `@behavior-support` | Feature areas. |
 
 ## Decisions taken at elaboration
@@ -300,11 +301,30 @@ an exact partition.
 
 ## Explicitly out of scope (for now)
 
-**Write flows (D4)** — add target, confirm/dismiss mastery, save report, record data.
-These are the highest-risk surfaces in the app and should be the first new unit after
-Phase 1 sign-off.
-
 **Unvisited nav areas** — Staff, Supervision, Settings, Training, Reporting, Template,
 Schedule, Notifications, Billing. Present in the nav but never crawled.
 
 **CI configuration (D5)** — deferred to Phase 3 pending a runner decision.
+
+### Unit 7 — Write flows  `@write`
+
+Requires `TEST_CLIENT_ID` (dedicated client). `npm test` excludes `@write`. Run
+`npm run test:write`. Created targets are named `ZZZ-SUITE-*` and DELETE'd in After
+(`If-Match: *`).
+
+W0 recon (2026-08-27): `POST .../targets` with `{ description }` → **201**. Empty `{}`
+also 201 (no API required-field check). `DELETE` without If-Match → **428**; with
+`If-Match: *` → **204**. UI `program-details-add-target` / `record-data` do not open a
+form. **Add Data Collection** navigates to `/sessions/new` (RBT wizard); no session
+write API captured. Mastery confirm/dismiss are live on Analyze Data — not clicked for
+pre-existing rows.
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| WR-1 | POST a uniquely named target; GET lists it | @api @write | P1 | ☑ |
+| WR-2 | Clicking add-target without a form does not create a target | @ui @write | P1 | ☑ |
+| WR-2b | Add-target opens a create form | @ui @write @bug | P1 | ✖ **DEF-6** |
+| WR-3 | Record data against a suite target | @ui @write | P1 | ☐ `@wip` — session wizard, no POST captured |
+| WR-4 | Confirm mastery on a suite-created evaluation | @ui @write | P1 | ☐ `@wip` — cannot create flagged evals without WR-3 |
+| WR-5 | Dismiss a suite-created evaluation | @ui @write | P1 | ☐ `@wip` — same |
+| WR-6 | Save a named report; it lists in the same browser context | @ui @write | P2 | ☑ |

@@ -121,4 +121,32 @@ export class ClinicalApi {
       { headers: this.headers() },
     );
   }
+
+  /**
+   * Observed 201 from POST `{ description }`. The server fills objectiveId, status
+   * and statusHistory. Do not send a richer body until recon captures one.
+   */
+  createTarget(
+    clientId: number,
+    programId: number,
+    description: string,
+  ): Promise<APIResponse> {
+    return this.api.post(
+      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets`,
+      {
+        headers: { ...this.headers(), 'Content-Type': 'application/json' },
+        data: { description },
+      },
+    );
+  }
+
+  /**
+   * Observed 428 without If-Match; 204 with `If-Match: *`.
+   */
+  deleteTarget(clientId: number, programId: number, targetId: number): Promise<APIResponse> {
+    return this.api.delete(
+      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets/${targetId}`,
+      { headers: { ...this.headers(), 'If-Match': '*' } },
+    );
+  }
 }

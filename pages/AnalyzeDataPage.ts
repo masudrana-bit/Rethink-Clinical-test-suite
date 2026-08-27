@@ -193,4 +193,29 @@ export class AnalyzeDataPage {
       return groups;
     });
   }
+
+  get saveReport(): Locator {
+    return this.page.getByTestId('saved-report-save');
+  }
+
+  get savedReportEmpty(): Locator {
+    return this.page.getByTestId('saved-report-empty');
+  }
+
+  get reportName(): Locator {
+    return this.page.getByRole('textbox', { name: 'Report name' });
+  }
+
+  get confirmSaveReport(): Locator {
+    return this.page.getByRole('button', { name: 'Save', exact: true });
+  }
+
+  async saveNamedReport(name: string): Promise<void> {
+    await this.saveReport.click();
+    await this.reportName.waitFor({ state: 'visible' });
+    await this.reportName.fill(name);
+    await this.reportName.press('Tab');
+    await expect(this.confirmSaveReport).toBeEnabled({ timeout: 10_000 });
+    await this.confirmSaveReport.click();
+  }
 }

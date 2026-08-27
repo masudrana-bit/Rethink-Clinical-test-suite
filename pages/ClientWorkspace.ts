@@ -75,4 +75,17 @@ export class ClientWorkspace {
   async filterByDomain(label: string): Promise<void> {
     await new PrimeSelect(this.page, this.domainFilter, 'domain filter').choose(label);
   }
+
+  get addTarget(): Locator {
+    return this.page.getByTestId('program-details-add-target');
+  }
+
+  get recordData(): Locator {
+    return this.page.getByTestId('program-details-record-data');
+  }
+
+  /** Any role=dialog / PrimeNG dialog that is actually painted. */
+  get visibleDialog(): Locator {
+    return this.page.locator('[role="dialog"]:visible, .p-dialog:visible');
+  }
 }

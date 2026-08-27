@@ -8,6 +8,7 @@ import { config } from './config';
 import { preflight } from './preflight';
 import { acquireAuth, seedAuth, HarvestedAuth } from './auth';
 import { installResponseScrubbing } from './scrub';
+import { requireWriteClientId } from './writeGuard';
 
 setDefaultTimeout(60_000);
 
@@ -42,6 +43,8 @@ AfterAll(async function () {
  */
 Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   const signedOut = scenario.pickle.tags.some((t) => t.name === '@signed-out');
+  const isWrite = scenario.pickle.tags.some((t) => t.name === '@write');
+  if (isWrite) requireWriteClientId();
 
   this.browser = browser;
   this.auth = auth;
@@ -58,6 +61,26 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 });
 
 After(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
+  if (!this.context || !this.page) return;
+
+  const created = (this.data.createdTargets ?? []) as Array<{
+    clientId: number;
+    programId: number;
+    targetId: number;
+  }>;
+  for (const row of created) {
+    try {
+      const res = await this.clinical.deleteTarget(row.clientId, row.programId, row.targetId);
+      if (res.status() >= 400) {
+        console.warn(
+          `cleanup: DELETE target ${row.targetId} returned ${res.status()} — leftover ZZZ-SUITE resource`,
+        );
+      }
+    } catch (error) {
+      console.warn(`cleanup: DELETE target ${row.targetId} failed: ${error}`);
+    }
+  }
+
   if (scenario.result?.status === Status.FAILED) {
     fs.mkdirSync('reports', { recursive: true });
     const safe = scenario.pickle.name.replace(/[^\w]+/g, '_').slice(0, 60);

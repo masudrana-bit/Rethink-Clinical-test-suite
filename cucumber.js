@@ -12,7 +12,10 @@ const common = {
 // @bug marks scenarios that assert *correct* behaviour the app does not yet have.
 // They are excluded from the default run so the suite stays green, and are expected
 // to start passing when the defect is fixed. See docs/defects.md.
-const ready = 'not @wip and not @bug';
+//
+// @write mutates the dedicated TEST_CLIENT_ID client. Excluded from npm test until
+// a write unit is signed off. Run with `npm run test:write`.
+const ready = 'not @wip and not @bug and not @write';
 
 module.exports = {
   default: { ...common, tags: ready },
@@ -22,4 +25,5 @@ module.exports = {
   ui: { ...common, tags: `@ui and ${ready}` },
   wip: { ...common, tags: '@wip' },
   bugs: { ...common, tags: '@bug and not @wip' },
+  write: { ...common, tags: '@write and not @wip and not @bug' },
 };

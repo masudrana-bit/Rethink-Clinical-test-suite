@@ -9,6 +9,7 @@
     "test:smoke": "cucumber-js -p smoke",
     "test:api": "cucumber-js -p api",
     "test:ui": "cucumber-js -p ui",
+    "test:write": "cucumber-js -p write",
     "typecheck": "tsc --noEmit",
     "verify:scrub": "ts-node scripts/verify-trace-scrubbing.ts",
     "report": "node scripts/report.js"
