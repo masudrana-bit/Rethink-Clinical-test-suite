@@ -9,5 +9,11 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["support/**/*.ts", "steps/**/*.ts", "pages/**/*.ts", "api/**/*.ts"]
+  "include": [
+    "support/**/*.ts",
+    "steps/**/*.ts",
+    "pages/**/*.ts",
+    "api/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

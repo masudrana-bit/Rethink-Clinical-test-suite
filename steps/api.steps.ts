@@ -2,21 +2,17 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { ClinicalApi } from '../api/clinicalApi';
-import { config } from '../support/config';
+import { config, hasCredentials } from '../support/config';
 
 /**
  * Starter API steps. These are enough to run AUTH-1, CLI-1, NEG-1.
  * Extend during Construction, one unit of work per bolt.
  */
 
-Given('I am logged in via the auth API', async function (this: CustomWorld) {
-  const api = new ClinicalApi(this.api);
-  const res = await api.login(config.username, config.password);
-  expect(res.status()).toBe(200);
-  const body = await res.json();
-  // TODO(construction): confirm the exact token field name from the login response.
-  this.data.token = body.accessToken ?? body.token ?? body.access_token;
-  expect(this.data.token, 'access token present in login response').toBeTruthy();
+// D1: the session is harvested once per run in BeforeAll, not fetched per scenario.
+Given('I am logged in via the auth API', function (this: CustomWorld) {
+  this.data.token = this.auth.accessToken;
+  expect(this.data.token, 'a harvested access token').toBeTruthy();
 });
 
 Given('I have no auth token', function (this: CustomWorld) {
@@ -24,15 +20,24 @@ Given('I have no auth token', function (this: CustomWorld) {
 });
 
 When('I log in via the auth API with valid dev credentials', async function (this: CustomWorld) {
+  if (!hasCredentials()) {
+    throw new Error(
+      'This step needs TEST_USERNAME, TEST_PASSWORD and AUTH_APPLICATION_KEY. ' +
+        'Under decision D1 the suite has no service account, so use ' +
+        '"I am logged in via the auth API" instead.',
+    );
+  }
   const api = new ClinicalApi(this.api);
-  const res = await api.login(config.username, config.password);
+  const res = await api.login(config.username!, config.password!);
   this.data.lastResponseStatus = res.status();
   this.data.lastResponseBody = await res.json().catch(() => ({}));
 });
 
 When('I GET {string}', async function (this: CustomWorld, path: string) {
   const url = path.startsWith('http') ? path : `${config.apiBaseUrl}${path}`;
-  const headers = this.data.token ? { Authorization: `Bearer ${this.data.token}` } : {};
+  const headers: Record<string, string> = this.data.token
+    ? { Authorization: `Bearer ${this.data.token}` }
+    : {};
   const res = await this.api.get(url, { headers });
   this.data.lastResponseStatus = res.status();
   this.data.lastResponseHeaders = res.headers();

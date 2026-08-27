@@ -5,15 +5,20 @@
   "description": "Playwright + Cucumber (BDD) test automation for Rethink Clinical, built via AIDLC.",
   "scripts": {
     "test": "cucumber-js",
-    "test:smoke": "cucumber-js --tags @smoke",
-    "test:api": "cucumber-js --tags @api",
-    "test:ui": "cucumber-js --tags @ui",
+    "test:preflight": "cucumber-js -p preflight",
+    "test:smoke": "cucumber-js -p smoke",
+    "test:api": "cucumber-js -p api",
+    "test:ui": "cucumber-js -p ui",
+    "typecheck": "tsc --noEmit",
+    "verify:scrub": "ts-node scripts/verify-trace-scrubbing.ts",
     "report": "node scripts/report.js"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.0.0",
     "@playwright/test": "^1.47.0",
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^22.0.0",
+    "adm-zip": "^0.6.0",
     "dotenv": "^16.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.0"

@@ -7,7 +7,8 @@
 
 - **Priority:** P0 (smoke, must pass on every PR) · P1 · P2
 - **Type:** `@api` (contract) · `@ui` (end-to-end) · `@network` (XHR assertion)
-- **Status:** ☐ not started · ◐ in progress · ☑ done
+- **Status:** ☐ not started · ◐ in progress · ☑ done · ✖ blocked by a defect
+- Defects and data anomalies are logged in [`defects.md`](./defects.md).
 
 ## Tag taxonomy
 
@@ -18,60 +19,289 @@
 | `@ui` | Browser end-to-end flows. |
 | `@network` | Asserts the right XHRs fire on a page. |
 | `@negative` | Expected error paths. |
-| `@bug` | Known defect kept visible until fixed. |
+| `@bug` | Asserts correct behaviour the app does not yet have. Excluded from `npm test`; run with `-p bugs`. Passes when the defect is fixed. |
 | `@auth` `@clients` `@programs` `@analyze-data` `@behavior-support` | Feature areas. |
+
+## Decisions taken at elaboration
+
+These constrain every row below. Change a decision, revisit the rows it touches.
+
+| # | Decision | Consequence |
+|---|----------|-------------|
+| D1 | Auth token is harvested from a one-time `/temp-dev-login` browser session, not from a credentialed API login. | No test account needed. `TEST_USERNAME` / `TEST_PASSWORD` / `AUTH_APPLICATION_KEY` become optional overrides. |
+| D2 | Client IDs are stable; program, target and mastery data are volatile. | Assert envelope shape and internal consistency. **No fixed counts** — `totalCount = 24` and `in scope = 38` are forbidden assertions. |
+| D3 | The behaviorplans 500 is a known defect, not a contract. | **Revised at Unit 4.** Split in two: a normal scenario asserting the UI degrades gracefully (correct either way, so it never goes red when the backend is fixed), plus a `@bug` scenario asserting the endpoint should return 200. Never assert 500 as if it were the contract. |
+| D4 | Phase 1 is read-only. | Write actions (`add-target`, `mastery-review-confirm` / `-dismiss`, `saved-report-save`, `record-data`) are out of scope; they become their own unit after sign-off. |
+| D5 | CI target is undecided. | Suite must be CI-agnostic. A preflight check fails fast with a clear message if `dev2.internal` is unreachable. No CI config authored this phase. |
+| D6 | Crawl data is synthetic but stays gitignored. | `output/` is never read at runtime. No client names, client numbers or IDs hardcoded in features or fixtures. |
+| D7 | Credential fields are scrubbed from API responses before they are traced. | `support/scrub.ts` nulls `apiKey`, `password`, `passwordQuestion` and `passwordAnswer` en route to the browser. Guarded by `npm run verify:scrub`. |
+| D8 | *Added at Unit 4.* No scenario may depend on run order, or on a resource another scenario consumed. | A scenario needing a single-use resource acquires its own. AUTH-2 signs in for itself rather than sharing the run-level refresh token. |
+| D9 | *Added at Unit 3.* UI-versus-API comparisons re-read the API on every poll. | dev2 is written to by other suites mid-run, so a snapshot taken once goes stale. Assert that the two agree *now*, not that the UI matches a value we captured earlier. |
+
+## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
+
+- The app exposes a stable `data-testid` layer, 20–43 per page. **Use `getByTestId`.**
+  Never guess with role or text selectors. (These are invisible to ripgrep because
+  the crawled HTML is minified onto one line; extract with a script if you need the list.)
+- Auth session lives in `localStorage["bh_clinical_auth_session"]`.
+- `localStorage` also holds `clinical.rbt.session.demo-session-*` state, and Analyze Data
+  saves reports "on this device". **Every scenario needs a fresh browser context**;
+  reusing a full `storageState` leaks data-collection state between tests.
+- `Targets mastered` is `0` for all 24 clients, so `mastered + remaining == in scope`
+  is currently unfalsifiable. See AZ-2 for the replacement assertion.
+- `/observations/v1/client/:id/behaviorplans` returns 500 for all 24 clients.
+- `auth/login` and `auth/refresh-token` require an `x-application-key` header.
+  Fetch it from `/runtime-config.json`; never commit it.
+- An unauthenticated API call returns **401**.
+- `staff-role` leaks `apiKey` and `password` fields — see the Unit 1 note.
+- The five per-program endpoints return **three different shapes**. Only `targets` and
+  `objectives` use the paged envelope. See the PRG-3 note.
+- **Refresh tokens are single-use, and the app spends them on its own.** Any scenario that
+  exercises refresh must sign in for itself (`acquireAuth(browser, true)`), because earlier
+  page loads in the run will have rotated the shared one. This surfaced the moment Unit 4
+  was added: `analyze-data` sorts before `auth`, so fifteen extra page loads happened first
+  and AUTH-2 began failing with 401. Scenario order should never decide a result.
+- The Analyze Data chart is **Highcharts SVG**, not a canvas, despite the
+  `clinical-chart-canvas` testid. Read labels with `textContent`; Playwright's `innerText`
+  returns undefined for SVG `<text>`.
+- Summary tiles show `--` until the report resolves. `AnalyzeDataPage.expectLoaded` waits
+  for a digit rather than letting each assertion race the load.
+
+### Shared environment — dev2 is written to while we run
+
+dev2 is not ours alone. Another automated suite creates programs on the same clients as we
+test, roughly hourly. On client `892745` we observed `ZZZ-E2E-<epoch>` programs (ids 255–259,
+domain `E2EDomain`) created at 00:27, 03:05, 07:02, 07:56 and 08:10 UTC on 2026-08-27, plus a
+`ZZZ-AUDIT-DELETE-ME` program under domain `AuditDomain`. The domain list for that client also
+carries junk values: `Test`, `AuditDomain`, `E2EDomain` and a misspelled `identificaion`.
+
+This caused a genuine intermittent failure: PRG-8 read the programs API, then a new program was
+created, then the rail rendered with one more entry than the snapshot expected. The test was
+right to complain — the expectation was simply stale by a few seconds.
+
+Consequences, applied throughout:
+
+- **Never hold the UI to a snapshot taken earlier in the run.** Rail comparisons re-read the
+  programs API on every poll and pass as soon as UI and API agree (`expectRailToMatch`).
+- **Never assert exact counts** of clients, programs or targets — only relationships.
+- Two runs passing is not proof of stability here; a run can pass because nothing was written
+  during its two-minute window.
+
+**Decided: we do not pin away from client `892745`.** Exercising the client that other teams
+churn is the stronger signal, and the re-read-on-poll approach handles concurrent writes. The
+cost is that Analyze Data aggregates over the junk programs too, so its assertions must be
+relationships rather than expected values.
 
 ## Units of work (AIDLC bolts)
 
-Construction proceeds one unit per bolt, in this order.
+Construction proceeds one unit per bolt, in this order. Unit 0 gates everything else.
+
+### Unit 0 — Foundations  `@preflight`
+
+Not user-facing tests; the harness the rest depends on. No unit below starts until this is green.
+
+| ID | Item | Priority | Status |
+|----|------|----------|--------|
+| FND-1 | `BeforeAll` drives `/temp-dev-login` once and lifts the session from `localStorage` (D1) — `support/auth.ts` | P0 | ☑ |
+| FND-2 | Preflight reachability check on both origins, failing with an actionable message (D5) — `support/preflight.ts` | P0 | ☑ |
+| FND-3 | Runtime data resolver: pick a client **by capability** (has ≥1 program with ≥1 target), never by ID (D2) — `support/testData.ts` | P0 | ☑ |
+| FND-4 | Page Objects on real testids: `AppShell`, `ClientsPage`, `ClientWorkspace`, `AnalyzeDataPage`, `BehaviorSupportPage` | P0 | ☑ |
+| FND-5 | Fresh browser context per scenario, seeded with the auth key only; asserts no demo-session bleed | P0 | ☑ |
+| FND-6 | Repo gaps closed: `scripts/report.js` added, `@wip` gating keeps undefined-step features out of the default run | P0 | ☑ |
+| FND-7 | Credential fields scrubbed from responses before tracing (D7), verified against a written trace by `npm run verify:scrub` | P0 | ☑ |
+
+Verified by `features/preflight/foundations.feature` — 5 scenarios, green twice
+consecutively, plus a negative check that an unreachable API host aborts the run in
+seconds with a named host and a VPN hint rather than cascading timeouts.
+
+Two findings worth carrying forward. The app does **not** create `clinical.rbt.*`
+localStorage entries on its own, so FND-5's isolation assertion is meaningful rather
+than vacuous. And an unauthenticated API call returns **401**, which pre-confirms the
+expected status for NEG-1.
 
 ### Unit 1 — Authentication  `@auth`
 
+Built in `features/auth/authentication.feature`. From this unit onward features are
+filed by **feature area, not test type** — the tags already carry the type, and a unit
+spanning `@api` and `@ui` should live in one file.
+
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
-| AUTH-1 | API login returns a token and 200 | @api | P0 | ☐ |
-| AUTH-2 | Refresh-token succeeds after login | @api | P1 | ☐ |
-| AUTH-3 | UI login via temp-dev-login lands on /clients | @ui @smoke | P0 | ☐ |
-| AUTH-4 | staff-role returns current user with a role | @api | P1 | ☐ |
+| AUTH-1 | The issued session is well formed: both tokens present, expiry in the future, refresh outliving access | @api @smoke | P0 | ☑ |
+| AUTH-2 | A refresh token exchanges for a complete new session, with a different access token the API accepts | @api | P1 | ☑ |
+| AUTH-3 | The preview sign-in lands an unauthenticated visitor on `/clients` | @ui @smoke | P0 | ☑ |
+| AUTH-4 | `staff-role` names a role, a user and a numeric staff member id | @api | P1 | ☑ |
+| AUTH-5 | A protected client record deep link is closed to an unauthenticated visitor, with no client name rendered | @ui @negative | P1 | ☑ |
+
+AUTH-5 deliberately differs from the superficially similar foundations scenario: that
+one guards the harness's context isolation, this one asserts the product refuses a
+deep link to a client record and leaks no name while doing so. It passes.
+
+**Contract correction.** Both `auth/login` and `auth/refresh-token` require an
+`x-application-key` header and return 401 without it — the crawl captured this, and
+the drafted `ClinicalApi.login()` had it wrong twice over (it sent `userName` rather
+than `username`, and put the key in the body). The key is published by the app's own
+`/runtime-config.json`, so `support/runtimeConfig.ts` fetches it at runtime and
+nothing is stored in the repo.
+
+**Security finding — open against the app.** `GET /accounts/v1/members/me/staff-role`
+returns the current user's `apiKey` (36 chars) and `password` (44 chars) to the
+browser alongside their profile. To be raised with the app team verbally; no separate
+defect note written. A candidate regression test — "staff-role returns no credential
+fields" — is **not built**, because asserting it today would fail by design.
+
+Mitigated on our side by D7. The first implementation used `route.fetch()`, which
+passed the browser-level assertion while the written trace still held the real
+values; the fix routes the upstream request through an APIRequestContext outside the
+traced browser context. `npm run verify:scrub` captures a real trace and greps the
+zip, so the control cannot silently break again. The dev API key was exposed in
+terminal output during that investigation and should be rotated.
 
 ### Unit 2 — Clients list  `@clients`
 
+Built in `features/clients/clients.feature`.
+
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
-| CLI-1 | Clients endpoint returns valid paged envelope | @api | P0 | ☐ |
-| CLI-2 | Each client item has required fields | @api | P1 | ☐ |
-| CLI-3 | Clients page renders a non-empty client list | @ui @smoke | P0 | ☐ |
-| CLI-4 | Selecting a client opens its Skills Programs page | @ui | P1 | ☐ |
-| CLI-5 | Clients page fires the expected XHRs | @network | P2 | ☐ |
+| CLI-1 | Clients endpoint returns a coherent paged envelope; paging arithmetic is self-consistent (D2: no fixed count) | @api @smoke | P0 | ☑ |
+| CLI-2 | Every client item has a numeric id, both names, a client number and a boolean active flag | @api | P1 | ☑ |
+| CLI-3 | The page lists **exactly** the client ids the API returned — set equality, not a count | @ui @smoke | P0 | ☑ |
+| CLI-4 | Opening a client lands on their workspace and the switcher names them | @ui | P0 | ☑ |
+| CLI-5 | Name search narrows to matching rows; every remaining row contains the term | @ui | P1 | ☑ |
+| CLI-5b | An unmatched name search empties the list | @ui | P1 | ☑ |
+| CLI-6 | Client-number search narrows to exactly the one client | @ui | P1 | ☑ |
+| CLI-7 | The client switcher navigates to the chosen client's record | @ui | P1 | ☑ |
+| CLI-8 | The clients page fires runtime-config, staff-role and clients calls, and nothing fails | @network | P2 | ☑ |
+| CLI-9 | Every row's status agrees with the API `isActive` flag for that client | @ui | P2 | ☑ |
+
+CLI-3 compares id sets rather than counts, so it fails on a wrong client as well as
+a missing one — which a count comparison would not catch.
+
+**Behaviour confirmed while building.** Name search is a case-insensitive substring
+match, filtered client-side with no request fired. An unmatched search empties the
+table but shows no "no results" message, only bare column headers — a minor UX gap,
+not a defect. The client switcher is a PrimeNG `p-select` whose overlay is appended
+to `body`, so its options are addressed at page level; selecting one navigates to
+`/clients/:id`.
+
+> **Open question still standing.** The page is headed "View and select active
+> clients" yet lists clients whose status renders as Inactive. CLI-9 passes, so the
+> status column is honest and the API agrees with it — the inconsistency is between
+> the heading and the unfiltered list. Confirm whether the copy or the filter is
+> wrong; no test asserts either way today.
 
 ### Unit 3 — Client programs  `@programs`
 
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
-| PRG-1 | Programs endpoint returns items for a client | @api | P1 | ☐ |
-| PRG-2 | program-library returns the template catalog | @api | P2 | ☐ |
-| PRG-3 | targets / objectives / mastery-criteria return 200 | @api | P1 | ☐ |
+| PRG-1 | Programs endpoint returns a valid envelope; every program has id, title and active flag | @api | P1 | ☑ |
+| PRG-2 | `program-library` returns the template catalog envelope | @api | P2 | ☑ |
+| PRG-3a | `targets` and `objectives` return 200 with a paged envelope | @api | P1 | ☑ |
+| PRG-3b | `mastery-criteria` returns `{programId, phases[]}` naming the requested program | @api | P1 | ☑ |
+| PRG-3c | `target-groups` returns a bare array, not an envelope | @api | P1 | ☑ |
+| PRG-3d | `data-collection` returns `{programId, method, prompts[]}` naming the requested program | @api | P1 | ☑ |
+| PRG-4 | `automastery-evaluations?status=flagged` returns only items with status `flagged` | @api | P1 | ☑ |
+| PRG-5 | Rail's Current tab lists exactly the client's **active** programs | @ui | P1 | ☑ |
+| PRG-6 | Selecting a program shows its targets, goals and settings panels | @ui | P1 | ☑ |
+| PRG-7 | Current / Inactive tabs partition the program set — disjoint and complete | @ui | P2 | ☑ |
+| PRG-8 | Domain filter narrows the rail to exactly that domain; clearing it restores the full set | @ui | P2 | ☑ |
+
+**PRG-3 was wrong as planned.** It assumed all five per-program endpoints share the paged
+envelope. Only `targets` and `objectives` do. `mastery-criteria` and `data-collection` return
+program-scoped documents, and `target-groups` returns a bare JSON array. Asserting a generic
+envelope across all five would have failed on three of them — or, worse, passed vacuously
+against `body.items ?? []`. It is split into PRG-3a–d, each asserting the real shape.
+
+**PRG-5 was also wrong as planned.** The rail does not list "the programs the API returned":
+for the crawled client the API returns 8 programs and the Current tab shows 1. The tabs split on
+the `active` boolean — Current holds `active: true`, Inactive the rest — which PRG-7 verifies is
+an exact partition.
+
+**The rail comparisons re-read the API on every poll.** See "Shared environment" below.
 
 ### Unit 4 — Analyze Data  `@analyze-data`
 
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
-| AZ-1 | Analyze-data page shows the three summary cards | @ui | P1 | ☐ |
-| AZ-2 | mastered + remaining equals in-scope | @ui | P1 | ☐ |
-| AZ-3 | "Mastered targets by skill area" chart renders | @ui | P2 | ☐ |
-| AZ-4 | Pending mastery determinations list renders | @ui | P2 | ☐ |
-| AZ-5 | Date-range chips are present and selectable | @ui | P2 | ☐ |
-| AZ-6 | Page fires targets + automastery-evaluations XHRs | @network | P2 | ☐ |
+| AZ-1 | The three summary tiles render with non-negative numbers | @ui | P1 | ☑ |
+| AZ-2 | **Revised.** `Targets in scope` equals the total targets across every program, and `mastered + remaining == in scope` holds as a secondary check | @ui @api | P1 | ☑ |
+| AZ-3 | Chart renders a value axis, and its categories are exactly the client's distinct program domains; the summary's "across N skill areas" matches that count | @ui @api | P2 | ☑ |
+| AZ-4 | Review rows equal the flagged automastery evaluations across all programs, and every row sits under a heading naming its own program | @ui @api | P2 | ☑ |
+| AZ-5 | Each of the five date-range chips becomes the sole `aria-pressed` selection | @ui | P2 | ☑ |
+| AZ-6 | Loading the report fires a `targets` XHR for every program, plus automastery evaluation calls | @network | P2 | ☑ |
+| AZ-6b | Every per-program request the report makes succeeds | @network | P2 | ✖ **DEF-4** |
+| AZ-7 | Grouping select changes the chart grouping | @ui @api | P2 | ✖ **DEF-1** |
+| AZ-7b | Grouping select offers Domain, Category and Area | @ui | P2 | ☑ |
+| AZ-8 | Mode tabs switch the view — the chosen panel shows and the other two are absent | @ui | P2 | ☑ |
+| AZ-9 | *Added.* Custom Graph's "N available in this scope" equals the client's program count | @ui @api | P2 | ☑ |
 
-### Unit 5 — Negative & error cases  `@negative`
+> AZ-2 rationale: the original assertion cannot fail while `mastered` is 0 across the
+> whole dataset. Cross-checking the tile against the API makes it a real reconciliation.
+> We now know *why* mastered is always 0 — every mastered target has an empty
+> `statusHistory`, so the report has no mastery date to place in any window. See AN-1
+> in `defects.md`.
+
+> **AZ-7 is a real defect (DEF-1).** Choosing `Category` updates the select's label but
+> leaves the chart grouped by Domain — Highcharts' own description still reads
+> "X axis displaying Domain". The scenario asserts the *correct* behaviour and is tagged
+> `@bug`, so it is excluded from `npm test` and will pass once fixed. AZ-7b keeps the
+> control itself under test meanwhile.
+
+> AZ-3 note: the chart plots the junk domains other suites create (`E2EDomain`,
+> `AuditDomain`, `Test`, `identificaion`) alongside real ones. The assertion compares
+> against whatever the API reports rather than a curated list, so it stays true.
+
+### Unit 5 — Behavior Support  `@behavior-support`
 
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
-| NEG-1 | behaviorplans endpoint returns 500 (known bug) | @api @bug | P1 | ☐ |
-| NEG-2 | Unauthenticated API call is rejected | @api | P1 | ☐ |
-| NEG-3 | Invalid client ID handled gracefully in UI | @ui | P2 | ☐ |
+| BS-1 | Plan rail offers Current and Inactive tabs, each with a count, and the novel behaviors panel reports a count | @ui | P1 | ☑ |
+| BS-2 | `behaviorplans` returns the client's plans | @api | P1 | ✖ **DEF-2** |
+| BS-3 | *Added.* The page never shows "no behavior plans yet" and "data is unavailable" together | @ui | P1 | ✖ **DEF-5** |
+
+> **BS-1 was re-scoped.** The plan asserted `behavior-support-unavailable` is shown, which
+> pins today's defect as the contract: it would go red the day the backend is fixed. Under
+> the revised D3 the honest split is a normal scenario for what is true either way (the
+> rail and panel render with counts), plus `@bug` scenarios for the endpoint (BS-2) and for
+> the contradictory messaging (BS-3).
+
+> The "error masked as empty state" behaviour the original note asked us to flag separately
+> is now BS-3 and DEF-5 — an executable assertion rather than a note, since the invariant
+> "only one of those two messages can be true" holds whichever way the endpoint behaves.
+
+> Timing note: the unavailable notice appears only after the app's retry fails.
+> `BehaviorSupportPage.goto` waits until the app stops re-requesting; without that, BS-3
+> passed vacuously against a half-drawn page.
+
+### Unit 6 — Negative & error cases  `@negative`
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| NEG-1 | API call without a token is rejected with 401 | @api | P1 | ☑ |
+| NEG-2 | API call with a malformed token is rejected with 401 | @api | P2 | ☑ |
+| NEG-3 | Unknown client ID in the URL falls back to the clients list | @ui | P2 | ☑ |
+| NEG-4 | Unknown route falls back to the clients list | @ui | P2 | ☑ |
+| NEG-5 | *Added.* Programs for a client ID that does not exist return 200 with no items | @api | P2 | ☑ |
+
+> **NEG-4 was re-scoped.** The plan expected a not-found state. There isn't one: the app
+> redirects any unknown route to `/clients`. That is graceful — no crash, no blank shell,
+> which was the point of the row — so the scenario asserts the real behaviour. Whether a
+> 404 view *should* exist is a product question, not a test failure.
+
+> NEG-5 note: `/clients/<missing id>/programs` answers **200 with an empty envelope**, not
+> 404, so the API cannot distinguish "no such client" from "client with no programs". The
+> scenario records the behaviour; see AN-4 in `defects.md` for the open question.
+
+> The missing client ID is derived as one past the highest real id rather than hardcoded,
+> so it cannot collide as the data changes (D2/D6).
 
 ## Explicitly out of scope (for now)
 
-Staff, Supervision, Settings, Training, Reporting, Template, Schedule, Notifications,
-Billing — present in the nav but not crawled. Add as new units only after Phase 1 sign-off.
+**Write flows (D4)** — add target, confirm/dismiss mastery, save report, record data.
+These are the highest-risk surfaces in the app and should be the first new unit after
+Phase 1 sign-off.
+
+**Unvisited nav areas** — Staff, Supervision, Settings, Training, Reporting, Template,
+Schedule, Notifications, Billing. Present in the nav but never crawled.
+
+**CI configuration (D5)** — deferred to Phase 3 pending a runner decision.
