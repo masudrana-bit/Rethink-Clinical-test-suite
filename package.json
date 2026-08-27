@@ -1,37 +1,21 @@
 {
-  "name": "rethink-clinical-test-suite",
-  "version": "0.0.0",
+  "name": "rethink-clinical-e2e",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "description": "Clinical E2E test suite governed by the AIDLC process in aidlc-docs/.",
+  "description": "Playwright + Cucumber (BDD) test automation for Rethink Clinical, built via AIDLC.",
   "scripts": {
-    "validate:traceability": "node scripts/validate-traceability.mjs",
-    "validate:traceability:gate": "node scripts/validate-traceability.mjs --gate",
-    "check:datamode": "node scripts/check-data-mode.mjs",
-    "api:readiness": "node scripts/api-readiness.mjs",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check",
-    "lint:fix": "biome check --write",
-    "format": "biome format --write",
-    "bddgen": "bddgen",
-    "test": "bddgen && playwright test --grep-invert @known-defect",
-    "test:p0": "bddgen && playwright test --grep @P0 --grep-invert @known-defect",
-    "test:defects": "bddgen && playwright test --grep @known-defect",
-    "test:dev": "cross-env ENV=dev npm test",
-    "test:dev2": "cross-env ENV=dev2 npm test",
-    "ui": "node scripts/watch-bdd.mjs --ui",
-    "watch:bdd": "node scripts/watch-bdd.mjs",
-    "report": "playwright show-report",
-    "report:cucumber": "node scripts/open-cucumber-report.mjs"
+    "test": "cucumber-js",
+    "test:smoke": "cucumber-js --tags @smoke",
+    "test:api": "cucumber-js --tags @api",
+    "test:ui": "cucumber-js --tags @ui",
+    "report": "node scripts/report.js"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.10",
-    "@playwright/test": "^1.62.1",
-    "@types/node": "^26.2.0",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
-    "cross-env": "^10.1.0",
-    "playwright-bdd": "^9.2.0",
-    "typescript": "^7.0.2"
+    "@cucumber/cucumber": "^11.0.0",
+    "@playwright/test": "^1.47.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
   }
 }
