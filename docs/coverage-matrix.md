@@ -2,6 +2,9 @@
 
 > Produced in the **Inception** phase (Mob Elaboration). Every automated test must
 > trace back to a row here. Review and prune with the team before Construction.
+>
+> Formal test-case write-ups (objective, steps, expected result) for every covered
+> case: [`test-cases.md`](./test-cases.md) · PDF: [`test-cases.pdf`](./test-cases.pdf).
 
 ## Legend
 

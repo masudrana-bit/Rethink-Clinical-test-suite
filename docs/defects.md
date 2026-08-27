@@ -7,6 +7,8 @@ Scenarios tagged `@bug` assert the **correct** behaviour and are excluded from t
 default run (`npm test`). Run them with `npx cucumber-js -p bugs`; they should start
 passing once the defect is fixed, at which point the tag comes off.
 
+Formal bug reports for those cases: [`bug-report.md`](./bug-report.md) · PDF: [`bug-report.pdf`](./bug-report.pdf).
+
 ---
 
 ## DEF-1 — The chart grouping select does not regroup the chart
