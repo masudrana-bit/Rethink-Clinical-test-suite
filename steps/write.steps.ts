@@ -6,6 +6,7 @@ import {
   suiteResourceName,
   trackCreatedTarget,
 } from '../support/writeGuard';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 
 /** Phase 2b — WR-1 … WR-6. */
 
@@ -16,7 +17,7 @@ When(
     const description = suiteResourceName('target');
     this.data.suiteTargetDescription = description;
     const res = await this.clinical.createTarget(client.id, program.id, description);
-    this.data.lastResponseStatus = res.status();
+    recordResponseMetadata(this, res, 'POST');
     this.data.lastResponseBody = await res.json().catch(() => undefined);
     const id = this.data.lastResponseBody?.id;
     if (typeof id === 'number') {

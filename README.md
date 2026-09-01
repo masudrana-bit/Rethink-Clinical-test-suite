@@ -33,9 +33,11 @@ Other scripts: `npm run test` (all), `npm run test:api`, `npm run test:ui`.
 
 ## Allure report
 
-Every npm test profile writes fresh results to `allure-results/`. Each Cucumber
-step includes a viewport screenshot, and the scenario's final attachment is its
-full Playwright execution video.
+Every npm test profile writes fresh results to `allure-results/`. Each executed
+`@ui` step includes a viewport screenshot, and the scenario's final attachment
+is its full Playwright execution video. API-only scenarios avoid visual noise:
+they attach a redacted request/response diagnostic and assertion failures show
+the method, URL, status, content type, and safe body preview.
 
 ```bash
 npm run test:smoke

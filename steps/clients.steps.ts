@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { resolveFixture, ClientRecord } from '../support/testData';
 import { NetworkRecorder } from '../support/network';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 
 /** Unit 2 — CLI-1 to CLI-9. */
 
@@ -17,8 +18,7 @@ interface ClientsEnvelope {
 async function clientsFromApi(world: CustomWorld): Promise<ClientsEnvelope> {
   if (!world.data.clientsEnvelope) {
     const res = await world.clinical.clients();
-    world.data.lastResponseStatus = res.status();
-    world.data.lastResponseHeaders = res.headers();
+    recordResponseMetadata(world, res);
     world.data.clientsEnvelope = await res.json();
   }
   // Shared envelope assertions in common.steps.ts read this.

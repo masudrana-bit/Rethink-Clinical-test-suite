@@ -17,6 +17,7 @@ import { preflight } from './preflight';
 import { acquireAuth, seedAuth, HarvestedAuth } from './auth';
 import { installResponseScrubbing } from './scrub';
 import { requireWriteClientId } from './writeGuard';
+import { apiDiagnostic } from './apiDiagnostics';
 
 setDefaultTimeout(60_000);
 
@@ -56,16 +57,24 @@ AfterAll(async function () {
 Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   const signedOut = scenario.pickle.tags.some((t) => t.name === '@signed-out');
   const isWrite = scenario.pickle.tags.some((t) => t.name === '@write');
+  const isUi = scenario.pickle.tags.some((t) => t.name === '@ui');
+  const isApi = scenario.pickle.tags.some((t) => t.name === '@api');
   if (isWrite) requireWriteClientId();
 
+  this.data.isUiScenario = isUi;
+  this.data.isApiScenario = isApi;
   this.browser = browser;
   this.auth = auth;
   this.context = await browser.newContext({
     baseURL: config.baseUrl,
-    recordVideo: {
-      dir: 'test-results/videos',
-      size: { width: 1280, height: 720 },
-    },
+    ...(isUi
+      ? {
+          recordVideo: {
+            dir: 'test-results/videos',
+            size: { width: 1280, height: 720 },
+          },
+        }
+      : {}),
   });
   await installResponseScrubbing(this.context, scrubFetcher);
   if (!signedOut) {
@@ -79,11 +88,26 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 });
 
 /**
- * Allure associates Cucumber attachments emitted by this hook with the step
- * that just completed. Capture successful and failed steps alike.
+ * UI steps get visual evidence. API-only scenarios instead get one safe,
+ * structured request/response diagnostic whenever a new response is recorded.
  */
 AfterStep(async function (this: CustomWorld, step: ITestStepHookParameter) {
-  if (!this.page || this.page.isClosed()) return;
+  if (this.data.isApiScenario && !this.data.isUiScenario) {
+    if (this.data.lastResponseStatus === undefined) return;
+
+    const diagnostic = apiDiagnostic(this);
+    const signature = JSON.stringify(diagnostic);
+    if (signature === this.data.lastAttachedApiDiagnostic) return;
+    this.data.lastAttachedApiDiagnostic = signature;
+
+    await this.attach(JSON.stringify(diagnostic, null, 2), {
+      mediaType: 'application/json',
+      fileName: `${safeArtifactName(step.pickleStep.text) || 'api-response'}.json`,
+    });
+    return;
+  }
+
+  if (!this.data.isUiScenario || !this.page || this.page.isClosed()) return;
 
   const name = safeArtifactName(step.pickleStep.text) || 'step';
   try {
@@ -125,12 +149,14 @@ After(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
     fs.mkdirSync('reports', { recursive: true });
     const safe = safeArtifactName(scenario.pickle.name).slice(0, 60);
     await this.context.tracing.stop({ path: `reports/trace-${safe}.zip` });
-    await this.page.screenshot({ path: `reports/fail-${safe}.png`, fullPage: true });
+    if (this.data.isUiScenario) {
+      await this.page.screenshot({ path: `reports/fail-${safe}.png`, fullPage: true });
+    }
   } else {
     await this.context.tracing.stop();
   }
 
-  const video = this.page.video();
+  const video = this.data.isUiScenario ? this.page.video() : null;
   await this.context.close();
 
   if (video) {

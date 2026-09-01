@@ -4,12 +4,12 @@ import { APIResponse } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { ProgramRecord } from '../support/testData';
 import { fixture, fetchPrograms } from '../support/clientFacts';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 
 /** Unit 3 — PRG-1 to PRG-8. */
 
 async function record(world: CustomWorld, res: APIResponse): Promise<void> {
-  world.data.lastResponseStatus = res.status();
-  world.data.lastResponseHeaders = res.headers();
+  recordResponseMetadata(world, res);
   world.data.lastResponseBody = await res.json().catch(() => undefined);
 }
 
@@ -118,7 +118,7 @@ When(
       const res = await this.clinical.automasteryEvaluations(f.client.id, program.id, 'flagged');
       const body = await res.json();
       if ((body?.items ?? []).length > 0) {
-        this.data.lastResponseStatus = res.status();
+        recordResponseMetadata(this, res);
         this.data.lastResponseBody = body;
         this.data.flaggedProgramId = program.id;
         return;

@@ -1,6 +1,7 @@
 import { When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 import { acquireAuth, refreshSession, SessionTokens } from '../support/auth';
 import { resolveFixture } from '../support/testData';
 import { ClinicalApi } from '../api/clinicalApi';
@@ -71,7 +72,7 @@ Then('they arrive on the clients page', async function (this: CustomWorld) {
 
 When("I request the current user's staff role", async function (this: CustomWorld) {
   const res = await this.clinical.staffRole();
-  this.data.lastResponseStatus = res.status();
+  recordResponseMetadata(this, res);
   this.data.lastResponseBody = await res.json().catch(() => ({}));
 });
 

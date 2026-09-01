@@ -2,6 +2,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { ClientRecord } from '../support/testData';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 
 /** Unit 6 — NEG-1 to NEG-5. */
 
@@ -22,7 +23,7 @@ Given('a client id that does not exist', async function (this: CustomWorld) {
 
 When("I request that client's programs", async function (this: CustomWorld) {
   const res = await this.clinical.programs(this.data.missingClientId as number);
-  this.data.lastResponseStatus = res.status();
+  recordResponseMetadata(this, res);
   this.data.lastResponseBody = await res.json().catch(() => undefined);
 });
 

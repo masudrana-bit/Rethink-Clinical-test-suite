@@ -2,6 +2,7 @@ import { When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { fixture } from '../support/clientFacts';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
 
 /** Unit 5 — BS-1 to BS-3. */
 
@@ -32,7 +33,7 @@ Then('the novel behaviors panel reports a count', async function (this: CustomWo
 When("I request the resolved client's behavior plans", async function (this: CustomWorld) {
   const { client } = await fixture(this);
   const res = await this.clinical.behaviorPlans(client.id);
-  this.data.lastResponseStatus = res.status();
+  recordResponseMetadata(this, res);
   this.data.lastResponseBody = await res.json().catch(() => undefined);
 });
 
