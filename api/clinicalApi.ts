@@ -1,5 +1,6 @@
 import { APIRequestContext, APIResponse } from '@playwright/test';
 import { config } from '../support/config';
+import { recordApiHit } from '../support/apiCallLog';
 
 /**
  * Thin typed wrapper over the Rethink Clinical API.
@@ -15,6 +16,12 @@ export class ClinicalApi {
 
   private headers(): Record<string, string> {
     return this.token ? { Authorization: `Bearer ${this.token}` } : {};
+  }
+
+  private async track(method: string, response: Promise<APIResponse>): Promise<APIResponse> {
+    const res = await response;
+    recordApiHit({ method, url: res.url(), status: res.status(), source: 'client' });
+    return res;
   }
 
   /** Both auth endpoints 401 without x-application-key, per the crawled headers. */
@@ -34,56 +41,73 @@ export class ClinicalApi {
    * for the day a real service account exists.
    */
   async login(username: string, password: string): Promise<APIResponse> {
-    return this.api.post(`${config.authBaseUrl}/login`, {
+    return this.track('POST', this.api.post(`${config.authBaseUrl}/login`, {
       headers: this.authEndpointHeaders(),
       data: { username, password },
-    });
+    }));
   }
 
   async refreshToken(refreshToken: string): Promise<APIResponse> {
-    return this.api.post(`${config.authBaseUrl}/refresh-token`, {
+    return this.track('POST', this.api.post(`${config.authBaseUrl}/refresh-token`, {
       headers: this.authEndpointHeaders(),
       data: { refreshToken },
-    });
+    }));
   }
 
   staffRole(): Promise<APIResponse> {
-    return this.api.get(`${config.apiBaseUrl}/accounts/v1/members/me/staff-role`, {
-      headers: this.headers(),
-    });
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}/accounts/v1/members/me/staff-role`, {
+        headers: this.headers(),
+      }),
+    );
   }
 
   clients(page = 1, pageSize = 200): Promise<APIResponse> {
-    return this.api.get(
-      `${config.apiBaseUrl}/clinical/v1/clients?page=${page}&pageSize=${pageSize}`,
-      { headers: this.headers() },
+    return this.track(
+      'GET',
+      this.api.get(
+        `${config.apiBaseUrl}/clinical/v1/clients?page=${page}&pageSize=${pageSize}`,
+        { headers: this.headers() },
+      ),
     );
   }
 
   programs(clientId: number): Promise<APIResponse> {
-    return this.api.get(
-      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs`,
-      { headers: this.headers() },
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs`, {
+        headers: this.headers(),
+      }),
     );
   }
 
   targets(clientId: number, programId: number): Promise<APIResponse> {
-    return this.api.get(
-      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets`,
-      { headers: this.headers() },
+    return this.track(
+      'GET',
+      this.api.get(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets`,
+        { headers: this.headers() },
+      ),
     );
   }
 
   programLibrary(): Promise<APIResponse> {
-    return this.api.get(`${config.apiBaseUrl}/clinical/v1/program-library`, {
-      headers: this.headers(),
-    });
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}/clinical/v1/program-library`, {
+        headers: this.headers(),
+      }),
+    );
   }
 
   private programScoped(clientId: number, programId: number, suffix: string): Promise<APIResponse> {
-    return this.api.get(
-      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/${suffix}`,
-      { headers: this.headers() },
+    return this.track(
+      'GET',
+      this.api.get(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/${suffix}`,
+        { headers: this.headers() },
+      ),
     );
   }
 
@@ -116,9 +140,11 @@ export class ClinicalApi {
   }
 
   behaviorPlans(clientId: number): Promise<APIResponse> {
-    return this.api.get(
-      `${config.apiBaseUrl}/observations/v1/client/${clientId}/behaviorplans`,
-      { headers: this.headers() },
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}/observations/v1/client/${clientId}/behaviorplans`, {
+        headers: this.headers(),
+      }),
     );
   }
 
@@ -131,12 +157,15 @@ export class ClinicalApi {
     programId: number,
     description: string,
   ): Promise<APIResponse> {
-    return this.api.post(
-      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets`,
-      {
-        headers: { ...this.headers(), 'Content-Type': 'application/json' },
-        data: { description },
-      },
+    return this.track(
+      'POST',
+      this.api.post(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets`,
+        {
+          headers: { ...this.headers(), 'Content-Type': 'application/json' },
+          data: { description },
+        },
+      ),
     );
   }
 
@@ -144,9 +173,12 @@ export class ClinicalApi {
    * Observed 428 without If-Match; 204 with `If-Match: *`.
    */
   deleteTarget(clientId: number, programId: number, targetId: number): Promise<APIResponse> {
-    return this.api.delete(
-      `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets/${targetId}`,
-      { headers: { ...this.headers(), 'If-Match': '*' } },
+    return this.track(
+      'DELETE',
+      this.api.delete(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/targets/${targetId}`,
+        { headers: { ...this.headers(), 'If-Match': '*' } },
+      ),
     );
   }
 }

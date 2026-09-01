@@ -4,6 +4,7 @@ import { CustomWorld } from '../support/world';
 import { ClinicalApi } from '../api/clinicalApi';
 import { config, hasCredentials } from '../support/config';
 import { apiAssertionMessage, recordResponseMetadata } from '../support/apiDiagnostics';
+import { recordApiHit } from '../support/apiCallLog';
 
 /**
  * Starter API steps. These are enough to run AUTH-1, CLI-1, NEG-1.
@@ -40,6 +41,7 @@ When('I GET {string}', async function (this: CustomWorld, path: string) {
     ? { Authorization: `Bearer ${this.data.token}` }
     : {};
   const res = await this.api.get(url, { headers });
+  recordApiHit({ method: 'GET', url: res.url(), status: res.status(), source: 'client' });
   recordResponseMetadata(this, res);
   this.data.lastResponseBody = await res.json().catch(() => ({}));
 });

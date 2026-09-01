@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const dir = 'reports';
 const report = path.join(dir, 'cucumber-report.html');
+const apiReport = path.join('docs', 'api-endpoint-report.md');
 
 if (!fs.existsSync(report)) {
   console.error(`No report at ${report}. Run \`npm test\` first.`);
@@ -17,6 +18,9 @@ const artifacts = fs
   .sort();
 
 console.log(`HTML report: ${path.resolve(report)}`);
+if (fs.existsSync(apiReport)) {
+  console.log(`API endpoint report: ${path.resolve(apiReport)}`);
+}
 
 if (artifacts.length === 0) {
   console.log('Failure artifacts: none.');

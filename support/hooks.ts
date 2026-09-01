@@ -18,6 +18,12 @@ import { acquireAuth, seedAuth, HarvestedAuth } from './auth';
 import { installResponseScrubbing } from './scrub';
 import { requireWriteClientId } from './writeGuard';
 import { apiDiagnostic } from './apiDiagnostics';
+import {
+  recordApiHit,
+  resetApiCallLog,
+  setApiLogScenario,
+  writeApiEndpointReport,
+} from './apiCallLog';
 
 setDefaultTimeout(60_000);
 
@@ -25,12 +31,15 @@ let browser: Browser;
 let auth: HarvestedAuth;
 /** Untraced context used to fetch responses that must be scrubbed before tracing. */
 let scrubFetcher: APIRequestContext;
+let runStartedAt = new Date();
 
 function safeArtifactName(value: string): string {
   return value.replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80);
 }
 
 BeforeAll({ timeout: 120_000 }, async function () {
+  resetApiCallLog();
+  runStartedAt = new Date();
   const reachability = await preflight();
   browser = await chromium.launch({ headless: config.headless });
   scrubFetcher = await request.newContext();
@@ -45,6 +54,8 @@ BeforeAll({ timeout: 120_000 }, async function () {
 });
 
 AfterAll(async function () {
+  const written = writeApiEndpointReport(runStartedAt);
+  console.log(`api report  ${written.join(' · ')}`);
   await browser?.close();
   await scrubFetcher?.dispose();
 });
@@ -63,6 +74,7 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 
   this.data.isUiScenario = isUi;
   this.data.isApiScenario = isApi;
+  setApiLogScenario(scenario.pickle.name);
   this.browser = browser;
   this.auth = auth;
   this.context = await browser.newContext({
@@ -84,6 +96,14 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 
   await this.context.tracing.start({ screenshots: true, snapshots: true });
   this.page = await this.context.newPage();
+  this.page.on('response', (response) => {
+    recordApiHit({
+      method: response.request().method(),
+      url: response.url(),
+      status: response.status(),
+      source: 'browser',
+    });
+  });
   this.api = await request.newContext();
 });
 

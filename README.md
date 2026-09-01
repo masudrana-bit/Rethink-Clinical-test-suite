@@ -12,6 +12,7 @@ rules/                 Steering files — the rules every AI agent obeys (load t
 docs/
   aidlc-process.md     Inception / Construction / Operations runbook
   coverage-matrix.md   Test inventory + units of work + tag taxonomy
+  api-endpoint-report.md  Regenerated each run: endpoint groups + HTTP status
 features/              Gherkin BDD scenarios (api/ and ui/)
 steps/                 Cucumber step definitions
 pages/                 Page Objects
@@ -46,6 +47,17 @@ npm run allure:open
 ```
 
 Use `npm run allure:serve` to generate and open the results in one command.
+
+## API endpoint report
+
+Each run rewrites `docs/api-endpoint-report.md` (copy also under `reports/`).
+Endpoints are grouped (Auth, Accounts, Clients, Programs, Write, Observations)
+and marked Pass / Error / Fail / Not hit from the HTTP statuses seen in that run.
+
+```bash
+npm run test:api
+# then open docs/api-endpoint-report.md
+```
 
 ## How to run the AIDLC process
 

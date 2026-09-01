@@ -5,6 +5,7 @@ test-results/
 playwright-report/
 allure-results/
 allure-report/
+docs/api-endpoint-report.md
 *.zip
 # never commit the source crawl — it contains real credentials
 output/
