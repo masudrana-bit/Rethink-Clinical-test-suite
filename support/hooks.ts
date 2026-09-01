@@ -1,5 +1,13 @@
 import {
-  Before, After, BeforeAll, AfterAll, Status, ITestCaseHookParameter, setDefaultTimeout,
+  Before,
+  After,
+  AfterStep,
+  BeforeAll,
+  AfterAll,
+  Status,
+  ITestCaseHookParameter,
+  ITestStepHookParameter,
+  setDefaultTimeout,
 } from '@cucumber/cucumber';
 import { chromium, request, APIRequestContext, Browser } from '@playwright/test';
 import * as fs from 'node:fs';
@@ -16,6 +24,10 @@ let browser: Browser;
 let auth: HarvestedAuth;
 /** Untraced context used to fetch responses that must be scrubbed before tracing. */
 let scrubFetcher: APIRequestContext;
+
+function safeArtifactName(value: string): string {
+  return value.replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+}
 
 BeforeAll({ timeout: 120_000 }, async function () {
   const reachability = await preflight();
@@ -48,7 +60,13 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 
   this.browser = browser;
   this.auth = auth;
-  this.context = await browser.newContext({ baseURL: config.baseUrl });
+  this.context = await browser.newContext({
+    baseURL: config.baseUrl,
+    recordVideo: {
+      dir: 'test-results/videos',
+      size: { width: 1280, height: 720 },
+    },
+  });
   await installResponseScrubbing(this.context, scrubFetcher);
   if (!signedOut) {
     await seedAuth(this.context, auth);
@@ -60,8 +78,30 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   this.api = await request.newContext();
 });
 
+/**
+ * Allure associates Cucumber attachments emitted by this hook with the step
+ * that just completed. Capture successful and failed steps alike.
+ */
+AfterStep(async function (this: CustomWorld, step: ITestStepHookParameter) {
+  if (!this.page || this.page.isClosed()) return;
+
+  const name = safeArtifactName(step.pickleStep.text) || 'step';
+  try {
+    const screenshot = await this.page.screenshot();
+    await this.attach(screenshot, {
+      mediaType: 'image/png',
+      fileName: `${name}.png`,
+    });
+  } catch (error) {
+    console.warn(`allure: could not capture screenshot for "${step.pickleStep.text}": ${error}`);
+  }
+});
+
 After(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
-  if (!this.context || !this.page) return;
+  if (!this.context || !this.page) {
+    await this.api?.dispose();
+    return;
+  }
 
   const created = (this.data.createdTargets ?? []) as Array<{
     clientId: number;
@@ -83,13 +123,29 @@ After(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
 
   if (scenario.result?.status === Status.FAILED) {
     fs.mkdirSync('reports', { recursive: true });
-    const safe = scenario.pickle.name.replace(/[^\w]+/g, '_').slice(0, 60);
+    const safe = safeArtifactName(scenario.pickle.name).slice(0, 60);
     await this.context.tracing.stop({ path: `reports/trace-${safe}.zip` });
     await this.page.screenshot({ path: `reports/fail-${safe}.png`, fullPage: true });
   } else {
     await this.context.tracing.stop();
   }
-  await this.page?.close();
-  await this.context?.close();
+
+  const video = this.page.video();
+  await this.context.close();
+
+  if (video) {
+    try {
+      const videoPath = await video.path();
+      const videoBuffer = await fs.promises.readFile(videoPath);
+      await this.attach(videoBuffer, {
+        mediaType: 'video/webm',
+        fileName: `${safeArtifactName(scenario.pickle.name) || 'scenario'}.webm`,
+      });
+      await fs.promises.unlink(videoPath).catch(() => undefined);
+    } catch (error) {
+      console.warn(`allure: could not attach video for "${scenario.pickle.name}": ${error}`);
+    }
+  }
+
   await this.api?.dispose();
 });

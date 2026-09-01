@@ -2,8 +2,16 @@ const common = {
   requireModule: ['ts-node/register'],
   require: ['support/**/*.ts', 'steps/**/*.ts'],
   paths: ['features/**/*.feature'],
-  format: ['progress-bar', 'html:reports/cucumber-report.html', 'summary'],
-  formatOptions: { snippetInterface: 'async-await' },
+  format: [
+    'progress-bar',
+    'html:reports/cucumber-report.html',
+    'allure-cucumberjs/reporter:reports/allure-formatter.log',
+    'summary',
+  ],
+  formatOptions: {
+    snippetInterface: 'async-await',
+    resultsDir: 'allure-results',
+  },
 };
 
 // @wip marks features drafted during Inception whose unit has not been built yet.

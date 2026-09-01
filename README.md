@@ -31,6 +31,20 @@ npm run test:smoke        # run @smoke first
 
 Other scripts: `npm run test` (all), `npm run test:api`, `npm run test:ui`.
 
+## Allure report
+
+Every npm test profile writes fresh results to `allure-results/`. Each Cucumber
+step includes a viewport screenshot, and the scenario's final attachment is its
+full Playwright execution video.
+
+```bash
+npm run test:smoke
+npm run allure:generate
+npm run allure:open
+```
+
+Use `npm run allure:serve` to generate and open the results in one command.
+
 ## How to run the AIDLC process
 
 Read `docs/aidlc-process.md`. In short:

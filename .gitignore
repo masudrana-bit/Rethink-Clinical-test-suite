@@ -3,6 +3,8 @@ node_modules/
 reports/
 test-results/
 playwright-report/
+allure-results/
+allure-report/
 *.zip
 # never commit the source crawl — it contains real credentials
 output/
