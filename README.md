@@ -52,7 +52,9 @@ Use `npm run allure:serve` to generate and open the results in one command.
 
 Each run rewrites `docs/api-endpoint-report.md` (copy also under `reports/`).
 Endpoints are grouped (Auth, Accounts, Clients, Programs, Write, Observations)
-and marked Pass / Error / Fail / Not hit from the HTTP statuses seen in that run.
+and marked ✅ Pass / ❌ Fail / ➖ Not run. The report includes group success
+rates, endpoint coverage, one failures-only view, safe backend error details,
+root-cause clusters, trace IDs, impacted scenarios, and recommended next checks.
 
 ```bash
 npm run test:api

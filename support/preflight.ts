@@ -1,6 +1,6 @@
 import { request } from '@playwright/test';
 import { config } from './config';
-import { recordApiHit } from './apiCallLog';
+import { recordApiResponseHit } from './apiCallLog';
 
 export interface PreflightResult {
   appOrigin: { url: string; status: number };
@@ -44,7 +44,7 @@ export async function preflight(): Promise<PreflightResult> {
     try {
       const appRes = await api.get(appUrl, { timeout: 20_000 });
       appStatus = appRes.status();
-      recordApiHit({ method: 'GET', url: appRes.url(), status: appStatus, source: 'client' });
+      await recordApiResponseHit(appRes, 'GET', 'client');
     } catch (cause) {
       throw unreachable('application', appUrl, cause);
     }
@@ -59,7 +59,10 @@ export async function preflight(): Promise<PreflightResult> {
     try {
       const apiRes = await api.get(apiUrl, { timeout: 20_000 });
       apiStatus = apiRes.status();
-      recordApiHit({ method: 'GET', url: apiRes.url(), status: apiStatus, source: 'client' });
+      await recordApiResponseHit(apiRes, 'GET', 'client', {
+        scenario: '(preflight reachability)',
+        expected: apiStatus < 500,
+      });
     } catch (cause) {
       throw unreachable('API gateway', apiUrl, cause);
     }

@@ -1,6 +1,6 @@
 import { APIRequestContext, APIResponse } from '@playwright/test';
 import { config } from '../support/config';
-import { recordApiHit } from '../support/apiCallLog';
+import { recordApiResponseHit } from '../support/apiCallLog';
 
 /**
  * Thin typed wrapper over the Rethink Clinical API.
@@ -20,7 +20,7 @@ export class ClinicalApi {
 
   private async track(method: string, response: Promise<APIResponse>): Promise<APIResponse> {
     const res = await response;
-    recordApiHit({ method, url: res.url(), status: res.status(), source: 'client' });
+    await recordApiResponseHit(res, method, 'client');
     return res;
   }
 

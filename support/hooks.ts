@@ -19,7 +19,8 @@ import { installResponseScrubbing } from './scrub';
 import { requireWriteClientId } from './writeGuard';
 import { apiDiagnostic } from './apiDiagnostics';
 import {
-  recordApiHit,
+  flushApiHitRecordings,
+  queueApiResponseHit,
   resetApiCallLog,
   setApiLogScenario,
   writeApiEndpointReport,
@@ -54,6 +55,7 @@ BeforeAll({ timeout: 120_000 }, async function () {
 });
 
 AfterAll(async function () {
+  await flushApiHitRecordings();
   const written = writeApiEndpointReport(runStartedAt);
   console.log(`api report  ${written.join(' · ')}`);
   await browser?.close();
@@ -70,11 +72,14 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   const isWrite = scenario.pickle.tags.some((t) => t.name === '@write');
   const isUi = scenario.pickle.tags.some((t) => t.name === '@ui');
   const isApi = scenario.pickle.tags.some((t) => t.name === '@api');
+  const allowsClientError = scenario.pickle.tags.some(
+    (t) => t.name === '@negative' || t.name === '@signed-out',
+  );
   if (isWrite) requireWriteClientId();
 
   this.data.isUiScenario = isUi;
   this.data.isApiScenario = isApi;
-  setApiLogScenario(scenario.pickle.name);
+  setApiLogScenario(scenario.pickle.name, allowsClientError);
   this.browser = browser;
   this.auth = auth;
   this.context = await browser.newContext({
@@ -97,12 +102,7 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   await this.context.tracing.start({ screenshots: true, snapshots: true });
   this.page = await this.context.newPage();
   this.page.on('response', (response) => {
-    recordApiHit({
-      method: response.request().method(),
-      url: response.url(),
-      status: response.status(),
-      source: 'browser',
-    });
+    queueApiResponseHit(response, response.request().method(), 'browser');
   });
   this.api = await request.newContext();
 });
