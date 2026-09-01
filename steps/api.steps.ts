@@ -60,6 +60,18 @@ Then('the response status is not {int}', function (this: CustomWorld, status: nu
   ).not.toBe(status);
 });
 
+Then('the response status is a client error', function (this: CustomWorld) {
+  const status = this.data.lastResponseStatus;
+  expect(
+    status,
+    apiAssertionMessage(this, 'Expected a safe HTTP 4xx rejection, not a write or server failure.'),
+  ).toBeGreaterThanOrEqual(400);
+  expect(
+    status,
+    apiAssertionMessage(this, 'Expected a safe HTTP 4xx rejection, not a write or server failure.'),
+  ).toBeLessThan(500);
+});
+
 Then('the login response status is {int}', function (this: CustomWorld, status: number) {
   expect(
     this.data.lastResponseStatus,

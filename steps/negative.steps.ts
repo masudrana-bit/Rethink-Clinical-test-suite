@@ -3,11 +3,24 @@ import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import { ClientRecord } from '../support/testData';
 import { recordResponseMetadata } from '../support/apiDiagnostics';
+import { ClinicalApi } from '../api/clinicalApi';
+import { getRuntimeConfig } from '../support/runtimeConfig';
 
 /** Unit 6 — NEG-1 to NEG-5. */
 
 Given('I have a malformed auth token', function (this: CustomWorld) {
   this.data.token = 'not-a-real-token';
+});
+
+When('I attempt login with deliberately invalid credentials', async function (this: CustomWorld) {
+  const runtime = await getRuntimeConfig(this.api);
+  const api = new ClinicalApi(this.api, undefined, runtime.authApplicationKey);
+  const res = await api.login(
+    `invalid-e2e-${Date.now()}@example.invalid`,
+    'deliberately-invalid-password',
+  );
+  recordResponseMetadata(this, res, 'POST');
+  this.data.lastResponseBody = await res.json().catch(() => undefined);
 });
 
 /**
@@ -24,6 +37,22 @@ Given('a client id that does not exist', async function (this: CustomWorld) {
 When("I request that client's programs", async function (this: CustomWorld) {
   const res = await this.clinical.programs(this.data.missingClientId as number);
   recordResponseMetadata(this, res);
+  this.data.lastResponseBody = await res.json().catch(() => undefined);
+});
+
+When('I attempt to create a target for that unknown client', async function (this: CustomWorld) {
+  const res = await this.clinical.createTarget(
+    this.data.missingClientId as number,
+    1,
+    'ZZZ-SUITE-NON-MUTATING-ENDPOINT-PROBE',
+  );
+  recordResponseMetadata(this, res, 'POST');
+  this.data.lastResponseBody = await res.json().catch(() => undefined);
+});
+
+When('I attempt to delete a target for that unknown client', async function (this: CustomWorld) {
+  const res = await this.clinical.deleteTarget(this.data.missingClientId as number, 1, 1);
+  recordResponseMetadata(this, res, 'DELETE');
   this.data.lastResponseBody = await res.json().catch(() => undefined);
 });
 

@@ -8,6 +8,7 @@
     "test:preflight": "npm run allure:clean --silent && cucumber-js -p preflight",
     "test:smoke": "npm run allure:clean --silent && cucumber-js -p smoke",
     "test:api": "npm run allure:clean --silent && cucumber-js -p api",
+    "test:endpoints": "npm run allure:clean --silent && cucumber-js -p endpoints",
     "test:ui": "npm run allure:clean --silent && cucumber-js -p ui",
     "test:write": "npm run allure:clean --silent && cucumber-js -p write",
     "typecheck": "tsc --noEmit",

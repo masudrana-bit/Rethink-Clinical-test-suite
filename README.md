@@ -57,9 +57,16 @@ rates, endpoint coverage, one failures-only view, safe backend error details,
 root-cause clusters, trace IDs, impacted scenarios, and recommended next checks.
 
 ```bash
-npm run test:api
+npm run test:api          # regular green API regression profile
+npm run test:endpoints    # all 16 catalogued endpoints, including known defects
 # then open docs/api-endpoint-report.md
 ```
+
+`test:endpoints` uses non-mutating 4xx probes for login and write routes, so it
+does not need credentials or `TEST_CLIENT_ID`. It intentionally executes the
+known `behaviorplans` defect; while that endpoint returns 500 the command exits
+non-zero and the report remains at 100% endpoint coverage with Observations
+marked ❌ Fail.
 
 ## How to run the AIDLC process
 

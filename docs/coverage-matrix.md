@@ -289,6 +289,9 @@ an exact partition.
 | NEG-3 | Unknown client ID in the URL falls back to the clients list | @ui | P2 | ☑ |
 | NEG-4 | Unknown route falls back to the clients list | @ui | P2 | ☑ |
 | NEG-5 | *Added.* Programs for a client ID that does not exist return 200 with no items | @api | P2 | ☑ |
+| NEG-6 | Invalid credentials reach the login endpoint and are rejected with 401 | @api @endpoint-coverage | P2 | ☑ |
+| NEG-7 | Target POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
+| NEG-8 | Target DELETE against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
 
 > **NEG-4 was re-scoped.** The plan expected a not-found state. There isn't one: the app
 > redirects any unknown route to `/clients`. That is graceful — no crash, no blank shell,
@@ -301,6 +304,10 @@ an exact partition.
 
 > The missing client ID is derived as one past the highest real id rather than hardcoded,
 > so it cannot collide as the data changes (D2/D6).
+
+`npm run test:endpoints` combines the regular API profile, NEG-6–8, and the
+existing `behaviorplans` `@bug` scenario. This reaches every endpoint in the
+health-report catalog without credentials, a dedicated write client, or mutation.
 
 ## Explicitly out of scope (for now)
 

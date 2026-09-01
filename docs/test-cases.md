@@ -39,9 +39,9 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 | Programs | PRG-1 … PRG-9 | 13 | Yes |
 | Analyze Data | AZ-1 … AZ-10 | 18 (2 of which `@bug`) | 16 Pass + 2 Known fail |
 | Behavior Support | BS-1 … BS-3 | 3 | 1 Pass + 2 Known fail |
-| Negative | NEG-1 … NEG-5 | 5 | Yes |
+| Negative | NEG-1 … NEG-8 | 8 | Yes |
 | Write flows | WR-1 … WR-6 | 7 | 3 Ready + 1 Known fail + 3 WIP |
-| **Total executable** | | **68** | **57 default + 11 filtered** |
+| **Total executable** | | **71** | **60 default + 11 filtered** |
 
 Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targets / PRG-3a-objectives).
 
@@ -758,6 +758,45 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Steps** | 1. Derive a missing id. 2. GET that client’s programs. |
 | **Expected result** | HTTP 200. `items` is empty. |
 | **Automation** | *An unknown client id returns an empty list rather than an error* |
+| **Status** | Pass |
+
+### NEG-6 — Invalid credentials are rejected by the login endpoint
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Exercise `/login` safely without storing or requiring a real username/password. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Test data** | Unique `.invalid` username and deliberately invalid password; runtime application key. |
+| **Steps** | 1. Read runtime config. 2. POST invalid credentials to `/login`. |
+| **Expected result** | HTTP 401; no session is created. |
+| **Automation** | *Invalid credentials are rejected by the login endpoint* |
+| **Status** | Pass |
+
+### NEG-7 — Target creation rejects an unknown client
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Exercise the target POST route without mutating a real client. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Test data** | Derived missing client id, placeholder program id, `ZZZ-SUITE-NON-MUTATING-ENDPOINT-PROBE`. |
+| **Steps** | 1. Derive a missing client id. 2. POST a target beneath that client. |
+| **Expected result** | HTTP 4xx; no resource is created. |
+| **Automation** | *Target creation rejects an unknown client without writing data* |
+| **Status** | Pass |
+
+### NEG-8 — Target deletion rejects an unknown client
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Exercise the target DELETE route without deleting real data. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Test data** | Derived missing client id with placeholder program and target ids. |
+| **Steps** | 1. Derive a missing client id. 2. DELETE a target beneath that client. |
+| **Expected result** | HTTP 4xx; no resource is deleted. |
+| **Automation** | *Target deletion rejects an unknown client without deleting data* |
 | **Status** | Pass |
 
 ### NEG-3 — An unknown client id in the URL falls back to the clients list

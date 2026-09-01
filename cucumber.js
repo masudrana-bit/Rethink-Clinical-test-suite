@@ -30,6 +30,12 @@ module.exports = {
   preflight: { ...common, tags: `@preflight and ${ready}` },
   smoke: { ...common, tags: `@smoke and ${ready}` },
   api: { ...common, tags: `@api and ${ready}` },
+  endpoints: {
+    ...common,
+    tags:
+      '(@api and not @bug and not @write and not @wip) or ' +
+      '(@api and @behavior-support and @bug)',
+  },
   ui: { ...common, tags: `@ui and ${ready}` },
   wip: { ...common, tags: '@wip' },
   bugs: { ...common, tags: '@bug and not @wip' },
