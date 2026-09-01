@@ -92,6 +92,10 @@ When('I search by name for {string}', async function (this: CustomWorld, text: s
   await this.clients.filterByName(text);
 });
 
+When('I clear the client search filters', async function (this: CustomWorld) {
+  await this.clients.clearFilters();
+});
+
 Then("every listed client's name contains the search text", async function (this: CustomWorld) {
   const needle = String(this.data.searchText).toLowerCase();
   await expect

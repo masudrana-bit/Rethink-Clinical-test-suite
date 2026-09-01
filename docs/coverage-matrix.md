@@ -177,6 +177,7 @@ Built in `features/clients/clients.feature`.
 | CLI-7 | The client switcher navigates to the chosen client's record | @ui | P1 | ☑ |
 | CLI-8 | The clients page fires runtime-config, staff-role and clients calls, and nothing fails | @network | P2 | ☑ |
 | CLI-9 | Every row's status agrees with the API `isActive` flag for that client | @ui | P2 | ☑ |
+| CLI-10 | Clearing client search restores the complete API-backed client list | @ui | P2 | ☑ |
 
 CLI-3 compares id sets rather than counts, so it fails on a wrong client as well as
 a missing one — which a count comparison would not catch.
@@ -209,6 +210,7 @@ to `body`, so its options are addressed at page level; selecting one navigates t
 | PRG-6 | Selecting a program shows its targets, goals and settings panels | @ui | P1 | ☑ |
 | PRG-7 | Current / Inactive tabs partition the program set — disjoint and complete | @ui | P2 | ☑ |
 | PRG-8 | Domain filter narrows the rail to exactly that domain; clearing it restores the full set | @ui | P2 | ☑ |
+| PRG-9 | Client top tabs navigate between Skills Programs, Analyze Data and Behavior Support | @ui | P1 | ☑ |
 
 **PRG-3 was wrong as planned.** It assumed all five per-program endpoints share the paged
 envelope. Only `targets` and `objectives` do. `mastery-criteria` and `data-collection` return
@@ -238,6 +240,7 @@ an exact partition.
 | AZ-7b | Grouping select offers Domain, Category and Area | @ui | P2 | ☑ |
 | AZ-8 | Mode tabs switch the view — the chosen panel shows and the other two are absent | @ui | P2 | ☑ |
 | AZ-9 | *Added.* Custom Graph's "N available in this scope" equals the client's program count | @ui @api | P2 | ☑ |
+| AZ-10 | Bulk Graph's "N available in this scope" equals the client's program count | @ui @api | P2 | ☑ |
 
 > AZ-2 rationale: the original assertion cannot fail while `mastered` is 0 across the
 > whole dataset. Cross-checking the tile against the API makes it a real reconciliation.

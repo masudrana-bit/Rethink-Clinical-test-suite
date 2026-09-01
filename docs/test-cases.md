@@ -35,12 +35,13 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 |--------|-----|------:|-------------|
 | Foundations | FND-1 … FND-7 | 6 scenarios + harness | Yes |
 | Authentication | AUTH-1 … AUTH-5 | 5 | Yes |
-| Clients | CLI-1 … CLI-9 | 10 | Yes |
-| Programs | PRG-1 … PRG-8 | 12 | Yes |
-| Analyze Data | AZ-1 … AZ-9 | 17 (2 of which `@bug`) | 15 Pass + 2 Known fail |
+| Clients | CLI-1 … CLI-10 | 11 | Yes |
+| Programs | PRG-1 … PRG-9 | 13 | Yes |
+| Analyze Data | AZ-1 … AZ-10 | 18 (2 of which `@bug`) | 16 Pass + 2 Known fail |
 | Behavior Support | BS-1 … BS-3 | 3 | 1 Pass + 2 Known fail |
 | Negative | NEG-1 … NEG-5 | 5 | Yes |
-| **Total executable** | | **58** | **54 Pass + 4 Known fail** |
+| Write flows | WR-1 … WR-6 | 7 | 3 Ready + 1 Known fail + 3 WIP |
+| **Total executable** | | **68** | **57 default + 11 filtered** |
 
 Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targets / PRG-3a-objectives).
 
@@ -336,6 +337,18 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Automation** | *Each row's status agrees with the API active flag* |
 | **Status** | Pass |
 
+### CLI-10 — Clearing search restores the complete client list
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Clearing both client search inputs removes the active filter. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Open `/clients`. 2. Enter an unmatched name. 3. Confirm no rows. 4. Clear both search inputs. |
+| **Expected result** | Visible client ids again equal the current clients API response. |
+| **Automation** | *Clearing client search restores the complete list* |
+| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
+
 ---
 
 ## 3. Client programs
@@ -489,6 +502,18 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Automation** | *The domain filter narrows the rail to one domain* |
 | **Status** | Pass |
 
+### PRG-9 — Client tab bar navigates between client areas
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The client-level tab bar reaches all three primary client areas. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Steps** | 1. Open the resolved client workspace. 2. Open Analyze Data. 3. Open Behavior Support. 4. Return to Skills Programs. |
+| **Expected result** | Each selected area renders its identifying page and content container. |
+| **Automation** | *The client tab bar navigates between all three client areas* |
+| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
+
 ---
 
 ## 4. Analyze Data
@@ -631,6 +656,18 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Expected result** | Series count = program count. |
 | **Automation** | *Custom Graph offers every program as a comparison series* |
 | **Status** | Pass |
+
+### AZ-10 — Bulk Graph offers every program as a comparison series
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Bulk Graph's “N available in this scope” reconciles with the programs API. |
+| **Type** | UI + API |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Switch to bulk mode. 3. Compare series count with the live programs list. |
+| **Expected result** | Series count = program count. |
+| **Automation** | *Bulk Graph offers every program as a comparison series* |
+| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
 
 ---
 

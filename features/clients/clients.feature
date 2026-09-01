@@ -45,6 +45,14 @@ Feature: Clients list
     Then no clients are listed
 
   @ui @clients
+  Scenario: Clearing client search restores the complete list
+    When I open the clients page
+    And I search by name for "zzz-no-such-client"
+    Then no clients are listed
+    When I clear the client search filters
+    Then the listed clients match the API response exactly
+
+  @ui @clients
   Scenario: Searching by client ID narrows the list to one client
     When I open the clients page
     And I search for the resolved client by their client number

@@ -91,3 +91,9 @@ Feature: Analyze Data
     When I open Analyze Data for the resolved client
     And I switch to the "custom" mode
     Then the series count equals the client's program count
+
+  @ui @api @analyze-data
+  Scenario: Bulk Graph offers every program as a comparison series
+    When I open Analyze Data for the resolved client
+    And I switch to the "bulk" mode
+    Then the series count equals the client's program count

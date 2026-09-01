@@ -223,3 +223,28 @@ Then('the rail lists exactly the programs in that domain', async function (this:
 When('I clear the domain filter', async function (this: CustomWorld) {
   await this.workspace.filterByDomain('All domains');
 });
+
+When('I open Analyze Data from the client tab bar', async function (this: CustomWorld) {
+  await this.workspace.openTab('analyze-data');
+});
+
+Then('the Analyze Data client area is displayed', async function (this: CustomWorld) {
+  await this.analyzeData.expectLoaded();
+});
+
+When('I open Behavior Support from the client tab bar', async function (this: CustomWorld) {
+  await this.workspace.openTab('behavior-support');
+});
+
+Then('the Behavior Support client area is displayed', async function (this: CustomWorld) {
+  await this.behaviorSupport.expectLoaded();
+});
+
+When('I open Skills Programs from the client tab bar', async function (this: CustomWorld) {
+  await this.workspace.openTab('skills-programs');
+});
+
+Then('the Skills Programs client area is displayed', async function (this: CustomWorld) {
+  await this.workspace.expectLoaded();
+  await expect(this.workspace.programRail).toBeVisible();
+});

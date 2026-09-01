@@ -78,3 +78,13 @@ Feature: Client programs
     Then the rail lists exactly the programs in that domain
     When I clear the domain filter
     Then the rail lists exactly the client's active programs
+
+  @ui @programs
+  Scenario: The client tab bar navigates between all three client areas
+    When I open the resolved client's workspace
+    And I open Analyze Data from the client tab bar
+    Then the Analyze Data client area is displayed
+    When I open Behavior Support from the client tab bar
+    Then the Behavior Support client area is displayed
+    When I open Skills Programs from the client tab bar
+    Then the Skills Programs client area is displayed
