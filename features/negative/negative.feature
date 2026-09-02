@@ -40,6 +40,18 @@ Feature: Negative and error cases
     When I attempt to delete a target for that unknown client
     Then the response status is a client error
 
+  @api @negative @endpoint-coverage
+  Scenario: Automastery evaluation creation rejects an unknown client without writing data
+    Given a client id that does not exist
+    When I attempt to create an automastery evaluation for that unknown client
+    Then the response status is a client error
+
+  @api @negative @endpoint-coverage
+  Scenario: Session creation rejects an unknown client without writing data
+    Given a client id that does not exist
+    When I attempt to create a session for that unknown client
+    Then the response status is a client error
+
   @ui @negative
   Scenario: An unknown client id in the URL falls back to the clients list
     Given a client id that does not exist

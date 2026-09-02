@@ -6,7 +6,7 @@ import { recordResponseMetadata } from '../support/apiDiagnostics';
 import { ClinicalApi } from '../api/clinicalApi';
 import { getRuntimeConfig } from '../support/runtimeConfig';
 
-/** Unit 6 — NEG-1 to NEG-5. */
+/** Unit 6 — NEG-1 to NEG-13. */
 
 Given('I have a malformed auth token', function (this: CustomWorld) {
   this.data.token = 'not-a-real-token';
@@ -53,6 +53,24 @@ When('I attempt to create a target for that unknown client', async function (thi
 When('I attempt to delete a target for that unknown client', async function (this: CustomWorld) {
   const res = await this.clinical.deleteTarget(this.data.missingClientId as number, 1, 1);
   recordResponseMetadata(this, res, 'DELETE');
+  this.data.lastResponseBody = await res.json().catch(() => undefined);
+});
+
+When(
+  'I attempt to create an automastery evaluation for that unknown client',
+  async function (this: CustomWorld) {
+    const res = await this.clinical.createAutomasteryEvaluation(
+      this.data.missingClientId as number,
+      1,
+    );
+    recordResponseMetadata(this, res, 'POST');
+    this.data.lastResponseBody = await res.json().catch(() => undefined);
+  },
+);
+
+When('I attempt to create a session for that unknown client', async function (this: CustomWorld) {
+  const res = await this.clinical.createClientSession(this.data.missingClientId as number);
+  recordResponseMetadata(this, res, 'POST');
   this.data.lastResponseBody = await res.json().catch(() => undefined);
 });
 

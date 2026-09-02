@@ -6,6 +6,7 @@ import { ClientsPage } from '../pages/ClientsPage';
 import { ClientWorkspace } from '../pages/ClientWorkspace';
 import { AnalyzeDataPage } from '../pages/AnalyzeDataPage';
 import { BehaviorSupportPage } from '../pages/BehaviorSupportPage';
+import { NewSessionPage } from '../pages/NewSessionPage';
 import { HarvestedAuth } from './auth';
 import { ResolvedFixture } from './testData';
 
@@ -57,6 +58,10 @@ export class CustomWorld extends World {
 
   get behaviorSupport(): BehaviorSupportPage {
     return this.lazy('behaviorSupport', () => new BehaviorSupportPage(this.page));
+  }
+
+  get newSession(): NewSessionPage {
+    return this.lazy('newSession', () => new NewSessionPage(this.page));
   }
 
   /** Authenticated API client. Use `new ClinicalApi(this.api)` for negative cases. */

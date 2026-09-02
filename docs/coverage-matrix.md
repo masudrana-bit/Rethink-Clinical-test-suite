@@ -24,6 +24,8 @@
 | `@negative` | Expected error paths. |
 | `@bug` | Asserts correct behaviour the app does not yet have. Excluded from `npm test`; run with `-p bugs`. Passes when the defect is fixed. |
 | `@write` | Mutates the dedicated `TEST_CLIENT_ID` client. Excluded from `npm test`; `npm run test:write`. |
+| `@visual` | Screenshot-diff vs committed baselines. Excluded from `npm test`; `npm run test:visual`. |
+| `@a11y` | axe-core WCAG 2.A/2.AA. In `npm test`; critical impact only (D12). `npm run test:a11y`. |
 | `@auth` `@clients` `@programs` `@analyze-data` `@behavior-support` | Feature areas. |
 
 ## Decisions taken at elaboration
@@ -37,11 +39,15 @@ These constrain every row below. Change a decision, revisit the rows it touches.
 | D3 | The behaviorplans 500 is a known defect, not a contract. | **Revised at Unit 4.** Split in two: a normal scenario asserting the UI degrades gracefully (correct either way, so it never goes red when the backend is fixed), plus a `@bug` scenario asserting the endpoint should return 200. Never assert 500 as if it were the contract. |
 | D4 | Phase 1 is read-only. | Write actions (`add-target`, `mastery-review-confirm` / `-dismiss`, `saved-report-save`, `record-data`) are out of scope; they become their own unit after sign-off. |
 | D5 | CI target is undecided. | Suite must be CI-agnostic. A preflight check fails fast with a clear message if `dev2.internal` is unreachable. No CI config authored this phase. |
+| D13 | *Added at Unit 14.* CI is GitHub Actions against clinical.dev2. | PR: typecheck + coverage ratchet + `@smoke`. Nightly: default suite (`not @write and not @bug and not @visual and not @wip`). Artifacts: reports + inventory. `@visual` stays off the gate (host fonts). Empty `BASE_URL` / `API_BASE_URL` repo vars fall through to `support/config.ts` defaults. Self-hosted runner via `CLINICAL_RUNNER` if `*.internal.*` is unreachable from `ubuntu-latest`. |
 | D6 | Crawl data is synthetic but stays gitignored. | `output/` is never read at runtime. No client names, client numbers or IDs hardcoded in features or fixtures. |
 | D7 | Credential fields are scrubbed from API responses before they are traced. | `support/scrub.ts` nulls `apiKey`, `password`, `passwordQuestion` and `passwordAnswer` en route to the browser. Guarded by `npm run verify:scrub`. |
 | D8 | *Added at Unit 4.* No scenario may depend on run order, or on a resource another scenario consumed. | A scenario needing a single-use resource acquires its own. AUTH-2 signs in for itself rather than sharing the run-level refresh token. |
 | D9 | *Added at Unit 3.* UI-versus-API comparisons re-read the API on every poll. | dev2 is written to by other suites mid-run, so a snapshot taken once goes stale. Assert that the two agree *now*, not that the UI matches a value we captured earlier. |
 | D10 | *Added at Unit 7.* "Targets in scope" is a report-filtered metric, not `sum(targets.totalCount)`. | Cross-layer equality is a false oracle. AZ-2 asserts the internal identity `mastered + remaining == in scope` and that in-scope does not exceed the live target total. |
+| D11 | *Added at Unit 12.* Visual baselines compare chrome and layout, not live data. | Volatile regions (names, counts, charts, identity) are masked. `@visual` is not a data oracle and does not replace D9. |
+| D12 | *Added at Unit 13.* axe-core gates on **critical** impact only. | Serious/moderate (today: color-contrast, one definition-list) are attached, not a fail. See AN-6. |
+| D14 | *Added after Unit 14.* Remaining inventory gaps are signed off with named compensating controls. | Live floor is `docs/coverage-floor.json` (94.7% after SES-1). See [`compensating-controls.md`](./compensating-controls.md). Do not delete gap rows to inflate %. |
 
 ## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
 
@@ -314,6 +320,8 @@ an exact partition.
 | NEG-9 | Clients list shows `clients-list-loading` while the list XHR is held | @ui @negative | P2 | ☑ |
 | NEG-10 | Clients list shows `clients-list-error` (no rows) on a 503, then recovers on retry | @ui @negative | P1 | ☑ |
 | NEG-11 | Empty programs envelope renders `program-rail-empty` and no rail items | @ui @negative | P2 | ☑ |
+| NEG-12 | Automastery evaluation POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
+| NEG-13 | Session POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
 
 > **NEG-4 was re-scoped.** The plan expected a not-found state. There isn't one: the app
 > redirects any unknown route to `/clients`. That is graceful — no crash, no blank shell,
@@ -327,7 +335,7 @@ an exact partition.
 > The missing client ID is derived as one past the highest real id rather than hardcoded,
 > so it cannot collide as the data changes (D2/D6).
 
-`npm run test:endpoints` combines the regular API profile, NEG-6–8, and the
+`npm run test:endpoints` combines the regular API profile, NEG-6–8 and NEG-12–13, and the
 existing `behaviorplans` `@bug` scenario. This reaches every endpoint in the
 health-report catalog without credentials, a dedicated write client, or mutation.
 
@@ -352,7 +360,8 @@ default-run family. Write flows stay in the matrix section below (workflow Unit 
 | PRG-1…9 | Program contracts, rail partition, details panels, or client tabs regress |
 | AZ-1…10 | Tile identity, chart domains, chips, modes, or series counts regress |
 | BS-1 | Plan rail or novel-behaviors panel missing |
-| NEG-1…8 | 401, login reject, unknown-id fallback, or safe 4xx writes regress |
+| NEG-1…13 | 401, login reject, unknown-id fallback, or safe 4xx writes regress |
+| A11Y-1…5 | A main page introduces a critical-impact axe violation |
 
 ### Unit 8 — Surface inventory
 
@@ -366,8 +375,8 @@ Each run rewrites [`surface-inventory.md`](./surface-inventory.md) and
 | **Formula** | `(covered + @bug + 0.5×partial) / in-scope` |
 | **Exclusions** | Unvisited primary-nav areas (Staff … Billing) — signed-off gap with a human exploratory compensating control |
 
-Open gaps remaining after Unit 9: Print, scope select, Analyze Data empty/loading
-(Unit 10), `/sessions/new` and mastery/record-data writes (Unit 11).
+Open gaps remaining after Unit 11: `/sessions/new` (never landed; DEF-6), mastery
+confirm/dismiss (no create API), Behavior Support true-empty (blocked by DEF-2).
 
 ### Unit 9 — Read-path states
 
@@ -380,19 +389,72 @@ Requires `TEST_CLIENT_ID` (dedicated client). `npm test` excludes `@write`. Run
 `npm run test:write`. Created targets are named `ZZZ-SUITE-*` and DELETE'd in After
 (`If-Match: *`).
 
-W0 recon (2026-08-27): `POST .../targets` with `{ description }` → **201**. Empty `{}`
-also 201 (no API required-field check). `DELETE` without If-Match → **428**; with
-`If-Match: *` → **204**. UI `program-details-add-target` / `record-data` do not open a
-form. **Add Data Collection** navigates to `/sessions/new` (RBT wizard); no session
-write API captured. Mastery confirm/dismiss are live on Analyze Data — not clicked for
-pre-existing rows.
+W0 recon (2026-08-27, re-checked 2026-09-02): `POST .../targets` with `{ description }`
+→ **201**. `DELETE` without If-Match → **428**; with `If-Match: *` → **204**. UI
+`program-details-add-target` / `record-data` do not open a form or `/sessions/new`
+(**DEF-6**). `POST .../automastery-evaluations` → **405** (no create API). Session
+collection POST → **404**. Mastery confirm/dismiss are not clicked for pre-existing rows.
 
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
 | WR-1 | POST a uniquely named target; GET lists it | @api @write | P1 | ☑ |
 | WR-2 | Clicking add-target without a form does not create a target | @ui @write | P1 | ☑ |
 | WR-2b | Add-target opens a create form | @ui @write @bug | P1 | ✖ **DEF-6** |
-| WR-3 | Record data against a suite target | @ui @write | P1 | ☐ `@wip` — session wizard, no POST captured |
-| WR-4 | Confirm mastery on a suite-created evaluation | @ui @write | P1 | ☐ `@wip` — cannot create flagged evals without WR-3 |
+| WR-3 | Clicking record-data does not create a session | @ui @write | P1 | ☑ |
+| WR-3b | Record-data opens a collection form or session wizard | @ui @write | P1 | ☑ (SES-1 in default) |
+| WR-4 | Confirm mastery on a suite-created evaluation | @ui @write | P1 | ☐ `@wip` — POST evaluations is 405 |
 | WR-5 | Dismiss a suite-created evaluation | @ui @write | P1 | ☐ `@wip` — same |
 | WR-6 | Save a named report; it lists in the same browser context | @ui @write | P2 | ☑ |
+
+### Unit 12 — Visual regression  `@visual`
+
+Viewport **1280×720**, `deviceScaleFactor: 1`, UTC / `en-US` / reduced motion. Magenta
+masks cover shared-caseload text and signed-in identity (D11). Diffs over 2% of
+pixels fail and write `reports/visual/{name}-diff.png` (gitignored).
+
+`npm test` excludes `@visual`. Run `npm run test:visual`. Rewrite baselines with
+`UPDATE_VISUAL=1`.
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| VIS-1 | Clients list chrome matches baseline | @ui @visual | P2 | ☑ |
+| VIS-2 | Client workspace chrome matches baseline | @ui @visual | P2 | ☑ |
+| VIS-3 | Analyze Data mastered report chrome matches baseline | @ui @visual | P2 | ☑ |
+| VIS-4 | Analyze Data custom graph chrome matches baseline | @ui @visual | P2 | ☑ |
+| VIS-5 | Analyze Data bulk graph chrome matches baseline | @ui @visual | P2 | ☑ |
+
+### Unit 13 — Accessibility  `@a11y`
+
+axe-core WCAG 2.A / 2.AA (`@axe-core/playwright`). **Critical** impact fails the
+scenario (D12). Included in `npm test`. `npm run test:a11y` runs this family alone.
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| A11Y-1 | Sign-in page has no critical axe violations | @ui @a11y @signed-out | P1 | ☑ |
+| A11Y-2 | Clients list has no critical axe violations | @ui @a11y | P1 | ☑ |
+| A11Y-3 | Client workspace has no critical axe violations | @ui @a11y | P1 | ☑ |
+| A11Y-4 | Analyze Data has no critical axe violations | @ui @a11y | P1 | ☑ |
+| A11Y-5 | Behavior Support has no critical axe violations | @ui @a11y | P1 | ☑ |
+
+### Sustain — New session wizard  `@sessions`
+
+Exploratory 2026-09-02: record-data now lands on `/sessions/new`. Default tests must not
+complete the wizard (that writes a session).
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| SES-1 | Record-data opens the new-session wizard without posting | @ui @sessions | P1 | ☑ |
+| SES-2 | Wizard advances to Programs without posting a session | @ui @sessions | P2 | ☑ |
+
+### Unit 14 — Operations / CI
+
+GitHub Actions. Gate excludes `@write`, `@bug`, `@visual`, `@wip`. Coverage ratchet
+compares live inventory % to [`coverage-floor.json`](./coverage-floor.json).
+
+| ID | Item | Priority | Status |
+|----|------|----------|--------|
+| OPS-1 | PR workflow: typecheck, `coverage:ratchet`, `test:smoke`, `verify:scrub` | P0 | ☑ |
+| OPS-2 | Nightly workflow: `npm test` (default profile) + ratchet + report artifacts | P0 | ☑ |
+| OPS-3 | Coverage floor 94.7%; build fails if live % is lower | P0 | ☑ |
+
+Signed-off gaps and the per-release human pass: [`compensating-controls.md`](./compensating-controls.md) (D14).

@@ -30,7 +30,7 @@ cp .env.example .env      # then fill in TEST_USERNAME, TEST_PASSWORD, AUTH_APPL
 npm run test:smoke        # run @smoke first
 ```
 
-Other scripts: `npm run test` (all), `npm run test:api`, `npm run test:ui`.
+Other scripts: `npm run test` (all except `@write` / `@bug` / `@visual`), `npm run test:api`, `npm run test:ui`, `npm run test:visual`, `npm run test:a11y`, `npm run test:sessions`.
 
 ## Allure report
 
@@ -78,6 +78,60 @@ actions × states). Each test run, or `npm run coverage:inventory`, rewrites
 npm run coverage:inventory
 # then open docs/surface-inventory.md
 ```
+
+## Visual regression
+
+`@visual` compares a 1280×720 screenshot (volatile data masked magenta) to PNGs in
+`visual/baselines`. Not part of `npm test`.
+
+```bash
+npm run test:visual
+# PowerShell, after a deliberate UI change:
+$env:UPDATE_VISUAL='1'; npm run test:visual
+```
+
+Diffs land in `reports/visual/` (gitignored). Commit updated baselines when the
+chrome change is intentional (decision D11).
+
+## Accessibility
+
+`@a11y` runs axe-core (WCAG 2.A / 2.AA) on the main pages and **fails only on
+critical** impact (D12). Included in `npm test`.
+
+```bash
+npm run test:a11y
+```
+
+## New session wizard
+
+Record-data opens `/sessions/new`. Default tests cover participants and Programs
+and **do not** click Confirm (that writes a session). Included in `npm test`.
+
+```bash
+npm run test:sessions
+```
+
+## CI (GitHub Actions)
+
+Decision **D13**. No credentials are required (D1: `/temp-dev-login`). The gate never runs
+`@write`, `@bug`, `@visual`, or `@wip`.
+
+| Workflow | When | What |
+|----------|------|------|
+| `.github/workflows/pr.yml` | Every pull request | `typecheck`, `coverage:ratchet`, `test:smoke`, `verify:scrub` |
+| `.github/workflows/nightly.yml` | 06:00 UTC and manual | `npm test` (default profile) + ratchet + report artifacts |
+
+Coverage floor: `docs/coverage-floor.json`. Raise it when inventory % increases.
+
+```bash
+npm run coverage:ratchet
+```
+
+Signed-off gaps and the per-release human pass: `docs/compensating-controls.md` (D14).
+
+If GitHub-hosted runners cannot reach `*.internal.*`, set repo variable `CLINICAL_RUNNER`
+to a self-hosted runner label. Optional URL overrides: repo variables `BASE_URL`,
+`API_BASE_URL`, `AUTH_BASE_URL`.
 
 ## How to run the AIDLC process
 

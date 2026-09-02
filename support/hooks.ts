@@ -17,6 +17,7 @@ import { preflight } from './preflight';
 import { acquireAuth, seedAuth, HarvestedAuth } from './auth';
 import { installResponseScrubbing } from './scrub';
 import { requireWriteClientId } from './writeGuard';
+import { VISUAL_VIEWPORT } from './visual';
 import { apiDiagnostic } from './apiDiagnostics';
 import { createRequire } from 'node:module';
 import {
@@ -77,6 +78,7 @@ AfterAll(async function () {
 Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   const signedOut = scenario.pickle.tags.some((t) => t.name === '@signed-out');
   const isWrite = scenario.pickle.tags.some((t) => t.name === '@write');
+  const isVisual = scenario.pickle.tags.some((t) => t.name === '@visual');
   const isUi = scenario.pickle.tags.some((t) => t.name === '@ui');
   const isApi = scenario.pickle.tags.some((t) => t.name === '@api');
   const allowsClientError = scenario.pickle.tags.some(
@@ -91,11 +93,21 @@ Before(async function (this: CustomWorld, scenario: ITestCaseHookParameter) {
   this.auth = auth;
   this.context = await browser.newContext({
     baseURL: config.baseUrl,
+    ...(isVisual
+      ? {
+          viewport: VISUAL_VIEWPORT,
+          deviceScaleFactor: 1,
+          locale: 'en-US',
+          timezoneId: 'UTC',
+          colorScheme: 'light',
+          reducedMotion: 'reduce',
+        }
+      : {}),
     ...(isUi
       ? {
           recordVideo: {
             dir: 'test-results/videos',
-            size: { width: 1280, height: 720 },
+            size: { width: VISUAL_VIEWPORT.width, height: VISUAL_VIEWPORT.height },
           },
         }
       : {}),

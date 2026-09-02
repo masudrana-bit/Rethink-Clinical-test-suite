@@ -111,23 +111,32 @@ prompt and gate behind each.
 **Unit 10 — Analyze-Data breadth**  ☑  `@analyze-data`
 - *Intent:* finish Unit 4 — Custom Graph, Bulk Graphs, Print tabs, empty/loading states. Read-only.
 
-**Unit 11 — Write / mutation unit**  ☐  `@write`
+**Unit 11 — Write / mutation unit**  ☑  `@write`
 - *Intent:* add-target, confirm/dismiss mastery, save report, record data.
 - *Inputs:* D4 (was deferred), `writeGuard.ts`, `TEST_CLIENT_ID`.
 - *Done when:* mutations covered against the **dedicated** client only, every created resource is
   torn down, the shared caseload is never touched.
+- *Landed:* WR-1 (POST target + After DELETE), WR-2/2b (add-target stub + DEF-6), WR-3/3b
+  (record-data stub + DEF-6), WR-6 (save report). WR-4/WR-5 stay `@wip`: POST
+  automastery-evaluations is 405, so a suite-owned flagged evaluation cannot be created
+  without clicking someone else's mastery row.
 
-**Unit 12 — Visual regression**  ☐  `@visual`
+**Unit 12 — Visual regression**  ☑  `@visual`
 - *Intent:* Playwright screenshot baselines for clients list, client workspace, each Analyze-Data
   tab. Mask volatile regions (dates, shared-suite data per D9).
+- *Landed:* VIS-1…5, D11, `npm run test:visual`, baselines under `visual/baselines`.
 
-**Unit 13 — Accessibility**  ☐  `@a11y`
+**Unit 13 — Accessibility**  ☑  `@a11y`
 - *Intent:* axe-core checks on main pages; gate on critical violations.
+- *Landed:* A11Y-1…5 (sign-in, clients, workspace, Analyze Data, Behavior Support). D12:
+  critical-only. Serious contrast is AN-6.
 
-**Unit 14 — Operations / CI**  ☐
+**Unit 14 — Operations / CI**  ☑
 - *Intent:* pipeline — smoke per PR, full suite nightly against dev2, exclude `@write`/`@bug` from
   the gate, publish reports/traces, and publish a **live, ratcheted coverage %** that fails the
   build if it drops.
+- *Landed:* `.github/workflows/pr.yml` + `nightly.yml`, `npm run coverage:ratchet`,
+  `docs/coverage-floor.json` (94.7%), D13.
 
 ---
 
@@ -136,6 +145,11 @@ prompt and gate behind each.
 Peak decays. Keep these running: every new feature/bug enters as a new unit; `@bug` tests stay
 red-until-fixed; triage flake immediately; keep the decision log live; re-run the inventory (Unit 8)
 quarterly so the coverage denominator grows with the app.
+
+**Sustain bolt — peak sign-off**  ☑  (2026-09-02)
+- *Intent:* name every remaining blind spot and sign it off with a compensating control (D14).
+- *Landed:* [`docs/compensating-controls.md`](./compensating-controls.md). Coverage floor is 94.7%
+  after SES-1 (`/sessions/new` landing).
 
 ---
 

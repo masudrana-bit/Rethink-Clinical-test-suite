@@ -1,0 +1,5 @@
+{
+  "percent": 94.7,
+  "asOf": "2026-09-02",
+  "notes": "Minimum in-scope coverage %. CI runs npm run coverage:ratchet. Raise this when the inventory % increases. Never lower it to hide a gap."
+}

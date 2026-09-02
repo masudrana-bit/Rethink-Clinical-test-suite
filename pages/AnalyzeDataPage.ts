@@ -151,6 +151,24 @@ export class AnalyzeDataPage {
     return active;
   }
 
+  /**
+   * Counts, chart series, and pending rows move while other suites write (D9).
+   * Mode tabs and report chrome stay in the comparison.
+   */
+  volatileForVisual(): Locator[] {
+    return [
+      this.tile('mastered'),
+      this.tile('in-scope'),
+      this.tile('remaining'),
+      this.chart,
+      this.masteryReview,
+      this.customGraph,
+      this.bulkReport,
+      this.masteredReportEmpty,
+      this.page.getByTestId('report-series-count'),
+    ];
+  }
+
   get masteredReport(): Locator {
     return this.page.getByTestId('mastered-targets-report');
   }

@@ -133,7 +133,7 @@ excluded from the PR gate until the unit is complete and stable.
 | 9 | States & negative paths (UI) | Inventory's state gaps for read paths closed per §4 |
 | 10 | Analyze-Data breadth | Custom Graph, Bulk Graphs, Print tabs + empty/loading states covered (read-only) |
 | 11 | Write/mutation unit | §6 satisfied; mutations covered with teardown on the dedicated client |
-| 12 | Visual regression | Baselines committed for key screens, volatile regions masked, diff gate active |
+| 12 | Visual regression | Baselines committed for key screens, volatile regions masked, diff gate active (`npm run test:visual`) |
 | 13 | Accessibility | axe-core on main pages; critical violations gated |
 | 14 | Operations / CI | Smoke per PR; full nightly; `@write`/`@bug` excluded from gate; coverage % published per run and **ratcheted** (build fails if it drops) |
 
@@ -152,13 +152,14 @@ grows with the app.
 
 ## 10. Peak checklist (declare "maximum" only when all hold)
 
-- ☐ Inventory complete and current; every item covered or a signed-off, risk-rated gap
-- ☐ Every covering test proven to fail on regression (no weak assertions)
-- ☐ UI state matrix (§4) closed for all read paths; write paths covered per §6
-- ☐ Network-assertion, visual-regression, and a11y layers active
-- ☐ Blind spots named with compensating controls (thin human exploratory pass per release)
-- ☐ CI: smoke per PR, full nightly, live ratcheted coverage %
-- ☐ Decision log current (D1–D10+); flake ~zero
+- ☑ Inventory complete and current; remaining items are covered, `@bug`, or a signed-off gap ([`docs/compensating-controls.md`](../docs/compensating-controls.md), D14)
+- ☑ Every covering test proven to fail on regression (no weak assertions) — Unit 7
+- ☑ UI state matrix (§4) closed for read paths; leftover empty/write states are signed-off gaps (DEF-2, DEF-6, WR-4/5)
+- ☑ Visual-regression layer active (`@visual`, masked baselines)
+- ☑ Accessibility layer (axe-core) active (`@a11y`, critical-only)
+- ☑ Blind spots named with compensating controls (thin human exploratory pass per release)
+- ☑ CI: smoke per PR, full nightly, live ratcheted coverage %
+- ☑ Decision log current (D1–D14); flake ~zero as of the Unit 6 baseline (re-open if nightly flakes)
 
 ## 11. Standing prompts
 
@@ -166,7 +167,7 @@ Prepend to every task:
 
 > Before writing any code, restate the goal in one sentence, give me your plan, and list what
 > you need to confirm about the app. Wait for my approval. Load rules/ as context. If you
-> discover anything that contradicts or extends decisions D1–D10, add a new dated decision to
+> discover anything that contradicts or extends decisions D1–D14, add a new dated decision to
 > coverage-matrix.md and tell me.
 
 Per-unit invocation:

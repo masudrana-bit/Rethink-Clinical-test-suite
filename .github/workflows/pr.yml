@@ -1,0 +1,65 @@
+# PR gate — typecheck, coverage ratchet, smoke
+#
+# Live tests need network to clinical.dev2 and the internal API gateway.
+# If GitHub-hosted runners cannot reach *.internal.*, set repo variable
+# CLINICAL_RUNNER to a self-hosted label (decision D13).
+name: PR gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pr-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Typecheck and coverage ratchet
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run coverage:ratchet
+
+  smoke:
+    name: Smoke against dev2
+    needs: static
+    runs-on: ${{ vars.CLINICAL_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Smoke (excludes @write @bug @visual @wip)
+        run: npm run test:smoke
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
+      - name: Scrubbing guard
+        run: npm run verify:scrub
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-reports
+          path: |
+            reports/
+            docs/surface-inventory.md
+            docs/api-endpoint-report.md
+          if-no-files-found: ignore
+          retention-days: 14

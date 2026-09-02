@@ -25,6 +25,8 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 |---------|---------|
 | Default (Pass cases) | `npm test` |
 | Smoke (P0 UI/API) | `npm run test:smoke` |
+| Accessibility | `npm run test:a11y` |
+| Coverage ratchet | `npm run coverage:ratchet` |
 | Known defects | `npx cucumber-js -p bugs` |
 
 ---
@@ -39,9 +41,13 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 | Programs | PRG-1 … PRG-9 | 13 | Yes |
 | Analyze Data | AZ-1 … AZ-14 | 22 (2 of which `@bug`) | 20 Pass + 2 Known fail |
 | Behavior Support | BS-1 … BS-3 | 3 | 1 Pass + 2 Known fail |
-| Negative | NEG-1 … NEG-11 | 11 | Yes |
-| Write flows | WR-1 … WR-6 | 7 | 3 Ready + 1 Known fail + 3 WIP |
-| **Total executable** | | **78** | **67 default + 11 filtered** |
+| Negative | NEG-1 … NEG-13 | 13 | Yes |
+| Write flows | WR-1 … WR-6 | 8 | 5 Ready + 1 Known fail + 2 WIP |
+| Visual | VIS-1 … VIS-5 | 5 | No (`npm run test:visual`) |
+| Accessibility | A11Y-1 … A11Y-5 | 5 | Yes |
+| Sessions | SES-1 … SES-2 | 2 | Yes |
+| Operations / CI | OPS-1 … OPS-3 | 3 (harness) | CI |
+| **Total executable** | | **94** | **76 default + 18 filtered** |
 
 Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targets / PRG-3a-objectives).
 
@@ -913,6 +919,32 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Status** | Pass |
 | **Fails when** | An empty caseload is rendered as leftover programs or a blank shell. |
 
+### NEG-12 — Automastery evaluation POST is rejected for an unknown client
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `POST .../automastery-evaluations` against a derived missing client is 4xx (observed 405). |
+| **Type** | API |
+| **Priority** | P2 |
+| **Steps** | 1. Derive a client id past the highest real id. 2. POST `{ status: "flagged" }` to that client's evaluations collection. |
+| **Expected result** | HTTP 4xx. No evaluation is created. |
+| **Automation** | *Automastery evaluation creation rejects an unknown client without writing data* |
+| **Status** | Pass |
+| **Fails when** | POST 2xx creates an evaluation, or the server 5xxs. |
+
+### NEG-13 — Session POST is rejected for an unknown client
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `POST .../clients/:id/sessions` against a derived missing client is 4xx (observed 404). |
+| **Type** | API |
+| **Priority** | P2 |
+| **Steps** | 1. Derive a missing client id. 2. POST `{}` to `/clinical/v1/clients/{id}/sessions`. |
+| **Expected result** | HTTP 4xx. No session is created. |
+| **Automation** | *Session creation rejects an unknown client without writing data* |
+| **Status** | Pass |
+| **Fails when** | POST 2xx creates a session, or the server 5xxs. |
+
 ---
 
 ## 7. Write flows (Phase 2b)
@@ -957,11 +989,34 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Automation** | *Add target opens a form for a new target* — `@bug` |
 | **Status** | Known fail (`@bug`) |
 
-### WR-3 / WR-4 / WR-5 — Record data and mastery confirm/dismiss
+### WR-3 — Clicking record-data does not create a session
 
 | Field | Detail |
 |-------|--------|
-| **Status** | `@wip` — no session POST captured; cannot create flagged evaluations without recording. |
+| **Objective** | The stub record-data click must not silently POST/PATCH/PUT/DELETE. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Steps** | 1. Open dedicated workspace and program. 2. Watch clinical writes. 3. Click record-data. |
+| **Expected result** | No dialog. No clinical write request. |
+| **Automation** | *Clicking record-data does not create a session* |
+| **Status** | Pass (when `TEST_CLIENT_ID` is set) |
+
+### WR-3b — Record data opens a collection form or session wizard
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Record-data should open a form or `/sessions/new`. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Defect** | **DEF-6** — click is a no-op. |
+| **Automation** | *Record data opens a collection form or session wizard* — `@bug` |
+| **Status** | Known fail (`@bug`) |
+
+### WR-4 / WR-5 — Confirm / dismiss mastery
+
+| Field | Detail |
+|-------|--------|
+| **Status** | `@wip` — `POST .../automastery-evaluations` is 405; must not click pre-existing flagged rows. |
 
 ### WR-6 — Saving a report lists it in the same session
 
@@ -980,5 +1035,203 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 ## Out of scope (not in this catalog)
 
 - Nav areas never crawled: Staff, Supervision, Settings, Training, Reporting, Template, Schedule, Notifications, Billing.
-- CI pipeline (decision D5).
-- WR-3–WR-5 until session/mastery write APIs are reconned.
+- WR-4–WR-5 until a suite-owned flagged evaluation can be created without mutating shared caseload.
+
+---
+
+## 8. Visual regression (Unit 12)
+
+**Feature:** `features/visual/visual.feature`  
+**Tags:** `@visual` — not in `npm test`. `npm run test:visual`.  
+**Baselines:** `visual/baselines/*.png`. Rewrite with `UPDATE_VISUAL=1`.
+
+Shared preconditions plus: viewport 1280×720, deviceScaleFactor 1, UTC, `en-US`, reduced motion.
+
+### VIS-1 — Clients list chrome
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | /clients layout (search + table chrome) matches the committed screenshot. |
+| **Type** | UI visual |
+| **Priority** | P2 |
+| **Steps** | 1. Open /clients. 2. Mask list rows and signed-in identity. 3. Compare to baseline. |
+| **Expected result** | Pixel mismatch ≤ 2%. |
+| **Automation** | *The clients list chrome matches the baseline* |
+| **Status** | Pass (`test:visual`) |
+| **Fails when** | Search/header/table chrome moves, or the list page fails to load. |
+
+### VIS-2 — Client workspace chrome
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Workspace tab bar, rail chrome, and details panels match the baseline. |
+| **Type** | UI visual |
+| **Priority** | P2 |
+| **Steps** | 1. Open resolved client. 2. Select resolved program. 3. Mask program titles and target/goal text. |
+| **Expected result** | Pixel mismatch ≤ 2%. |
+| **Automation** | *The client workspace chrome matches the baseline* |
+| **Status** | Pass (`test:visual`) |
+| **Fails when** | Tab bar, rail, or details panel chrome regresses. |
+
+### VIS-3 — Analyze Data mastered chrome
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Mastered report chrome (mode tabs, window chips, print) matches the baseline. |
+| **Type** | UI visual |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Mask tiles, chart, and pending rows. |
+| **Expected result** | Pixel mismatch ≤ 2%. |
+| **Automation** | *Analyze Data mastered report chrome matches the baseline* |
+| **Status** | Pass (`test:visual`) |
+
+### VIS-4 — Analyze Data custom graph chrome
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Custom Graph mode chrome matches the baseline. |
+| **Type** | UI visual |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Switch to custom. 3. Mask series/graph data. |
+| **Expected result** | Pixel mismatch ≤ 2%. |
+| **Automation** | *Analyze Data custom graph chrome matches the baseline* |
+| **Status** | Pass (`test:visual`) |
+
+### VIS-5 — Analyze Data bulk graph chrome
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Bulk Graphs mode chrome matches the baseline. |
+| **Type** | UI visual |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Switch to bulk. 3. Mask series/graph data. |
+| **Expected result** | Pixel mismatch ≤ 2%. |
+| **Automation** | *Analyze Data bulk graph chrome matches the baseline* |
+| **Status** | Pass (`test:visual`) |
+
+---
+
+## 9. Accessibility (Unit 13)
+
+**Feature:** `features/a11y/a11y.feature`  
+**Tags:** `@a11y` — included in `npm test`. `npm run test:a11y`.  
+**Gate:** critical-impact axe violations only (D12). Non-critical findings attach as `axe-scan.json` (AN-6).
+
+### A11Y-1 — Sign-in has no critical violations
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Unauthenticated landing page has no critical-impact WCAG 2.A/2.AA axe violations. |
+| **Type** | UI a11y |
+| **Priority** | P1 |
+| **Preconditions** | `@signed-out`. |
+| **Steps** | 1. Open `/`. 2. Wait for `sign-in-page`. 3. Run axe. |
+| **Expected result** | Zero violations with impact `critical`. |
+| **Automation** | *The sign-in page has no critical accessibility violations* |
+| **Status** | Pass |
+| **Fails when** | A critical axe rule fails on the sign-in page. |
+
+### A11Y-2 — Clients list has no critical violations
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `/clients` has no critical-impact axe violations after the list loads. |
+| **Type** | UI a11y |
+| **Priority** | P1 |
+| **Automation** | *The clients list has no critical accessibility violations* |
+| **Status** | Pass |
+
+### A11Y-3 — Client workspace has no critical violations
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Workspace with a program selected has no critical-impact axe violations. |
+| **Type** | UI a11y |
+| **Priority** | P1 |
+| **Automation** | *The client workspace has no critical accessibility violations* |
+| **Status** | Pass |
+
+### A11Y-4 — Analyze Data has no critical violations
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Loaded Analyze Data (mastered report) has no critical-impact axe violations. |
+| **Type** | UI a11y |
+| **Priority** | P1 |
+| **Automation** | *Analyze Data has no critical accessibility violations* |
+| **Status** | Pass |
+
+### A11Y-5 — Behavior Support has no critical violations
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Behavior Support (including the known unavailable path) has no critical-impact axe violations. |
+| **Type** | UI a11y |
+| **Priority** | P1 |
+| **Automation** | *Behavior Support has no critical accessibility violations* |
+| **Status** | Pass |
+
+---
+
+## 9b. New session wizard (sustain)
+
+**Feature:** `features/sessions/sessions.feature`  
+**Tags:** `@sessions` — in `npm test`. Do **not** complete the wizard (that writes a session).
+
+### SES-1 — Record-data opens the wizard without posting
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Clicking `program-details-record-data` lands on `/sessions/new` without a clinical POST/PATCH/PUT/DELETE. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Steps** | 1. Open resolved workspace and program. 2. Watch writes. 3. Click record-data. |
+| **Expected result** | `new-session-page` visible. URL `/sessions/new`. No clinical write. |
+| **Automation** | *Record-data opens the new-session wizard without posting* |
+| **Status** | Pass |
+| **Fails when** | Record-data is a no-op again, or landing on the wizard silently POSTs. |
+
+### SES-2 — Wizard advances to Programs without posting
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Selecting the resolved client and clicking Next shows the Programs step without a session POST. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. SES-1 setup. 2. Tick resolved client. 3. Next. |
+| **Expected result** | `new-session-step-programs` visible. No clinical write. Confirm is not clicked. |
+| **Automation** | *The wizard advances to Programs without posting a session* |
+| **Status** | Pass |
+
+---
+
+## 10. Operations / CI (Unit 14)
+
+Harness, not Gherkin. Workflows: `.github/workflows/pr.yml`, `.github/workflows/nightly.yml`.
+
+### OPS-1 — PR gate
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Every PR typechecks, coverage does not drop, and `@smoke` is green against dev2. |
+| **Steps** | `npm run typecheck` → `npm run coverage:ratchet` → `npm run test:smoke` → `npm run verify:scrub`. |
+| **Expected result** | Job green. `@write` / `@bug` / `@visual` / `@wip` are not in this gate. |
+| **Status** | Ready (GitHub Actions) |
+
+### OPS-2 — Nightly default suite
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Once a day, the default profile (`npm test`) runs against clinical.dev2 and publishes reports. |
+| **Expected result** | Cucumber HTML, traces, inventory, and allure-results uploaded as artifacts. |
+| **Status** | Ready (cron `0 6 * * *` UTC) |
+
+### OPS-3 — Coverage ratchet
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Live inventory % must be ≥ `docs/coverage-floor.json` (currently 94.7). |
+| **Fails when** | An inventory item is dropped from `covered`/`bug` without a signed-off exclusion, or the floor is higher than live %. |
+| **Status** | Pass locally (`npm run coverage:ratchet`) |
+
+

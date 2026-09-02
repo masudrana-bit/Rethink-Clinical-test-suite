@@ -1,0 +1,42 @@
+# Nightly default suite against clinical.dev2
+#
+# Excludes @write, @bug, @visual, @wip (the PR/nightly gate).
+# Set CLINICAL_RUNNER if ubuntu-latest cannot reach the internal API.
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  default-suite:
+    name: Default suite and coverage ratchet
+    runs-on: ${{ vars.CLINICAL_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Default suite (excludes @write @bug @visual @wip)
+        run: npm test
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
+      - run: npm run coverage:ratchet
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-reports
+          path: |
+            reports/
+            docs/surface-inventory.md
+            docs/api-endpoint-report.md
+            allure-results/
+          if-no-files-found: ignore
+          retention-days: 30

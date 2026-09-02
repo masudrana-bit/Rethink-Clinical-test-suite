@@ -18,7 +18,7 @@ These reports cover only scenarios tagged `@bug`. Each scenario asserts **correc
 | DEF-2 | `behaviorplans` returns 500 for every client | High | Behavior Support / API | BS-2 | Fail (held out) |
 | DEF-4 | `automastery-evaluations` 500 under concurrent load | Medium | Analyze Data / API | AZ-6b | Intermittent (held out) |
 | DEF-5 | Server error shown as “no behavior plans yet” | High | Behavior Support UI | BS-3 | Fail (held out) |
-| DEF-6 | Add-target does not open a write UI | High | Skills Programs UI | WR-1 | Fail (held out) |
+| DEF-6 | Add-target does not open a write UI | High | Skills Programs UI | WR-2b | Fail (held out) |
 
 Related (not `@bug` tagged): **DEF-3** — `staff-role` returns credential fields. Mitigated in the harness only (`support/scrub.ts`). See `docs/defects.md`.
 
@@ -308,6 +308,9 @@ If the request fails (after retry): show only the unavailable/error state; do no
 npx cucumber-js -p bugs
 ```
 
-Expected today: **five scenarios**, **four or five failures** (AZ-6b may pass on a lucky load). After a fix, the matching scenario should go green; remove `@bug` and fold it into `npm test`.
+Expected today: **six `@bug` scenarios**. AZ-6b may pass on a lucky load. WR-2b and WR-3b
+need `TEST_CLIENT_ID` (`-p bugs` will fail fast on those two if it is unset). After a
+fix, the matching scenario should go green; remove `@bug` and fold it into `npm test`
+(write cases stay on `npm run test:write`).
 
 Full write-up of anomalies that are **not** `@bug` cases: `docs/defects.md`.

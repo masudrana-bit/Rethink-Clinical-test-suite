@@ -3,12 +3,12 @@ Feature: Write flows
   Phase 2b. Mutating flows run only against TEST_CLIENT_ID (a dedicated client).
   Resources this suite creates are named ZZZ-SUITE-* and deleted in After.
 
-  W0 recon (2026-08-27): POST /programs/{id}/targets with `{ description }` returns 201.
-  DELETE requires If-Match (428 without it; 204 with `If-Match: *`). The UI buttons
-  `program-details-add-target` and `program-details-record-data` do not open a form.
-  Record data / Add Data Collection navigates to `/sessions/new` (RBT wizard) — no
-  session POST was captured. Mastery confirm/dismiss exist on Analyze Data but must
-  not be clicked for pre-existing evaluations.
+  W0 recon (2026-08-27, re-checked 2026-09-02): POST /programs/{id}/targets with
+  `{ description }` returns 201. DELETE requires If-Match (428 without it; 204 with
+  `If-Match: *`). `program-details-add-target` does not open a form (DEF-6).
+  Record-data opens `/sessions/new` (SES-1). POST .../automastery-evaluations returns
+  405, so this suite cannot create a flagged evaluation to confirm or dismiss.
+  Mastery confirm/dismiss must not be clicked for pre-existing evaluations.
 
   @api @write
   Scenario: Creating a target via the API lists it for the dedicated client
@@ -33,11 +33,24 @@ Feature: Write flows
     And I click add-target
     Then a target form is shown
 
-  @ui @write @wip
-  Scenario: Recording data against a suite target stores a session
-    When I record data against a suite-created target
-    Then a subsequent read shows that session
+  @ui @write
+  Scenario: Clicking record-data does not create a session
+    When I open the dedicated client's workspace
+    And I select the resolved program in the rail
+    And I start watching for clinical writes
+    And I click record-data
+    Then no dialog is shown
+    And no clinical write request is sent
 
+  # Lands on /sessions/new (same as SES-1). Must not POST a session.
+  @ui @write
+  Scenario: Record data opens a collection form or session wizard
+    When I open the dedicated client's workspace
+    And I select the resolved program in the rail
+    And I click record-data
+    Then a data-collection form or the session wizard is shown
+
+  # Blocked: POST automastery-evaluations is 405; no suite-owned flagged row.
   @ui @write @wip
   Scenario: Confirming mastery on a suite-created evaluation removes the pending row
     When I confirm mastery on a suite-created flagged evaluation

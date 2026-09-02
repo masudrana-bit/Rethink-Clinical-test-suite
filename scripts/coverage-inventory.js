@@ -100,7 +100,7 @@ function render(inventory, stats) {
   lines.push('');
   lines.push('## Ranked gap backlog');
   lines.push('');
-  lines.push('Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (writes).');
+  lines.push('Remaining gaps are signed off (D14): mastery confirm/dismiss, `/sessions/new` (DEF-6), Behavior Support true-empty (DEF-2). See docs/compensating-controls.md.');
   lines.push('');
   lines.push('| Risk | ID | Surface | Status | Why it is open | Next unit |');
   lines.push('|------|----|---------|--------|----------------|-----------|');
@@ -138,20 +138,17 @@ function render(inventory, stats) {
   lines.push('');
   lines.push('- **Denominator:** every item except `excluded`.');
   lines.push('- **Numerator:** `covered` and `bug` = 1, `partial` = 0.5, `wip` and `gap` = 0.');
-  lines.push('- Coverage must not drop. Unit 14 will ratchet this number in CI.');
+  lines.push('- Coverage must not drop. CI runs `npm run coverage:ratchet` against `docs/coverage-floor.json`.');
   lines.push('');
   return `${lines.join('\n')}\n`;
 }
 
 function nextUnit(item) {
-  if (item.id.startsWith('S-') || item.id === 'R-sessions-new') return 'Unit 9/10';
-  if (item.id.startsWith('A-print') || item.id === 'A-scope-select' || item.id === 'S-analyze-loading') {
-    return 'Unit 10';
-  }
-  if (item.id.startsWith('A-confirm') || item.id.startsWith('A-dismiss') || item.id === 'A-record-data') {
-    return 'Unit 11';
-  }
-  return 'Unit 9';
+  if (item.id.startsWith('A-confirm') || item.id.startsWith('A-dismiss')) return 'blocked';
+  if (item.id === 'R-sessions-new') return 'write wizard';
+  if (item.id === 'S-bs-true-empty') return 'DEF-2';
+  if (item.id === 'A-scope-select') return 'AN-3';
+  return 'backlog';
 }
 
 function writeSurfaceInventoryReport() {

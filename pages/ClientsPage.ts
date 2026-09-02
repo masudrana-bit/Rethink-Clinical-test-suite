@@ -89,4 +89,9 @@ export class ClientsPage {
     await this.searchByName.fill('');
     await this.searchById.fill('');
   }
+
+  /** Row text churns with the shared caseload (D9). Layout of search + table chrome stays. */
+  volatileForVisual(): Locator[] {
+    return [this.items];
+  }
 }

@@ -99,12 +99,38 @@ export class ClientWorkspace {
     await new PrimeSelect(this.page, this.domainFilter, 'domain filter').choose(label);
   }
 
+  /** Program titles, target rows, and goals — shared-suite data (D9). */
+  volatileForVisual(): Locator[] {
+    return [this.allProgramItems(), this.programTargets, this.programGoals, this.programRailEmpty];
+  }
+
   get addTarget(): Locator {
     return this.page.getByTestId('program-details-add-target');
   }
 
   get recordData(): Locator {
     return this.page.getByTestId('program-details-record-data');
+  }
+
+  /**
+   * Click record-data and wait for either a dialog, `/sessions/new`, or a no-op.
+   * Does not use a fixed sleep — each branch is an explicit wait that may time out.
+   */
+  async clickRecordData(): Promise<'dialog' | 'wizard' | 'noop'> {
+    await this.recordData.click();
+    try {
+      await this.page.waitForURL(/\/sessions\/new(?:\/|$|\?)/, {
+        timeout: 5_000,
+        waitUntil: 'commit',
+      });
+      return 'wizard';
+    } catch {
+      /* still in the clinical shell */
+    }
+    if (await this.visibleDialog.first().isVisible().catch(() => false)) {
+      return 'dialog';
+    }
+    return 'noop';
   }
 
   /** Any role=dialog / PrimeNG dialog that is actually painted. */

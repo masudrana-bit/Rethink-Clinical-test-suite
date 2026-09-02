@@ -86,10 +86,10 @@
       "id": "R-sessions-new",
       "kind": "route",
       "surface": "/sessions/new",
-      "status": "gap",
+      "status": "partial",
       "risk": "P2",
-      "tests": [],
-      "gap": "Record-data / Add Data Collection leaves the clinical shell. No session-write API captured (WR-3)."
+      "tests": ["SES-1", "SES-2", "WR-3b"],
+      "gap": "Participants + Programs steps (SES-1/2). Confirm is a write; not in the default gate."
     },
     {
       "id": "R-nav-unvisited",
@@ -98,7 +98,7 @@
       "status": "excluded",
       "risk": "P3",
       "tests": [],
-      "gap": "Present in nav, never crawled. Compensating control: thin human exploratory pass per release."
+      "gap": "Present in nav as non-interactive labels (2026-09-02 pass: click does not route). Compensating control: re-check each release in case they become links."
     },
 
     {
@@ -196,6 +196,15 @@
       "status": "covered",
       "risk": "P1",
       "tests": ["PRG-4", "AZ-6"]
+    },
+    {
+      "id": "E-automastery-post",
+      "kind": "endpoint",
+      "surface": "POST .../automastery-evaluations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["NEG-12"],
+      "gap": "POST returns 405 on unknown (and live) clients. No create API for suite-owned flagged evals (WR-4/WR-5 remain @wip)."
     },
     {
       "id": "E-behaviorplans",
@@ -384,7 +393,7 @@
       "status": "wip",
       "risk": "P1",
       "tests": ["WR-4"],
-      "gap": "Needs a suite-created flagged evaluation (blocked on WR-3)."
+      "gap": "POST automastery-evaluations is 405. Must not click pre-existing flagged rows."
     },
     {
       "id": "A-dismiss-mastery",
@@ -393,7 +402,7 @@
       "status": "wip",
       "risk": "P1",
       "tests": ["WR-5"],
-      "gap": "Same blocker as confirm mastery."
+      "gap": "Same blocker as confirm mastery (no suite-owned flagged evaluation)."
     },
     {
       "id": "A-add-target",
@@ -408,10 +417,10 @@
       "id": "A-record-data",
       "kind": "action",
       "surface": "Skills Programs: record data",
-      "status": "wip",
+      "status": "covered",
       "risk": "P1",
-      "tests": ["WR-3"],
-      "gap": "UI leaves for /sessions/new; no session POST captured."
+      "tests": ["SES-1", "WR-3", "WR-3b"],
+      "gap": "Opens /sessions/new. Completing the wizard is still out of the default gate."
     },
 
     {
@@ -544,6 +553,86 @@
       "risk": "P2",
       "tests": [],
       "gap": "Unreachable while behaviorplans 500s for every client."
+    },
+    {
+      "id": "V-clients-list",
+      "kind": "state",
+      "surface": "Visual: /clients chrome (data masked)",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["VIS-1"]
+    },
+    {
+      "id": "V-client-workspace",
+      "kind": "state",
+      "surface": "Visual: client workspace chrome (data masked)",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["VIS-2"]
+    },
+    {
+      "id": "V-analyze-mastered",
+      "kind": "state",
+      "surface": "Visual: Analyze Data mastered chrome (data masked)",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["VIS-3"]
+    },
+    {
+      "id": "V-analyze-custom",
+      "kind": "state",
+      "surface": "Visual: Analyze Data custom graph chrome (data masked)",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["VIS-4"]
+    },
+    {
+      "id": "V-analyze-bulk",
+      "kind": "state",
+      "surface": "Visual: Analyze Data bulk graph chrome (data masked)",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["VIS-5"]
+    },
+    {
+      "id": "A11Y-sign-in",
+      "kind": "state",
+      "surface": "a11y: /sign-in no critical axe violations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["A11Y-1"]
+    },
+    {
+      "id": "A11Y-clients",
+      "kind": "state",
+      "surface": "a11y: /clients no critical axe violations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["A11Y-2"]
+    },
+    {
+      "id": "A11Y-workspace",
+      "kind": "state",
+      "surface": "a11y: client workspace no critical axe violations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["A11Y-3"]
+    },
+    {
+      "id": "A11Y-analyze-data",
+      "kind": "state",
+      "surface": "a11y: Analyze Data no critical axe violations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["A11Y-4"]
+    },
+    {
+      "id": "A11Y-behavior-support",
+      "kind": "state",
+      "surface": "a11y: Behavior Support no critical axe violations",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["A11Y-5"]
     }
   ]
 }

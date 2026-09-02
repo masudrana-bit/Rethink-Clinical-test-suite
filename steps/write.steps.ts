@@ -50,6 +50,32 @@ When('I click add-target', async function (this: CustomWorld) {
   await this.workspace.addTarget.click();
 });
 
+When('I start watching for clinical writes', async function (this: CustomWorld) {
+  const writes: string[] = [];
+  this.data.clinicalWrites = writes;
+  this.page.on('request', (req) => {
+    if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method())) return;
+    if (/refresh-token|\/login(?:\?|$)/i.test(req.url())) return;
+    writes.push(`${req.method()} ${req.url()}`);
+  });
+});
+
+When('I click record-data', async function (this: CustomWorld) {
+  this.data.recordDataOutcome = await this.workspace.clickRecordData();
+});
+
+Then('no clinical write request is sent', function (this: CustomWorld) {
+  const writes = (this.data.clinicalWrites as string[]) ?? [];
+  expect(writes, 'record-data must not POST/PATCH/PUT/DELETE clinical data').toEqual([]);
+});
+
+Then('a data-collection form or the session wizard is shown', function (this: CustomWorld) {
+  expect(
+    this.data.recordDataOutcome,
+    'record-data should open a form or /sessions/new (DEF-6: it currently does not)',
+  ).not.toBe('noop');
+});
+
 Then('no dialog is shown', async function (this: CustomWorld) {
   await expect(this.workspace.visibleDialog).toHaveCount(0);
 });
@@ -85,14 +111,6 @@ Then('that report name is listed among saved reports', async function (this: Cus
   const name = this.data.savedReportName as string;
   await expect(this.page.getByText(name, { exact: true })).toBeVisible();
   await expect(this.analyzeData.savedReportEmpty).toHaveCount(0);
-});
-
-When('I record data against a suite-created target', async function () {
-  return 'pending';
-});
-
-Then('a subsequent read shows that session', async function () {
-  return 'pending';
 });
 
 When('I confirm mastery on a suite-created flagged evaluation', async function () {

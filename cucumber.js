@@ -24,7 +24,10 @@ const common = {
 //
 // @write mutates the dedicated TEST_CLIENT_ID client. Excluded from npm test until
 // a write unit is signed off. Run with `npm run test:write`.
-const ready = 'not @wip and not @bug and not @write';
+// @visual is a screenshot-diff gate (Unit 12). Host fonts/DPI make it a
+// dedicated profile until Unit 14 CI pins the runner. Run with `npm run test:visual`.
+// @a11y is included in npm test (D12: critical-only). Run alone with `npm run test:a11y`.
+const ready = 'not @wip and not @bug and not @write and not @visual';
 
 module.exports = {
   default: { ...common, tags: ready },
@@ -41,4 +44,7 @@ module.exports = {
   wip: { ...common, tags: '@wip' },
   bugs: { ...common, tags: '@bug and not @wip' },
   write: { ...common, tags: '@write and not @wip and not @bug' },
+  visual: { ...common, tags: '@visual and not @wip and not @bug' },
+  a11y: { ...common, tags: '@a11y and not @wip and not @bug' },
+  sessions: { ...common, tags: '@sessions and not @wip and not @bug' },
 };

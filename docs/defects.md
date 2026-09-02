@@ -89,18 +89,20 @@ The `staff-role` response carries `apiKey`, `password`, `passwordQuestion` and
 
 This is a mitigation in our harness, not a fix — the API still sends them.
 
-## DEF-6 — Add-target and record-data do not open a write UI
+## DEF-6 — Add-target does not open a write UI
 
-**Severity:** high for the write-flow program — the buttons exist (`program-details-add-target`,
-`program-details-record-data`) and are clickable, but no dialog, toast, or navigation
-occurs. Clinicians cannot add a target from Skills Programs. Record-data is the same
-no-op; **Add Data Collection** instead leaves the clinical shell for `/sessions/new`.
+**Severity:** high for adding targets from Skills Programs — `program-details-add-target`
+is clickable but no dialog, toast, or navigation occurs.
 
-The targets **API** does accept `POST { description }` (201), so the gap is the UI, not
-the backend create.
+**Record-data (updated 2026-09-02):** `program-details-record-data` now navigates to
+`/sessions/new` (RBT wizard, `new-session-page`, participants step). Covered by SES-1
+in the default suite. Completing the wizard is still a write and is not in `npm test`.
+
+The targets **API** does accept `POST { description }` (201), so the remaining gap is
+the add-target UI, not backend create.
 
 **Covered by:** `Add target opens a form for a new target` (`@write @bug`). Companion
-WR-2 asserts the click also does not silently POST (target count unchanged).
+WR-2 asserts the click also does not silently POST.
 
 ---
 
@@ -160,3 +162,12 @@ available.
 
 Not asserted either way — **needs a product answer** before we write a test that fixes
 the wrong behaviour in place.
+
+## AN-6 — axe finds serious (not critical) issues on main pages
+
+Live WCAG 2.A/2.AA scan (2026-09-02): **zero critical** violations on sign-in, clients
+list, workspace, Analyze Data, and Behavior Support. Recurring **serious**
+`color-contrast` on the authenticated shell; Analyze Data also has a serious
+`definition-list`. Unit 13 / D12 gates **critical** only; these serious hits are
+attached on each `@a11y` scenario as `axe-scan.json` and are not a fail.
+

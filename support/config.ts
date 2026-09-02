@@ -31,6 +31,9 @@ export const config = {
 
   headless: env('HEADED') !== '1',
 
+  /** Rewrite PNGs under visual/baselines. Used by `@visual` (Unit 12). */
+  updateVisual: env('UPDATE_VISUAL') === '1',
+
   /** localStorage key holding the app's auth session. */
   authStorageKey: 'bh_clinical_auth_session',
 };

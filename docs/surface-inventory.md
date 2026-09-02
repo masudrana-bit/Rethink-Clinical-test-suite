@@ -4,38 +4,37 @@ Source of truth: [`surface-inventory.json`](./surface-inventory.json). Regenerat
 
 **As of:** 2026-09-02
 
-## Coverage 91.4%
+## Coverage 94.7%
 
-91.4% of the **in-scope** surface is covered (full credit for `covered` and `@bug`, half credit for `partial`). 64 in-scope items, 1 signed-off exclusion.
+94.7% of the **in-scope** surface is covered (full credit for `covered` and `@bug`, half credit for `partial`). 75 in-scope items, 1 signed-off exclusion.
 
 | Status | Count |
 |--------|------:|
-| ✅ covered | 53 |
+| ✅ covered | 65 |
 | 🐞 @bug | 5 |
-| ◐ partial | 1 |
-| ☐ wip | 3 |
-| ❌ gap | 2 |
+| ◐ partial | 2 |
+| ☐ wip | 2 |
+| ❌ gap | 1 |
 | excluded (not in %) | 1 |
 
 | Kind | Items | Weighted coverage |
 |------|------:|------------------:|
-| route | 10 | 90% |
-| endpoint | 16 | 100% |
-| action | 22 | 84.1% |
-| state | 16 | 93.8% |
+| route | 10 | 95% |
+| endpoint | 17 | 100% |
+| action | 22 | 88.6% |
+| state | 26 | 96.2% |
 
 ## Ranked gap backlog
 
-Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (writes).
+Remaining gaps are signed off (D14): mastery confirm/dismiss, `/sessions/new` (DEF-6), Behavior Support true-empty (DEF-2). See docs/compensating-controls.md.
 
 | Risk | ID | Surface | Status | Why it is open | Next unit |
 |------|----|---------|--------|----------------|-----------|
-| P1 | `A-confirm-mastery` | Analyze Data: confirm mastery | ☐ wip | Needs a suite-created flagged evaluation (blocked on WR-3). | Unit 11 |
-| P1 | `A-dismiss-mastery` | Analyze Data: dismiss mastery | ☐ wip | Same blocker as confirm mastery. | Unit 11 |
-| P1 | `A-record-data` | Skills Programs: record data | ☐ wip | UI leaves for /sessions/new; no session POST captured. | Unit 11 |
-| P2 | `A-scope-select` | Analyze Data: report scope select | ◐ partial | AN-3: control is present (AZ-14). Option values are not contracted until product answers whether Domain/Category/Area belong there. | Unit 10 |
-| P2 | `R-sessions-new` | /sessions/new | ❌ gap | Record-data / Add Data Collection leaves the clinical shell. No session-write API captured (WR-3). | Unit 9/10 |
-| P2 | `S-bs-true-empty` | Behavior Support: genuine zero plans | ❌ gap | Unreachable while behaviorplans 500s for every client. | Unit 9/10 |
+| P1 | `A-confirm-mastery` | Analyze Data: confirm mastery | ☐ wip | POST automastery-evaluations is 405. Must not click pre-existing flagged rows. | blocked |
+| P1 | `A-dismiss-mastery` | Analyze Data: dismiss mastery | ☐ wip | Same blocker as confirm mastery (no suite-owned flagged evaluation). | blocked |
+| P2 | `A-scope-select` | Analyze Data: report scope select | ◐ partial | AN-3: control is present (AZ-14). Option values are not contracted until product answers whether Domain/Category/Area belong there. | AN-3 |
+| P2 | `R-sessions-new` | /sessions/new | ◐ partial | Participants + Programs steps (SES-1/2). Confirm is a write; not in the default gate. | write wizard |
+| P2 | `S-bs-true-empty` | Behavior Support: genuine zero plans | ❌ gap | Unreachable while behaviorplans 500s for every client. | DEF-2 |
 
 ## Known defects (count as covered for %; still red in `-p bugs`)
 
@@ -62,7 +61,7 @@ Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (wri
 | `R-behavior-support` | /clients/:id/behavior-support | ✅ covered | P1 | BS-1, PRG-9 |
 | `R-unknown-client` | /clients/:missing-id | ✅ covered | P2 | NEG-3 |
 | `R-unknown-path` | unknown path | ✅ covered | P2 | NEG-4 |
-| `R-sessions-new` | /sessions/new | ❌ gap | P2 | — |
+| `R-sessions-new` | /sessions/new | ◐ partial | P2 | SES-1, SES-2, WR-3b |
 | `R-nav-unvisited` | Staff, Supervision, Settings, Training, Reporting, Template, Schedule, Notifications, Billing | ➖ excluded | P3 | — |
 
 ### Endpoints
@@ -81,6 +80,7 @@ Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (wri
 | `E-target-groups` | GET .../programs/:id/target-groups | ✅ covered | P1 | PRG-3c |
 | `E-data-collection` | GET .../programs/:id/data-collection | ✅ covered | P1 | PRG-3d |
 | `E-automastery` | GET .../automastery-evaluations?status= | ✅ covered | P1 | PRG-4, AZ-6 |
+| `E-automastery-post` | POST .../automastery-evaluations | ✅ covered | P1 | NEG-12 |
 | `E-behaviorplans` | GET /observations/v1/client/:id/behaviorplans | 🐞 @bug | P1 | BS-2 |
 | `E-runtime-config` | GET /runtime-config.json | ✅ covered | P0 | CLI-8, FND-2 |
 | `E-targets-post` | POST .../programs/:id/targets | ✅ covered | P1 | WR-1, NEG-7 |
@@ -111,7 +111,7 @@ Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (wri
 | `A-confirm-mastery` | Analyze Data: confirm mastery | ☐ wip | P1 | WR-4 |
 | `A-dismiss-mastery` | Analyze Data: dismiss mastery | ☐ wip | P1 | WR-5 |
 | `A-add-target` | Skills Programs: add target | 🐞 @bug | P1 | WR-2, WR-2b |
-| `A-record-data` | Skills Programs: record data | ☐ wip | P1 | WR-3 |
+| `A-record-data` | Skills Programs: record data | ✅ covered | P1 | SES-1, WR-3, WR-3b |
 
 ### States
 
@@ -133,10 +133,20 @@ Close these in Unit 9 (states), Unit 10 (Analyze Data breadth), and Unit 11 (wri
 | `S-bs-shell` | Behavior Support: rail + novel behaviors render | ✅ covered | P1 | BS-1 |
 | `S-bs-error-vs-empty` | Behavior Support: error not presented as empty | 🐞 @bug | P1 | BS-3 |
 | `S-bs-true-empty` | Behavior Support: genuine zero plans | ❌ gap | P2 | — |
+| `V-clients-list` | Visual: /clients chrome (data masked) | ✅ covered | P2 | VIS-1 |
+| `V-client-workspace` | Visual: client workspace chrome (data masked) | ✅ covered | P2 | VIS-2 |
+| `V-analyze-mastered` | Visual: Analyze Data mastered chrome (data masked) | ✅ covered | P2 | VIS-3 |
+| `V-analyze-custom` | Visual: Analyze Data custom graph chrome (data masked) | ✅ covered | P2 | VIS-4 |
+| `V-analyze-bulk` | Visual: Analyze Data bulk graph chrome (data masked) | ✅ covered | P2 | VIS-5 |
+| `A11Y-sign-in` | a11y: /sign-in no critical axe violations | ✅ covered | P1 | A11Y-1 |
+| `A11Y-clients` | a11y: /clients no critical axe violations | ✅ covered | P1 | A11Y-2 |
+| `A11Y-workspace` | a11y: client workspace no critical axe violations | ✅ covered | P1 | A11Y-3 |
+| `A11Y-analyze-data` | a11y: Analyze Data no critical axe violations | ✅ covered | P1 | A11Y-4 |
+| `A11Y-behavior-support` | a11y: Behavior Support no critical axe violations | ✅ covered | P1 | A11Y-5 |
 
 ## How the percentage is computed
 
 - **Denominator:** every item except `excluded`.
 - **Numerator:** `covered` and `bug` = 1, `partial` = 0.5, `wip` and `gap` = 0.
-- Coverage must not drop. Unit 14 will ratchet this number in CI.
+- Coverage must not drop. CI runs `npm run coverage:ratchet` against `docs/coverage-floor.json`.
 

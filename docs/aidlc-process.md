@@ -41,9 +41,10 @@ Exit gate: `@smoke` green, then full `@api` and `@ui` green twice consecutively.
 
 ## Phase 3 — OPERATIONS (deploy & run)
 
-1. AI generates CI config: pull creds from CI secrets, run `@smoke` on every PR,
-   full suite nightly against dev2.
-2. Publish Cucumber HTML report + Playwright traces as artifacts; alert on failure.
+1. GitHub Actions (D13): `.github/workflows/pr.yml` runs `@smoke` on every PR;
+   `nightly.yml` runs the default suite against clinical.dev2.
+2. Publish Cucumber HTML report + Playwright traces as artifacts; coverage ratchet
+   fails the build if inventory % drops below `docs/coverage-floor.json`.
 3. Feedback loop: a flake or a real bug (e.g. behaviorplans) becomes a new unit of
    work, re-entering Inception. The lifecycle loops.
 

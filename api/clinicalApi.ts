@@ -149,6 +149,42 @@ export class ClinicalApi {
   }
 
   /**
+   * Recon 2026-09-02: POST on this collection returns 405 (no create API).
+   * Used only as a non-mutating unknown-client probe (NEG-12).
+   */
+  createAutomasteryEvaluation(
+    clientId: number,
+    programId: number,
+  ): Promise<APIResponse> {
+    return this.track(
+      'POST',
+      this.api.post(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/programs/${programId}/automastery-evaluations`,
+        {
+          headers: { ...this.headers(), 'Content-Type': 'application/json' },
+          data: { status: 'flagged' },
+        },
+      ),
+    );
+  }
+
+  /**
+   * Recon 2026-09-02: this path 404s. Probe only — do not treat as a write contract.
+   */
+  createClientSession(clientId: number): Promise<APIResponse> {
+    return this.track(
+      'POST',
+      this.api.post(
+        `${config.apiBaseUrl}/clinical/v1/clients/${clientId}/sessions`,
+        {
+          headers: { ...this.headers(), 'Content-Type': 'application/json' },
+          data: {},
+        },
+      ),
+    );
+  }
+
+  /**
    * Observed 201 from POST `{ description }`. The server fills objectiveId, status
    * and statusHistory. Do not send a richer body until recon captures one.
    */
