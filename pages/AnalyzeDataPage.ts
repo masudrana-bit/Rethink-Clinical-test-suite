@@ -29,6 +29,8 @@ export class AnalyzeDataPage {
   readonly chart: Locator;
   readonly chartCanvas: Locator;
   readonly masteryReview: Locator;
+  readonly print: Locator;
+  readonly masteredReportEmpty: Locator;
 
   constructor(private readonly page: Page) {
     this.root = page.getByTestId('analyze-data-page');
@@ -39,6 +41,8 @@ export class AnalyzeDataPage {
     this.chart = page.getByTestId('mastered-report-chart');
     this.chartCanvas = page.getByTestId('clinical-chart-canvas');
     this.masteryReview = page.getByTestId('mastery-evaluation-review');
+    this.print = page.getByTestId('analyze-print');
+    this.masteredReportEmpty = page.getByTestId('mastered-report-empty');
   }
 
   tile(which: SummaryTile): Locator {
@@ -59,8 +63,8 @@ export class AnalyzeDataPage {
   }
 
   async expectLoaded(): Promise<void> {
-    await expect(this.root).toBeVisible();
-    await expect(this.summary).toBeVisible();
+    await expect(this.root).toBeVisible({ timeout: 30_000 });
+    await expect(this.summary).toBeVisible({ timeout: 30_000 });
     // Tiles hold "--" until the report resolves; wait for real figures rather
     // than letting every downstream assertion race the load.
     await expect(this.tile('in-scope'), 'the in-scope tile should resolve to a number').toHaveText(

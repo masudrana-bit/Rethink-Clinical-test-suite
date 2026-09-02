@@ -14,6 +14,9 @@ export class ClientsPage {
   readonly rows: Locator;
   readonly searchByName: Locator;
   readonly searchById: Locator;
+  readonly loading: Locator;
+  readonly error: Locator;
+  readonly retry: Locator;
 
   constructor(private readonly page: Page) {
     this.root = page.getByTestId('clients-list-page');
@@ -21,6 +24,9 @@ export class ClientsPage {
     this.rows = page.locator('[data-testid="clients-list-items"] tbody tr');
     this.searchByName = page.getByTestId('clients-list-search-name');
     this.searchById = page.getByTestId('clients-list-search-id');
+    this.loading = page.getByTestId('clients-list-loading');
+    this.error = page.getByTestId('clients-list-error');
+    this.retry = page.getByTestId('clients-list-retry');
   }
 
   /** Rows are keyed by client id, so this doubles as an existence check. */

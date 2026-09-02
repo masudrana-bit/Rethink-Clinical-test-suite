@@ -6,7 +6,8 @@ Printable copy: [`bug-report.pdf`](./bug-report.pdf).
 **Environment:** `https://clinical.dev2.rethinkbhtech.com`  
 **API:** `https://dev2.internal.rethinkbhtech.com/mobile-gateway-api`  
 **Reported by:** AIDLC E2E suite (Playwright + Cucumber)  
-**Date:** 2026-08-27  
+**Date:** 2026-09-02
+
 **Suite command:** `npx cucumber-js -p bugs`
 
 These reports cover only scenarios tagged `@bug`. Each scenario asserts **correct** product behaviour. They are excluded from `npm test` so the default suite stays green. They are expected to **pass** once the defect is fixed; then the `@bug` tag should be removed.
@@ -17,6 +18,7 @@ These reports cover only scenarios tagged `@bug`. Each scenario asserts **correc
 | DEF-2 | `behaviorplans` returns 500 for every client | High | Behavior Support / API | BS-2 | Fail (held out) |
 | DEF-4 | `automastery-evaluations` 500 under concurrent load | Medium | Analyze Data / API | AZ-6b | Intermittent (held out) |
 | DEF-5 | Server error shown as “no behavior plans yet” | High | Behavior Support UI | BS-3 | Fail (held out) |
+| DEF-6 | Add-target does not open a write UI | High | Skills Programs UI | WR-1 | Fail (held out) |
 
 Related (not `@bug` tagged): **DEF-3** — `staff-role` returns credential fields. Mitigated in the harness only (`support/scrub.ts`). See `docs/defects.md`.
 
@@ -306,6 +308,6 @@ If the request fails (after retry): show only the unavailable/error state; do no
 npx cucumber-js -p bugs
 ```
 
-Expected today: **four scenarios**, **three or four failures** (AZ-6b may pass on a lucky load). After a fix, the matching scenario should go green; remove `@bug` and fold it into `npm test`.
+Expected today: **five scenarios**, **four or five failures** (AZ-6b may pass on a lucky load). After a fix, the matching scenario should go green; remove `@bug` and fold it into `npm test`.
 
 Full write-up of anomalies that are **not** `@bug` cases: `docs/defects.md`.

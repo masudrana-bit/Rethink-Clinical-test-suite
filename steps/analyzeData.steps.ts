@@ -1,4 +1,4 @@
-import { When, Then } from '@cucumber/cucumber';
+import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import {
@@ -31,8 +31,9 @@ Then(
   },
 );
 
-Then("the in-scope tile equals the client's total target count", async function (this: CustomWorld) {
-  // Both sides re-read each poll: a target created mid-scenario moves both.
+Then("the in-scope tile is not larger than the client's total target count", async function (this: CustomWorld) {
+  // D10: in-scope is a report-filtered subset, not the raw target rollup.
+  // Equality against totalCount is a false oracle; inflation above the API total is not.
   await expect
     .poll(
       async () => {
@@ -40,14 +41,14 @@ Then("the in-scope tile equals the client's total target count", async function 
           this.analyzeData.tileValue('in-scope'),
           fetchTargetTotal(this),
         ]);
-        return tile === api ? 'reconciled' : `tile=${tile} api=${api}`;
+        return tile <= api ? 'within-api-total' : `tile=${tile} api=${api}`;
       },
       {
-        message: 'Targets in scope should equal the sum of targets across every program',
+        message: 'In-scope should not exceed the live target count across every program',
         timeout: 30_000,
       },
     )
-    .toBe('reconciled');
+    .toBe('within-api-total');
 });
 
 Then('mastered plus remaining equals in scope', async function (this: CustomWorld) {
@@ -268,4 +269,68 @@ Then("the series count equals the client's program count", async function (this:
       { message: 'programs available in scope should match the programs API', timeout: 30_000 },
     )
     .toBe('reconciled');
+});
+
+const TARGETS = /\/clinical\/v1\/clients\/\d+\/programs\/\d+\/targets/;
+
+Given('the targets API is delayed', async function (this: CustomWorld) {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  this.data.releaseTargetsApi = release;
+  await this.page.route(TARGETS, async (route) => {
+    await gate;
+    await route.continue();
+  });
+});
+
+When('I open Analyze Data without waiting for tiles', async function (this: CustomWorld) {
+  const { client } = await fixture(this);
+  await this.page.goto(`/clients/${client.id}/analyze-data`);
+  await expect(this.analyzeData.root).toBeVisible({ timeout: 30_000 });
+});
+
+Then('the in-scope tile is still unresolved', async function (this: CustomWorld) {
+  await expect(this.analyzeData.tile('in-scope')).toHaveText(/--/);
+});
+
+When('the targets API is allowed to complete', async function (this: CustomWorld) {
+  const release = this.data.releaseTargetsApi as (() => void) | undefined;
+  if (!release) throw new Error('the targets API was not delayed in this scenario');
+  release();
+  await this.analyzeData.expectLoaded();
+});
+
+When('I print the current report', async function (this: CustomWorld) {
+  await this.page.evaluate(() => {
+    (window as unknown as { __printCalls: number }).__printCalls = 0;
+    window.print = () => {
+      (window as unknown as { __printCalls: number }).__printCalls += 1;
+    };
+  });
+  await this.analyzeData.print.click();
+});
+
+Then('the browser print dialog is requested', async function (this: CustomWorld) {
+  await expect
+    .poll(() => this.page.evaluate(() => (window as unknown as { __printCalls?: number }).__printCalls ?? 0), {
+      message: 'clicking Print should call window.print',
+      timeout: 5_000,
+    })
+    .toBeGreaterThan(0);
+});
+
+Then('every summary tile is zero', async function (this: CustomWorld) {
+  for (const tile of ['mastered', 'in-scope', 'remaining'] as const) {
+    expect(await this.analyzeData.tileValue(tile), `${tile} should be 0 with no programs`).toBe(0);
+  }
+});
+
+Then('the mastered report empty state is shown', async function (this: CustomWorld) {
+  await expect(this.analyzeData.masteredReportEmpty).toBeVisible();
+});
+
+Then('the report scope select is displayed', async function (this: CustomWorld) {
+  await expect(this.analyzeData.scopeSelect).toBeVisible();
 });

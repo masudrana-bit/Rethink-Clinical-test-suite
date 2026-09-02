@@ -128,6 +128,17 @@ skill-area chart plots junk categories alongside real ones.
 This caused one genuine intermittent failure before the suite was changed to re-read the
 API on every poll. See "Shared environment" in `coverage-matrix.md`.
 
+## AN-5 — Analyze Data tab navigation is delayed and logs a recoverable error
+
+Clicking `client-tab-analyze-data` from a selected program can keep the URL on
+`/clients/:id/programs/:programId` for several seconds. The browser may log:
+
+> `Cannot read properties of undefined (reading 'enabled')`
+
+The Analyze Data page then does render. A 5-second visibility assertion looks like a
+crash; waiting on `/analyze-data` and retrying the tab click once (PRG-9) matches the
+real transition. Not tagged `@bug`.
+
 ## AN-4 — An unknown client id returns 200 with an empty list
 
 `GET /clinical/v1/clients/<id that does not exist>/programs` answers **200** with an empty

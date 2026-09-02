@@ -18,6 +18,7 @@ import { acquireAuth, seedAuth, HarvestedAuth } from './auth';
 import { installResponseScrubbing } from './scrub';
 import { requireWriteClientId } from './writeGuard';
 import { apiDiagnostic } from './apiDiagnostics';
+import { createRequire } from 'node:module';
 import {
   flushApiHitRecordings,
   queueApiResponseHit,
@@ -25,6 +26,10 @@ import {
   setApiLogScenario,
   writeApiEndpointReport,
 } from './apiCallLog';
+
+const { writeSurfaceInventoryReport } = createRequire(__filename)(
+  '../scripts/coverage-inventory.js',
+) as { writeSurfaceInventoryReport: () => string[] };
 
 setDefaultTimeout(60_000);
 
@@ -58,6 +63,8 @@ AfterAll(async function () {
   await flushApiHitRecordings();
   const written = writeApiEndpointReport(runStartedAt);
   console.log(`api report  ${written.join(' · ')}`);
+  const coverage = writeSurfaceInventoryReport();
+  console.log(`coverage   ${coverage.join(' · ')}`);
   await browser?.close();
   await scrubFetcher?.dispose();
 });

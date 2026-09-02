@@ -41,6 +41,7 @@ These constrain every row below. Change a decision, revisit the rows it touches.
 | D7 | Credential fields are scrubbed from API responses before they are traced. | `support/scrub.ts` nulls `apiKey`, `password`, `passwordQuestion` and `passwordAnswer` en route to the browser. Guarded by `npm run verify:scrub`. |
 | D8 | *Added at Unit 4.* No scenario may depend on run order, or on a resource another scenario consumed. | A scenario needing a single-use resource acquires its own. AUTH-2 signs in for itself rather than sharing the run-level refresh token. |
 | D9 | *Added at Unit 3.* UI-versus-API comparisons re-read the API on every poll. | dev2 is written to by other suites mid-run, so a snapshot taken once goes stale. Assert that the two agree *now*, not that the UI matches a value we captured earlier. |
+| D10 | *Added at Unit 7.* "Targets in scope" is a report-filtered metric, not `sum(targets.totalCount)`. | Cross-layer equality is a false oracle. AZ-2 asserts the internal identity `mastered + remaining == in scope` and that in-scope does not exceed the live target total. |
 
 ## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
 
@@ -88,6 +89,12 @@ Consequences, applied throughout:
 - **Never hold the UI to a snapshot taken earlier in the run.** Rail comparisons re-read the
   programs API on every poll and pass as soon as UI and API agree (`expectRailToMatch`).
 - **Never assert exact counts** of clients, programs or targets — only relationships.
+- dev2 can return PostgreSQL `53300` when Analyze Data exhausts the shared connection pool.
+  Live read helpers retry that exact transient at most twice with backoff. Other 5xx responses
+  still fail immediately.
+- The Analyze Data client tab can stay on `/programs/:id` for several seconds before the route
+  changes. `ClientWorkspace.openTab` waits on the destination URL (up to 30s), not a click.
+  Opening a program waits on `/programs/:id` before asserting details panels.
 - Two runs passing is not proof of stability here; a run can pass because nothing was written
   during its two-minute window.
 
@@ -218,6 +225,12 @@ program-scoped documents, and `target-groups` returns a bare JSON array. Asserti
 envelope across all five would have failed on three of them — or, worse, passed vacuously
 against `body.items ?? []`. It is split into PRG-3a–d, each asserting the real shape.
 
+> **PRG-9 is a slow tab transition, not a dead tab.** A 5s `toBeVisible` on
+> `analyze-data-page` failed while the URL was still `/programs/:id`. A later live click
+> reached Analyze Data after the delayed route change. The suite now waits on that URL.
+> The app may still log `Cannot read properties of undefined (reading 'enabled')` during
+> the transition; see AN-5 in `defects.md`.
+
 **PRG-5 was also wrong as planned.** The rail does not list "the programs the API returned":
 for the crawled client the API returns 8 programs and the Current tab shows 1. The tabs split on
 the `active` boolean — Current holds `active: true`, Inactive the rest — which PRG-7 verifies is
@@ -230,7 +243,7 @@ an exact partition.
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
 | AZ-1 | The three summary tiles render with non-negative numbers | @ui | P1 | ☑ |
-| AZ-2 | **Revised.** `Targets in scope` equals the total targets across every program, and `mastered + remaining == in scope` holds as a secondary check | @ui @api | P1 | ☑ |
+| AZ-2 | **Revised (D10).** `mastered + remaining == in scope`; in-scope is not larger than the live target total | @ui @api | P1 | ☑ |
 | AZ-3 | Chart renders a value axis, and its categories are exactly the client's distinct program domains; the summary's "across N skill areas" matches that count | @ui @api | P2 | ☑ |
 | AZ-4 | Review rows equal the flagged automastery evaluations across all programs, and every row sits under a heading naming its own program | @ui @api | P2 | ☑ |
 | AZ-5 | Each of the five date-range chips becomes the sole `aria-pressed` selection | @ui | P2 | ☑ |
@@ -241,10 +254,16 @@ an exact partition.
 | AZ-8 | Mode tabs switch the view — the chosen panel shows and the other two are absent | @ui | P2 | ☑ |
 | AZ-9 | *Added.* Custom Graph's "N available in this scope" equals the client's program count | @ui @api | P2 | ☑ |
 | AZ-10 | Bulk Graph's "N available in this scope" equals the client's program count | @ui @api | P2 | ☑ |
+| AZ-11 | Print calls `window.print` | @ui | P2 | ☑ |
+| AZ-12 | In-scope tile stays `--` while targets XHRs are held | @ui | P2 | ☑ |
+| AZ-13 | Empty programs envelope zeros the tiles and shows `mastered-report-empty` | @ui | P2 | ☑ |
+| AZ-14 | Report scope select is present (option values not contracted — AN-3) | @ui | P2 | ◐ |
 
-> AZ-2 rationale: the original assertion cannot fail while `mastered` is 0 across the
-> whole dataset. Cross-checking the tile against the API makes it a real reconciliation.
-> We now know *why* mastered is always 0 — every mastered target has an empty
+> AZ-2 rationale (D10): equating the in-scope tile to `sum(targets.totalCount)` is a false
+> oracle — the tile is window/status-filtered. The identity `mastered + remaining == in
+> scope` is an internal-consistency check from the same report. The API is used only as an
+> upper bound so a tile that inflates above every program's targets still fails.
+> We now know *why* mastered is often 0 — every mastered target has an empty
 > `statusHistory`, so the report has no mastery date to place in any window. See AN-1
 > in `defects.md`.
 
@@ -292,6 +311,9 @@ an exact partition.
 | NEG-6 | Invalid credentials reach the login endpoint and are rejected with 401 | @api @endpoint-coverage | P2 | ☑ |
 | NEG-7 | Target POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
 | NEG-8 | Target DELETE against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
+| NEG-9 | Clients list shows `clients-list-loading` while the list XHR is held | @ui @negative | P2 | ☑ |
+| NEG-10 | Clients list shows `clients-list-error` (no rows) on a 503, then recovers on retry | @ui @negative | P1 | ☑ |
+| NEG-11 | Empty programs envelope renders `program-rail-empty` and no rail items | @ui @negative | P2 | ☑ |
 
 > **NEG-4 was re-scoped.** The plan expected a not-found state. There isn't one: the app
 > redirects any unknown route to `/clients`. That is graceful — no crash, no blank shell,
@@ -309,14 +331,50 @@ an exact partition.
 existing `behaviorplans` `@bug` scenario. This reaches every endpoint in the
 health-report catalog without credentials, a dedicated write client, or mutation.
 
-## Explicitly out of scope (for now)
+### Unit 7 — Harden existing tests
 
-**Unvisited nav areas** — Staff, Supervision, Settings, Training, Reporting, Template,
-Schedule, Notifications, Billing. Present in the nav but never crawled.
+Oracle, contract headers, selector ownership, and a named regression for each
+default-run family. Write flows stay in the matrix section below (workflow Unit 11).
 
-**CI configuration (D5)** — deferred to Phase 3 pending a runner decision.
+| Check | Result |
+|-------|--------|
+| D10 AZ-2 oracle | In-scope is no longer required to equal `sum(targets.totalCount)` |
+| `x-api-version=1` | Asserted on every default-run 200 API contract except `@bug` BS-2 |
+| Session tokens | Non-empty strings longer than 20 characters, not merely truthy |
+| PRG-6 settings panel | `program-details-settings` lives on `ClientWorkspace` |
+| Traceability orphans | Every `.feature` scenario maps to a matrix ID in `test-cases.md` |
 
-### Unit 7 — Write flows  `@write`
+| ID | Turns red when |
+|----|----------------|
+| FND-1…7 | Auth harvest, preflight, fixture, or scrubbing regress |
+| AUTH-1…5 | Token pair, refresh, preview sign-in, staff-role identity, or signed-out gate regress |
+| CLI-1…10 | Envelope, list↔API, search, switcher, or status mapping regress |
+| PRG-1…9 | Program contracts, rail partition, details panels, or client tabs regress |
+| AZ-1…10 | Tile identity, chart domains, chips, modes, or series counts regress |
+| BS-1 | Plan rail or novel-behaviors panel missing |
+| NEG-1…8 | 401, login reject, unknown-id fallback, or safe 4xx writes regress |
+
+### Unit 8 — Surface inventory
+
+The coverage denominator lives in [`surface-inventory.json`](./surface-inventory.json).
+Each run rewrites [`surface-inventory.md`](./surface-inventory.md) and
+`reports/coverage-percent.json`.
+
+| | |
+|--|--|
+| **Command** | `npm run coverage:inventory` |
+| **Formula** | `(covered + @bug + 0.5×partial) / in-scope` |
+| **Exclusions** | Unvisited primary-nav areas (Staff … Billing) — signed-off gap with a human exploratory compensating control |
+
+Open gaps remaining after Unit 9: Print, scope select, Analyze Data empty/loading
+(Unit 10), `/sessions/new` and mastery/record-data writes (Unit 11).
+
+### Unit 9 — Read-path states
+
+Fault-injected against live testids: `clients-list-loading`, `clients-list-error`,
+`clients-list-retry`, `program-rail-empty`. Analyze Data empty/loading stays Unit 10.
+
+### Unit 7b — Write flows  `@write` (workflow Unit 11)
 
 Requires `TEST_CLIENT_ID` (dedicated client). `npm test` excludes `@write`. Run
 `npm run test:write`. Created targets are named `ZZZ-SUITE-*` and DELETE'd in After

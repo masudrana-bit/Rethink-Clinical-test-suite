@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "verify:scrub": "ts-node scripts/verify-trace-scrubbing.ts",
     "report": "node scripts/report.js",
+    "coverage:inventory": "node scripts/coverage-inventory.js",
     "allure:clean": "node -e \"require('fs').rmSync('allure-results',{recursive:true,force:true})\"",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",

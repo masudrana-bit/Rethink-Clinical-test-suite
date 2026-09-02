@@ -28,6 +28,7 @@ Feature: Authentication
   Scenario: Staff role identifies the current user
     When I request the current user's staff role
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the staff role names a role and a user
 
   @ui @negative @auth

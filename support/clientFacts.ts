@@ -23,22 +23,42 @@ export async function fixture(world: CustomWorld): Promise<ResolvedFixture> {
  * Parsing that blind yields "Unexpected token 'S'", which says nothing useful, so
  * report the status and a snippet of what actually came back.
  */
-async function readJson(res: APIResponse, what: string): Promise<any> {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(
-      `${what} returned ${res.status()} with a body that is not JSON: ` +
-        `${text.slice(0, 200)}${text.length > 200 ? '…' : ''}`,
-    );
+const TRANSIENT_DATABASE_ERROR =
+  /53300|remaining connection slots|likely due to a transient failure/i;
+
+async function readJsonWithTransientRetry(
+  request: () => Promise<APIResponse>,
+  what: string,
+): Promise<any> {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const response = await request();
+    const text = await response.text();
+    if (
+      response.status() >= 500 &&
+      TRANSIENT_DATABASE_ERROR.test(text) &&
+      attempt < 3
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1_000));
+      continue;
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error(
+        `${what} returned ${response.status()} with a body that is not JSON: ` +
+          `${text.slice(0, 200)}${text.length > 200 ? '…' : ''}`,
+      );
+    }
   }
+  throw new Error(`${what} exhausted transient retries`);
 }
 
 export async function fetchPrograms(world: CustomWorld): Promise<ProgramRecord[]> {
   const { client } = await fixture(world);
-  const res = await world.clinical.programs(client.id);
-  const body = await readJson(res, `programs for client ${client.id}`);
+  const body = await readJsonWithTransientRetry(
+    () => world.clinical.programs(client.id),
+    `programs for client ${client.id}`,
+  );
   return (body?.items ?? []) as ProgramRecord[];
 }
 
@@ -48,8 +68,10 @@ export async function fetchTargetTotal(world: CustomWorld): Promise<number> {
   const programs = await fetchPrograms(world);
   let total = 0;
   for (const program of programs) {
-    const res = await world.clinical.targets(client.id, program.id);
-    const body = await readJson(res, `targets for program ${program.id}`);
+    const body = await readJsonWithTransientRetry(
+      () => world.clinical.targets(client.id, program.id),
+      `targets for program ${program.id}`,
+    );
     total += Number(body?.totalCount ?? 0);
   }
   return total;
@@ -60,8 +82,10 @@ export async function fetchFlaggedTotal(world: CustomWorld): Promise<number> {
   const programs = await fetchPrograms(world);
   let total = 0;
   for (const program of programs) {
-    const res = await world.clinical.automasteryEvaluations(client.id, program.id, 'flagged');
-    const body = await readJson(res, `automastery evaluations for program ${program.id}`);
+    const body = await readJsonWithTransientRetry(
+      () => world.clinical.automasteryEvaluations(client.id, program.id, 'flagged'),
+      `automastery evaluations for program ${program.id}`,
+    );
     total += (body?.items ?? []).length;
   }
   return total;

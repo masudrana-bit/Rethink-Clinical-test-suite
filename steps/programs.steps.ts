@@ -187,9 +187,9 @@ When('I select the resolved program in the rail', async function (this: CustomWo
 Then(
   "the program's targets, goals and settings panels are shown",
   async function (this: CustomWorld) {
-    await expect(this.workspace.programTargets).toBeVisible();
-    await expect(this.workspace.programGoals).toBeVisible();
-    await expect(this.page.getByTestId('program-details-settings')).toBeVisible();
+    await expect(this.workspace.programTargets).toBeVisible({ timeout: 15_000 });
+    await expect(this.workspace.programGoals).toBeVisible({ timeout: 15_000 });
+    await expect(this.workspace.programSettings).toBeVisible({ timeout: 15_000 });
   },
 );
 

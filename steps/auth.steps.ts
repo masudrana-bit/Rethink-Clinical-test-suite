@@ -8,9 +8,14 @@ import { ClinicalApi } from '../api/clinicalApi';
 
 /** Unit 1 — AUTH-1 to AUTH-5. */
 
+function expectSessionToken(value: unknown, label: string): asserts value is string {
+  expect(typeof value, `${label} type`).toBe('string');
+  expect((value as string).trim().length, `${label} should be a non-empty token`).toBeGreaterThan(20);
+}
+
 Then('the session carries an access token and a refresh token', function (this: CustomWorld) {
-  expect(this.auth.accessToken, 'access token').toBeTruthy();
-  expect(this.auth.refreshToken, 'refresh token').toBeTruthy();
+  expectSessionToken(this.auth.accessToken, 'access token');
+  expectSessionToken(this.auth.refreshToken, 'refresh token');
 });
 
 Then('the access token expires in the future', function (this: CustomWorld) {
@@ -39,15 +44,12 @@ When('I exchange the refresh token for a new session', async function (this: Cus
 
 Then('the exchange returns a complete set of tokens', function (this: CustomWorld) {
   const tokens = this.data.refreshed as SessionTokens;
-  for (const field of [
-    'accessToken',
-    'refreshToken',
-    'accessTokenExpiration',
-    'refreshTokenExpiration',
-  ] as const) {
-    expect(tokens[field], `refreshed session field "${field}"`).toBeTruthy();
-  }
+  expectSessionToken(tokens.accessToken, 'refreshed access token');
+  expectSessionToken(tokens.refreshToken, 'refreshed refresh token');
   expect(new Date(tokens.accessTokenExpiration).getTime()).toBeGreaterThan(Date.now());
+  expect(new Date(tokens.refreshTokenExpiration).getTime()).toBeGreaterThan(
+    new Date(tokens.accessTokenExpiration).getTime() - 1,
+  );
 });
 
 Then('the new access token differs from the previous one', function (this: CustomWorld) {
@@ -78,8 +80,10 @@ When("I request the current user's staff role", async function (this: CustomWorl
 
 Then('the staff role names a role and a user', function (this: CustomWorld) {
   const body = this.data.lastResponseBody ?? {};
-  expect(body.accountRole?.name, 'accountRole.name').toBeTruthy();
-  expect(body.userName, 'userName').toBeTruthy();
+  expect(typeof body.accountRole?.name, 'accountRole.name').toBe('string');
+  expect(String(body.accountRole?.name ?? '').trim(), 'accountRole.name').not.toBe('');
+  expect(typeof body.userName, 'userName').toBe('string');
+  expect(String(body.userName ?? '').trim(), 'userName').not.toBe('');
   expect(typeof body.staffMemberId, 'staffMemberId is numeric').toBe('number');
 });
 

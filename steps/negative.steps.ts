@@ -73,3 +73,73 @@ Then('the clients list is shown', async function (this: CustomWorld) {
   await expect(this.page.getByTestId('clients-list-page')).toBeVisible({ timeout: 15_000 });
   await expect(this.page, 'the app should settle on the clients list').toHaveURL(/\/clients\/?$/);
 });
+
+const CLIENTS_LIST = /\/clinical\/v1\/clients(\?|$)/;
+const CLIENT_PROGRAMS = /\/clinical\/v1\/clients\/\d+\/programs(?:\?|$)/;
+
+Given('the clients API is delayed', async function (this: CustomWorld) {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  this.data.releaseClientsApi = release;
+  await this.page.route(CLIENTS_LIST, async (route) => {
+    await gate;
+    await route.continue();
+  });
+});
+
+Given('the clients API will return 503', async function (this: CustomWorld) {
+  await this.page.route(CLIENTS_LIST, (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ title: 'Service Unavailable' }),
+    }),
+  );
+});
+
+Given('the programs API returns an empty list', async function (this: CustomWorld) {
+  await this.page.route(CLIENT_PROGRAMS, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8; x-api-version=1',
+      body: JSON.stringify({ page: 1, pageSize: 200, totalCount: 0, totalPages: 1, items: [] }),
+    }),
+  );
+});
+
+When('I open the clients page without waiting for rows', async function (this: CustomWorld) {
+  await this.page.goto('/clients');
+  await expect(this.clients.root).toBeVisible();
+});
+
+Then('the clients list loading state is shown', async function (this: CustomWorld) {
+  await expect(this.clients.loading).toBeVisible({ timeout: 15_000 });
+});
+
+When('the clients API is allowed to complete', async function (this: CustomWorld) {
+  const release = this.data.releaseClientsApi as (() => void) | undefined;
+  if (!release) throw new Error('the clients API was not delayed in this scenario');
+  release();
+  await this.clients.expectLoaded();
+});
+
+Then('the clients list error state is shown', async function (this: CustomWorld) {
+  await expect(this.clients.error).toBeVisible({ timeout: 15_000 });
+  await expect(this.clients.retry).toBeVisible();
+});
+
+When('I retry the clients list after the API recovers', async function (this: CustomWorld) {
+  await this.page.unroute(CLIENTS_LIST);
+  await this.clients.retry.click();
+  await this.clients.expectLoaded();
+});
+
+Then('the program rail shows an empty state', async function (this: CustomWorld) {
+  await expect(this.workspace.programRailEmpty).toBeVisible({ timeout: 15_000 });
+});
+
+Then('no programs are listed in the rail', async function (this: CustomWorld) {
+  await expect(this.workspace.allProgramItems()).toHaveCount(0);
+});

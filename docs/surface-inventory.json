@@ -1,0 +1,549 @@
+{
+  "version": 1,
+  "asOf": "2026-09-02",
+  "app": "Rethink Clinical (clinical.dev2)",
+  "notes": [
+    "Denominator for coverage %. Excluded items are signed-off and do not count.",
+    "status: covered | partial | bug | wip | gap | excluded",
+    "partial = happy path only; Unit 9/10 close those state gaps.",
+    "bug = @bug scenario asserts the correct behaviour (counts as covered for %).",
+    "wip = scenario exists but does not run."
+  ],
+  "items": [
+    {
+      "id": "R-sign-in",
+      "kind": "route",
+      "surface": "/sign-in",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AUTH-5", "FND-5b"]
+    },
+    {
+      "id": "R-temp-dev-login",
+      "kind": "route",
+      "surface": "/temp-dev-login",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AUTH-3", "FND-1"]
+    },
+    {
+      "id": "R-clients",
+      "kind": "route",
+      "surface": "/clients",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-3", "CLI-8"]
+    },
+    {
+      "id": "R-client-workspace",
+      "kind": "route",
+      "surface": "/clients/:id",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-4", "PRG-5"]
+    },
+    {
+      "id": "R-program-details",
+      "kind": "route",
+      "surface": "/clients/:id/programs/:id",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-6"]
+    },
+    {
+      "id": "R-analyze-data",
+      "kind": "route",
+      "surface": "/clients/:id/analyze-data",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AZ-1", "PRG-9"]
+    },
+    {
+      "id": "R-behavior-support",
+      "kind": "route",
+      "surface": "/clients/:id/behavior-support",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["BS-1", "PRG-9"]
+    },
+    {
+      "id": "R-unknown-client",
+      "kind": "route",
+      "surface": "/clients/:missing-id",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["NEG-3"]
+    },
+    {
+      "id": "R-unknown-path",
+      "kind": "route",
+      "surface": "unknown path",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["NEG-4"]
+    },
+    {
+      "id": "R-sessions-new",
+      "kind": "route",
+      "surface": "/sessions/new",
+      "status": "gap",
+      "risk": "P2",
+      "tests": [],
+      "gap": "Record-data / Add Data Collection leaves the clinical shell. No session-write API captured (WR-3)."
+    },
+    {
+      "id": "R-nav-unvisited",
+      "kind": "route",
+      "surface": "Staff, Supervision, Settings, Training, Reporting, Template, Schedule, Notifications, Billing",
+      "status": "excluded",
+      "risk": "P3",
+      "tests": [],
+      "gap": "Present in nav, never crawled. Compensating control: thin human exploratory pass per release."
+    },
+
+    {
+      "id": "E-login",
+      "kind": "endpoint",
+      "surface": "POST /auth/login",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["NEG-6"]
+    },
+    {
+      "id": "E-refresh",
+      "kind": "endpoint",
+      "surface": "POST /auth/refresh-token",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AUTH-2"]
+    },
+    {
+      "id": "E-staff-role",
+      "kind": "endpoint",
+      "surface": "GET /accounts/v1/members/me/staff-role",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AUTH-4", "FND-7"]
+    },
+    {
+      "id": "E-clients",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/clients",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-1", "CLI-2"]
+    },
+    {
+      "id": "E-program-library",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/program-library",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["PRG-2"]
+    },
+    {
+      "id": "E-programs",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/clients/:id/programs",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-1", "NEG-5"]
+    },
+    {
+      "id": "E-targets",
+      "kind": "endpoint",
+      "surface": "GET .../programs/:id/targets",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-3a"]
+    },
+    {
+      "id": "E-objectives",
+      "kind": "endpoint",
+      "surface": "GET .../programs/:id/objectives",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-3a"]
+    },
+    {
+      "id": "E-mastery-criteria",
+      "kind": "endpoint",
+      "surface": "GET .../programs/:id/mastery-criteria",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-3b"]
+    },
+    {
+      "id": "E-target-groups",
+      "kind": "endpoint",
+      "surface": "GET .../programs/:id/target-groups",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-3c"]
+    },
+    {
+      "id": "E-data-collection",
+      "kind": "endpoint",
+      "surface": "GET .../programs/:id/data-collection",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-3d"]
+    },
+    {
+      "id": "E-automastery",
+      "kind": "endpoint",
+      "surface": "GET .../automastery-evaluations?status=",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-4", "AZ-6"]
+    },
+    {
+      "id": "E-behaviorplans",
+      "kind": "endpoint",
+      "surface": "GET /observations/v1/client/:id/behaviorplans",
+      "status": "bug",
+      "risk": "P1",
+      "tests": ["BS-2"],
+      "gap": "DEF-2: returns 500 for every client. @bug holds the correct 200 contract."
+    },
+    {
+      "id": "E-runtime-config",
+      "kind": "endpoint",
+      "surface": "GET /runtime-config.json",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-8", "FND-2"]
+    },
+    {
+      "id": "E-targets-post",
+      "kind": "endpoint",
+      "surface": "POST .../programs/:id/targets",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["WR-1", "NEG-7"]
+    },
+    {
+      "id": "E-targets-delete",
+      "kind": "endpoint",
+      "surface": "DELETE .../programs/:id/targets/:id",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["NEG-8"]
+    },
+
+    {
+      "id": "A-search-name",
+      "kind": "action",
+      "surface": "Clients: search by name",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["CLI-5", "CLI-5b"]
+    },
+    {
+      "id": "A-search-id",
+      "kind": "action",
+      "surface": "Clients: search by client number",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["CLI-6"]
+    },
+    {
+      "id": "A-clear-search",
+      "kind": "action",
+      "surface": "Clients: clear search",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["CLI-10"]
+    },
+    {
+      "id": "A-open-client",
+      "kind": "action",
+      "surface": "Clients: open a row",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-4"]
+    },
+    {
+      "id": "A-switcher",
+      "kind": "action",
+      "surface": "Header: client switcher",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["CLI-7"]
+    },
+    {
+      "id": "A-rail-partition",
+      "kind": "action",
+      "surface": "Skills Programs: Current / Inactive rail",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-5", "PRG-7"]
+    },
+    {
+      "id": "A-domain-filter",
+      "kind": "action",
+      "surface": "Skills Programs: domain filter",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["PRG-8"]
+    },
+    {
+      "id": "A-select-program",
+      "kind": "action",
+      "surface": "Skills Programs: select program",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-6"]
+    },
+    {
+      "id": "A-client-tabs",
+      "kind": "action",
+      "surface": "Client tab bar",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-9"]
+    },
+    {
+      "id": "A-date-chips",
+      "kind": "action",
+      "surface": "Analyze Data: date-range chips",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-5"]
+    },
+    {
+      "id": "A-grouping-options",
+      "kind": "action",
+      "surface": "Analyze Data: grouping select offers Domain/Category/Area",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-7b"]
+    },
+    {
+      "id": "A-grouping-effect",
+      "kind": "action",
+      "surface": "Analyze Data: grouping regroups the chart",
+      "status": "bug",
+      "risk": "P2",
+      "tests": ["AZ-7"],
+      "gap": "DEF-1: label changes, chart stays on Domain."
+    },
+    {
+      "id": "A-mode-tabs",
+      "kind": "action",
+      "surface": "Analyze Data: Mastered / Custom / Bulk modes",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-8"]
+    },
+    {
+      "id": "A-custom-series",
+      "kind": "action",
+      "surface": "Analyze Data: Custom Graph series count",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-9"]
+    },
+    {
+      "id": "A-bulk-series",
+      "kind": "action",
+      "surface": "Analyze Data: Bulk Graph series count",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-10"]
+    },
+    {
+      "id": "A-print",
+      "kind": "action",
+      "surface": "Analyze Data: Print",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-11"]
+    },
+    {
+      "id": "A-scope-select",
+      "kind": "action",
+      "surface": "Analyze Data: report scope select",
+      "status": "partial",
+      "risk": "P2",
+      "tests": ["AZ-14"],
+      "gap": "AN-3: control is present (AZ-14). Option values are not contracted until product answers whether Domain/Category/Area belong there."
+    },
+    {
+      "id": "A-save-report",
+      "kind": "action",
+      "surface": "Analyze Data: save report",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["WR-6"]
+    },
+    {
+      "id": "A-confirm-mastery",
+      "kind": "action",
+      "surface": "Analyze Data: confirm mastery",
+      "status": "wip",
+      "risk": "P1",
+      "tests": ["WR-4"],
+      "gap": "Needs a suite-created flagged evaluation (blocked on WR-3)."
+    },
+    {
+      "id": "A-dismiss-mastery",
+      "kind": "action",
+      "surface": "Analyze Data: dismiss mastery",
+      "status": "wip",
+      "risk": "P1",
+      "tests": ["WR-5"],
+      "gap": "Same blocker as confirm mastery."
+    },
+    {
+      "id": "A-add-target",
+      "kind": "action",
+      "surface": "Skills Programs: add target",
+      "status": "bug",
+      "risk": "P1",
+      "tests": ["WR-2", "WR-2b"],
+      "gap": "DEF-6: button is a no-op. WR-2 proves no silent POST; WR-2b asserts a form should open."
+    },
+    {
+      "id": "A-record-data",
+      "kind": "action",
+      "surface": "Skills Programs: record data",
+      "status": "wip",
+      "risk": "P1",
+      "tests": ["WR-3"],
+      "gap": "UI leaves for /sessions/new; no session POST captured."
+    },
+
+    {
+      "id": "S-clients-normal",
+      "kind": "state",
+      "surface": "Clients list: many rows",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["CLI-3"]
+    },
+    {
+      "id": "S-clients-search-empty",
+      "kind": "state",
+      "surface": "Clients list: unmatched search (0 rows)",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["CLI-5b"]
+    },
+    {
+      "id": "S-clients-one",
+      "kind": "state",
+      "surface": "Clients list: single-row search",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["CLI-6"]
+    },
+    {
+      "id": "S-clients-loading",
+      "kind": "state",
+      "surface": "Clients list: loading",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["NEG-9"]
+    },
+    {
+      "id": "S-clients-error",
+      "kind": "state",
+      "surface": "Clients list: load failure (e.g. 503)",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["NEG-10"]
+    },
+    {
+      "id": "S-signed-out-protected",
+      "kind": "state",
+      "surface": "Protected client URL while signed out",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["AUTH-5"]
+    },
+    {
+      "id": "S-api-unauth",
+      "kind": "state",
+      "surface": "API without / with malformed token",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["NEG-1", "NEG-2"]
+    },
+    {
+      "id": "S-workspace-normal",
+      "kind": "state",
+      "surface": "Skills Programs: populated rail",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["PRG-5", "PRG-7"]
+    },
+    {
+      "id": "S-workspace-empty",
+      "kind": "state",
+      "surface": "Skills Programs: client with zero programs",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["NEG-11"]
+    },
+    {
+      "id": "S-analyze-normal",
+      "kind": "state",
+      "surface": "Analyze Data: populated report",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["AZ-1", "AZ-2", "AZ-3"]
+    },
+    {
+      "id": "S-analyze-loading",
+      "kind": "state",
+      "surface": "Analyze Data: tiles still `--`",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-12"]
+    },
+    {
+      "id": "S-analyze-empty",
+      "kind": "state",
+      "surface": "Analyze Data: client with no targets",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["AZ-13"]
+    },
+    {
+      "id": "S-analyze-error",
+      "kind": "state",
+      "surface": "Analyze Data: per-program 500 under fan-out",
+      "status": "bug",
+      "risk": "P2",
+      "tests": ["AZ-6b"],
+      "gap": "DEF-4: intermittent 500. @bug asserts every request succeeds."
+    },
+    {
+      "id": "S-bs-shell",
+      "kind": "state",
+      "surface": "Behavior Support: rail + novel behaviors render",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["BS-1"]
+    },
+    {
+      "id": "S-bs-error-vs-empty",
+      "kind": "state",
+      "surface": "Behavior Support: error not presented as empty",
+      "status": "bug",
+      "risk": "P1",
+      "tests": ["BS-3"],
+      "gap": "DEF-5: empty copy and unavailable notice show together."
+    },
+    {
+      "id": "S-bs-true-empty",
+      "kind": "state",
+      "surface": "Behavior Support: genuine zero plans",
+      "status": "gap",
+      "risk": "P2",
+      "tests": [],
+      "gap": "Unreachable while behaviorplans 500s for every client."
+    }
+  ]
+}

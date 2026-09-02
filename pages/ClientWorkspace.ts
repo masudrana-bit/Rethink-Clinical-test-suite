@@ -13,6 +13,8 @@ export class ClientWorkspace {
   readonly domainFilter: Locator;
   readonly programTargets: Locator;
   readonly programGoals: Locator;
+  readonly programSettings: Locator;
+  readonly programRailEmpty: Locator;
 
   constructor(private readonly page: Page) {
     this.tabBar = page.getByTestId('client-top-tab-bar');
@@ -23,6 +25,8 @@ export class ClientWorkspace {
     this.domainFilter = page.getByTestId('program-rail-domain-filter');
     this.programTargets = page.getByTestId('program-details-targets');
     this.programGoals = page.getByTestId('program-details-goals');
+    this.programSettings = page.getByTestId('program-details-settings');
+    this.programRailEmpty = page.getByTestId('program-rail-empty');
   }
 
   tab(name: ClientTab): Locator {
@@ -48,7 +52,22 @@ export class ClientWorkspace {
   }
 
   async openTab(name: ClientTab): Promise<void> {
+    const dest: Record<ClientTab, RegExp> = {
+      'skills-programs': /\/clients\/\d+(\/programs(\/\d+)?)?$/,
+      'behavior-support': /\/clients\/\d+\/behavior-support/,
+      'analyze-data': /\/clients\/\d+\/analyze-data/,
+    };
+    const urlOk = dest[name];
     await this.tab(name).click();
+    try {
+      await this.page.waitForURL(urlOk, { timeout: 10_000, waitUntil: 'commit' });
+    } catch {
+      // The tab can paint as current while Angular is still on /programs/:id.
+      // A second click matches what a clinician would do; if the route still
+      // does not change, the wait below fails with the real URL.
+      await this.tab(name).click();
+      await this.page.waitForURL(urlOk, { timeout: 20_000, waitUntil: 'commit' });
+    }
   }
 
   async listedProgramIds(): Promise<number[]> {
@@ -68,7 +87,11 @@ export class ClientWorkspace {
 
   async openProgram(programId: number): Promise<void> {
     await this.programItem(programId).click();
-    await expect(this.programTargets).toBeVisible();
+    await this.page.waitForURL(new RegExp(`/programs/${programId}(?:/|$)`), {
+      timeout: 15_000,
+      waitUntil: 'commit',
+    });
+    await expect(this.programTargets).toBeVisible({ timeout: 15_000 });
   }
 
   /** The domain filter is a PrimeNG select whose overlay is appended to `body`. */

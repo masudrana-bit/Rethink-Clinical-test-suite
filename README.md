@@ -68,6 +68,17 @@ known `behaviorplans` defect; while that endpoint returns 500 the command exits
 non-zero and the report remains at 100% endpoint coverage with Observations
 marked ❌ Fail.
 
+## Surface inventory
+
+`docs/surface-inventory.json` is the coverage denominator (routes × endpoints ×
+actions × states). Each test run, or `npm run coverage:inventory`, rewrites
+`docs/surface-inventory.md` with the live percentage and a ranked gap backlog.
+
+```bash
+npm run coverage:inventory
+# then open docs/surface-inventory.md
+```
+
 ## How to run the AIDLC process
 
 Read `docs/aidlc-process.md`. In short:

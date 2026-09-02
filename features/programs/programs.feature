@@ -10,6 +10,7 @@ Feature: Client programs
   Scenario: The programs endpoint describes a client's programs
     When I request the resolved client's programs
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the envelope's paging arithmetic is self-consistent
     And every program has an id, a title and an active flag
 
@@ -17,6 +18,7 @@ Feature: Client programs
   Scenario: The program library returns the template catalogue
     When I request the program library
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the envelope's paging arithmetic is self-consistent
     And every library entry has an id and a title
 
@@ -24,6 +26,7 @@ Feature: Client programs
   Scenario Outline: Paged per-program endpoints return a valid envelope
     When I request "<endpoint>" for the resolved program
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the envelope's paging arithmetic is self-consistent
 
     Examples:
@@ -35,24 +38,28 @@ Feature: Client programs
   Scenario: Mastery criteria returns a programme-scoped criteria document
     When I request "mastery-criteria" for the resolved program
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the document names the resolved program and carries a phases list
 
   @api @programs
   Scenario: Target groups returns a bare list
     When I request "target-groups" for the resolved program
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the response body is an array
 
   @api @programs
   Scenario: Data collection describes how the programme is measured
     When I request "data-collection" for the resolved program
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And the document names the resolved program and carries a collection method
 
   @api @programs
   Scenario: Flagged automastery evaluations return only flagged items
     When I request flagged automastery evaluations for a program that has them
     Then the response status is 200
+    And the content type includes "x-api-version=1"
     And every evaluation is flagged and references a target
 
   @ui @programs

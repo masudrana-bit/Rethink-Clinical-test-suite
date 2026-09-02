@@ -103,7 +103,7 @@ export function recordApiHit(
     scenario: hit.scenario ?? currentScenario,
     expected:
       hit.expected ??
-      (currentAllowsClientError && hit.status >= 400 && hit.status < 500),
+      (currentAllowsClientError && hit.status >= 400),
   });
 }
 

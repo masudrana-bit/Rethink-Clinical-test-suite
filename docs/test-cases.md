@@ -37,11 +37,11 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 | Authentication | AUTH-1 … AUTH-5 | 5 | Yes |
 | Clients | CLI-1 … CLI-10 | 11 | Yes |
 | Programs | PRG-1 … PRG-9 | 13 | Yes |
-| Analyze Data | AZ-1 … AZ-10 | 18 (2 of which `@bug`) | 16 Pass + 2 Known fail |
+| Analyze Data | AZ-1 … AZ-14 | 22 (2 of which `@bug`) | 20 Pass + 2 Known fail |
 | Behavior Support | BS-1 … BS-3 | 3 | 1 Pass + 2 Known fail |
-| Negative | NEG-1 … NEG-8 | 8 | Yes |
+| Negative | NEG-1 … NEG-11 | 11 | Yes |
 | Write flows | WR-1 … WR-6 | 7 | 3 Ready + 1 Known fail + 3 WIP |
-| **Total executable** | | **71** | **60 default + 11 filtered** |
+| **Total executable** | | **78** | **67 default + 11 filtered** |
 
 Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targets / PRG-3a-objectives).
 
@@ -347,7 +347,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Steps** | 1. Open `/clients`. 2. Enter an unmatched name. 3. Confirm no rows. 4. Clear both search inputs. |
 | **Expected result** | Visible client ids again equal the current clients API response. |
 | **Automation** | *Clearing client search restores the complete list* |
-| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
+| **Status** | Pass |
 
 ---
 
@@ -512,7 +512,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Steps** | 1. Open the resolved client workspace. 2. Open Analyze Data. 3. Open Behavior Support. 4. Return to Skills Programs. |
 | **Expected result** | Each selected area renders its identifying page and content container. |
 | **Automation** | *The client tab bar navigates between all three client areas* |
-| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
+| **Status** | Pass |
 
 ---
 
@@ -533,17 +533,18 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Automation** | *The three summary tiles render numbers* |
 | **Status** | Pass |
 
-### AZ-2 — Targets in scope reconciles with the targets API
+### AZ-2 — Mastered plus remaining equals in scope
 
 | Field | Detail |
 |-------|--------|
-| **Objective** | In-scope equals the sum of `totalCount` across all programs’ targets APIs; identity `mastered + remaining = in scope`. |
+| **Objective** | The three tiles are internally consistent, and in-scope does not exceed the live target total (D10). |
 | **Type** | UI + API |
 | **Priority** | P1 |
-| **Steps** | 1. Open Analyze Data. 2. Poll until tile in-scope equals live target total. 3. Check mastered + remaining. |
-| **Expected result** | In-scope = sum of targets over every program. Arithmetic identity holds. |
-| **Automation** | *Targets in scope reconciles with the targets API* |
+| **Steps** | 1. Open Analyze Data. 2. Read mastered, remaining, in-scope. 3. Compare in-scope to the live target total. |
+| **Expected result** | `mastered + remaining = in scope`. In-scope ≤ sum of `totalCount` across programs. |
+| **Automation** | *Mastered plus remaining equals in scope* |
 | **Status** | Pass |
+| **Fails when** | A tile arithmetic bug, or in-scope counting more targets than the API reports. |
 
 ### AZ-3 — The skill-area chart plots one category per domain
 
@@ -667,7 +668,55 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Steps** | 1. Open Analyze Data. 2. Switch to bulk mode. 3. Compare series count with the live programs list. |
 | **Expected result** | Series count = program count. |
 | **Automation** | *Bulk Graph offers every program as a comparison series* |
-| **Status** | Implemented; live verification blocked by dev2 clients API 503 on 2026-09-01 |
+| **Status** | Pass |
+
+### AZ-11 — Print requests the browser print dialog
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The Print control asks the browser to print the current report. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Stub `window.print`. 3. Click `analyze-print`. |
+| **Expected result** | `window.print` is invoked. |
+| **Automation** | *Print requests a browser print of the current report* |
+| **Status** | Pass |
+
+### AZ-12 — Summary tiles stay `--` while targets are in flight
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | In-scope does not show a number before targets resolve. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Hold targets XHRs. 2. Open Analyze Data. 3. Assert `--`. 4. Release. 5. Tiles are numbers. |
+| **Expected result** | Loading shows `--`; after release, tiles are non-negative numbers. |
+| **Automation** | *Summary tiles stay unresolved while targets are in flight* |
+| **Status** | Pass |
+
+### AZ-13 — Empty programs zero the report
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | No programs → tiles 0 and `mastered-report-empty`. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Stub programs as `{ items: [] }`. 2. Open Analyze Data. |
+| **Expected result** | Mastered, in-scope, remaining are 0. Empty-report sentinel is visible. |
+| **Automation** | *A client with no programs shows a zeroed empty report* |
+| **Status** | Pass |
+
+### AZ-14 — Report scope select is present
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `report-scope-select` is on the page. Option values are not contracted (AN-3). |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Open Analyze Data. 2. Assert the scope select is visible. |
+| **Expected result** | Scope select is displayed. |
+| **Automation** | *The report scope select is present* |
+| **Status** | Pass (partial — values not asserted) |
 
 ---
 
@@ -824,6 +873,45 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Expected result** | Clients list is shown. URL is `/clients`. |
 | **Automation** | *An unknown route falls back to the clients list* |
 | **Status** | Pass |
+
+### NEG-9 — Clients list loading state
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The list shows `clients-list-loading` while the clients XHR is in flight. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Hold the clients API. 2. Open `/clients`. 3. Assert loading. 4. Release. 5. List matches API. |
+| **Expected result** | Loading sentinel visible until the XHR completes; then rows match the live API. |
+| **Automation** | *The clients list shows a loading state while the API is in flight* |
+| **Status** | Pass |
+| **Fails when** | Rows appear with no loading sentinel, or the list never recovers. |
+
+### NEG-10 — Clients list error state on 503
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | A 503 clients response shows `clients-list-error` and no rows; retry recovers. |
+| **Type** | UI |
+| **Priority** | P1 |
+| **Steps** | 1. Stub clients as 503. 2. Open `/clients`. 3. Assert error + retry + zero rows. 4. Unstub. 5. Click retry. |
+| **Expected result** | Error state, no client links. After retry, list matches the live API. |
+| **Automation** | *A failed clients list shows an error instead of rows* |
+| **Status** | Pass |
+| **Fails when** | A failed load still shows stale/empty-as-success rows, or retry does nothing. |
+
+### NEG-11 — Empty program rail
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | A successful empty programs envelope shows `program-rail-empty`. |
+| **Type** | UI |
+| **Priority** | P2 |
+| **Steps** | 1. Stub programs as `{ items: [] }`. 2. Open the resolved client workspace. |
+| **Expected result** | Empty-rail sentinel visible; no `program-rail-item-*` nodes. |
+| **Automation** | *A client with no programs shows an empty program rail* |
+| **Status** | Pass |
+| **Fails when** | An empty caseload is rendered as leftover programs or a blank shell. |
 
 ---
 

@@ -14,7 +14,8 @@ import { recordApiResponseHit } from '../support/apiCallLog';
 // D1: the session is harvested once per run in BeforeAll, not fetched per scenario.
 Given('I am logged in via the auth API', function (this: CustomWorld) {
   this.data.token = this.auth.accessToken;
-  expect(this.data.token, 'a harvested access token').toBeTruthy();
+  expect(typeof this.data.token, 'a harvested access token').toBe('string');
+  expect(this.data.token!.length, 'a harvested access token').toBeGreaterThan(20);
 });
 
 Given('I have no auth token', function (this: CustomWorld) {

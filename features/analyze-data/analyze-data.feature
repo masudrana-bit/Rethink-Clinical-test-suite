@@ -3,9 +3,8 @@ Feature: Analyze Data
   Unit 4. The mastery report: summary tiles, the skill-area chart, pending
   mastery determinations, and the controls that reshape them.
 
-  Every count is asserted as a relationship against the API rather than as a
-  literal, because other suites write programs and targets to this client while
-  ours runs.
+  Every count is asserted as a relationship from the same report, or as an upper
+  bound against the live API. In-scope is not assumed to equal the raw target total.
 
   @ui @analyze-data
   Scenario: The three summary tiles render numbers
@@ -13,10 +12,10 @@ Feature: Analyze Data
     Then the mastered, in-scope and remaining tiles each show a number
 
   @ui @api @analyze-data
-  Scenario: Targets in scope reconciles with the targets API
+  Scenario: Mastered plus remaining equals in scope
     When I open Analyze Data for the resolved client
-    Then the in-scope tile equals the client's total target count
-    And mastered plus remaining equals in scope
+    Then mastered plus remaining equals in scope
+    And the in-scope tile is not larger than the client's total target count
 
   @ui @api @analyze-data
   Scenario: The skill-area chart plots one category per domain
@@ -97,3 +96,30 @@ Feature: Analyze Data
     When I open Analyze Data for the resolved client
     And I switch to the "bulk" mode
     Then the series count equals the client's program count
+
+  @ui @analyze-data
+  Scenario: Print requests a browser print of the current report
+    When I open Analyze Data for the resolved client
+    And I print the current report
+    Then the browser print dialog is requested
+
+  @ui @analyze-data
+  Scenario: Summary tiles stay unresolved while targets are in flight
+    Given the targets API is delayed
+    When I open Analyze Data without waiting for tiles
+    Then the in-scope tile is still unresolved
+    When the targets API is allowed to complete
+    Then the mastered, in-scope and remaining tiles each show a number
+
+  @ui @analyze-data
+  Scenario: A client with no programs shows a zeroed empty report
+    Given the programs API returns an empty list
+    When I open Analyze Data for the resolved client
+    Then the mastered, in-scope and remaining tiles each show a number
+    And every summary tile is zero
+    And the mastered report empty state is shown
+
+  @ui @analyze-data
+  Scenario: The report scope select is present
+    When I open Analyze Data for the resolved client
+    Then the report scope select is displayed
