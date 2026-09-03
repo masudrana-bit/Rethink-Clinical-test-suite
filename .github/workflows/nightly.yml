@@ -7,11 +7,6 @@ name: Nightly
 on:
   schedule:
     - cron: "0 6 * * *"
-  # Temporary branch trigger used only to prove 15d before this workflow reaches main.
-  # Removed after the green/red publication verification.
-  push:
-    branches:
-      - cursor/aidlc-e2e-test-generation-workflow
   workflow_dispatch:
     inputs:
       suite:
@@ -21,10 +16,6 @@ on:
           - full
           - smoke
         default: full
-      deliberate_red:
-        description: Deliberately fail the metrics ratchet (15d verification only)
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -67,9 +58,6 @@ jobs:
           BASE_URL: ${{ vars.BASE_URL }}
           API_BASE_URL: ${{ vars.API_BASE_URL }}
           AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
-      - name: Use the deterministic green report for branch-only publication proof
-        if: github.event_name == 'push'
-        run: node -e "const fs=require('fs');fs.mkdirSync('reports',{recursive:true});fs.copyFileSync('fixtures/dashboard/green-cucumber-report.json','reports/cucumber-report.json')"
       - name: Generate dashboard after the run
         if: always()
         continue-on-error: true
@@ -79,9 +67,6 @@ jobs:
       - name: Coverage ratchet reads dashboard metrics
         if: always()
         run: npm run coverage:ratchet
-        env:
-          # Temporary 15d negative probe. Reverted after this run publishes.
-          COVERAGE_FLOOR: "100"
       - name: Generate detailed test evidence
         if: always()
         continue-on-error: true

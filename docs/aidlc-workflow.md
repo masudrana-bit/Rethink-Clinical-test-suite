@@ -160,8 +160,9 @@ quarterly so the coverage denominator grows with the app.
 - *15c landed:* `reports/dashboard.html`, self-contained, product language. Product review asked for
   a more professional layout and a clearer matrix; the one permitted revision applied it
   (KPI strip, protection breakdown, per-area results matrix, defect table).
-- *15d wiring:* post-steps run on green/red, ratchet reads the run's `metrics.json`, and GitHub
-  Pages publishes dashboard + history + Allure at the stable D17 URL. Green/red proof pending.
+- *15d landed:* post-steps run on green/red, ratchet reads the run's `metrics.json`, and GitHub
+  Pages publishes dashboard + history + Allure at the stable D17 URL. Green run `33733844597`
+  and deliberately red ratchet run `33734013611` both published; temporary probes were removed.
 
 ---
 

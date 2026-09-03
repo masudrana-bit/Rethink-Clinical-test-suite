@@ -471,8 +471,10 @@ Cucumber JSON at `reports/cucumber-report.json`. Parser: `npm run dashboard:metr
 | DASH-1 | JSON formatter + `metrics.json` implementing §3 / D15 | P1 | ☑ 15a |
 | DASH-2 | `history.json`, flake, trends | P1 | ☑ 15b |
 | DASH-3 | `dashboard.html` | P1 | ☑ 15c — reviewed by product, one wording/layout revision applied |
-| DASH-4 | CI post-step + GitHub Pages publish (D16/D17) | P1 | ◐ 15d — awaiting green/red pipeline proof |
+| DASH-4 | CI post-step + GitHub Pages publish (D16/D17) | P1 | ☑ 15d — green/red pipeline proof complete |
 
 **15a formulas (D15):** headline pass rate = passed ÷ executed, excluding `@bug` (`@write` included when present). Open defects = Gherkin `@bug` catalog not proven green this run. `coverage.percent` = D14 ratchet; `coverage.specPercent` = covered ÷ total inventory items.
 
 **15b (D16):** flake rate = (scenario names that both passed and failed in the last 10 history runs) ÷ executed this run. Trend = pass rate + both coverage % for the last 30 runs. Cap 200.
+
+**15d proof (2026-09-03):** [green run 33733844597](https://github.com/masudrana-bit/Rethink-Clinical-test-suite/actions/runs/33733844597) published the stable Pages URL and passed the ratchet (`94.7%` from `metrics.json`, floor `94.7%`). [Deliberately red run 33734013611](https://github.com/masudrana-bit/Rethink-Clinical-test-suite/actions/runs/33734013611) raised only the temporary floor to `100%`; its ratchet failed on the same `metrics.json`, while the Pages job still published and history advanced from one to two entries. The temporary floor, feature-branch trigger, fixture, and deployment allowance were removed afterward.
