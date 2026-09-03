@@ -51,6 +51,7 @@ These constrain every row below. Change a decision, revisit the rows it touches.
 | D15 | *Added at Unit 15a.* `reports/metrics.json` carries both coverage claims. | `coverage.percent` is the D14 ratchet formula `(covered + bug + 0.5×partial) / in-scope`. `coverage.specPercent` is §3 `covered ÷ total inventory items`, with `partial` as its own slice. Headline pass rate excludes `@bug` only (Unit 11 is done: `@write` counts when present in the run). Open defects are every Gherkin `@bug` scenario that this run did not prove green. |
 | D16 | *Added at Unit 15b (2026-09-03).* Where `history.json` lives across CI runs. | Working copy: `reports/history.json` (gitignored, append-only, never hand-edited). Shape `{ cap: 200, runs: [...] }`; after each append, drop the oldest runs until `runs.length ≤ cap`. **CI restore:** before `npm run dashboard:metrics`, download the previous workflow artifact named **`metrics-history`** (retention **90 days**) into `reports/history.json`; after generate, re-upload that file (`if: always()`, so red runs still append). Missing artifact (first run, expiry, fork PR) → start `runs: []` and log it — do not fail the job. **Durable copy (15d):** publish `history.json` next to `dashboard.html` on GitHub Pages; prefer that file when artifact restore misses so history outlives 90 days. Local: the on-disk file is the store. |
 | D17 | *Added at Unit 15d (2026-09-03).* Dashboard publication and coverage gate. | Publish the nightly/manual dashboard to GitHub Pages at `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/`; PRs produce artifacts but do not replace the executive view. Post-steps use `if: always()` so red runs still generate metrics, history, dashboard, and Allure. Pages contains `index.html`, `metrics.json`, `history.json`, and `/allure/`. The coverage ratchet reads `reports/metrics.json → coverage.percent`; it never recomputes coverage from inventory. Dashboard rendering is non-blocking, while a missing/invalid coverage metric fails the separate ratchet gate. |
+| D18 | *Added at Unit 15e (2026-09-03).* Nightly Teams Adaptive Card. | Post only from Nightly (schedule or `workflow_dispatch`), after Pages publish, `if: always()`. Power Automate **Workflows** incoming webhook in secret `TEAMS_WEBHOOK_URL` (not the retired Office 365 connector). Body is a Teams `message` with one Adaptive Card: status, headline pass rate, D14 coverage, known-defect deltas vs the previous history entry, button to the D17 URL. Missing secret or metrics skips the post. Notify failure never fails the pipeline. History entries store `openDefects` names so deltas survive restore. |
 
 ## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
 
@@ -462,7 +463,7 @@ compares live inventory % to [`coverage-floor.json`](./coverage-floor.json).
 
 Signed-off gaps and the per-release human pass: [`compensating-controls.md`](./compensating-controls.md) (D14).
 
-### Unit 15 — Metrics dashboard (15a–15d)
+### Unit 15 — Metrics dashboard (15a–15e)
 
 Cucumber JSON at `reports/cucumber-report.json`. Parser: `npm run dashboard:metrics` → `reports/metrics.json` + append `reports/history.json`.
 
@@ -472,6 +473,7 @@ Cucumber JSON at `reports/cucumber-report.json`. Parser: `npm run dashboard:metr
 | DASH-2 | `history.json`, flake, trends | P1 | ☑ 15b |
 | DASH-3 | `dashboard.html` | P1 | ☑ 15c — reviewed by product, one wording/layout revision applied |
 | DASH-4 | CI post-step + GitHub Pages publish (D16/D17) | P1 | ☑ 15d — green/red pipeline proof complete |
+| DASH-5 | Nightly Teams Adaptive Card (D18) | P2 | deferred — webhook not configured |
 
 **15a formulas (D15):** headline pass rate = passed ÷ executed, excluding `@bug` (`@write` included when present). Open defects = Gherkin `@bug` catalog not proven green this run. `coverage.percent` = D14 ratchet; `coverage.specPercent` = covered ÷ total inventory items.
 

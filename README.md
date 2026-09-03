@@ -9,6 +9,8 @@ Angular app, using the AIDLC (AI-Driven Development Lifecycle) methodology.
 rules/                 Steering files — the rules every AI agent obeys (load these first)
   00-project-rules.md  The AIDLC loop, stack, hard constraints, definition of done
   10-app-context.md    Endpoint inventory, response shapes, UI flows (from the crawl)
+  20-coverage-maximization-rules.md  Peak-coverage backlog and oracle rules
+  30-metrics-dashboard.md  Product dashboard units 15a–15e and §3 metric definitions
 docs/
   aidlc-process.md     Inception / Construction / Operations runbook
   coverage-matrix.md   Test inventory + units of work + tag taxonomy
@@ -118,8 +120,8 @@ Decision **D13**. No credentials are required (D1: `/temp-dev-login`). The gate 
 
 | Workflow | When | What |
 |----------|------|------|
-| `.github/workflows/pr.yml` | Every pull request | `typecheck`, `coverage:ratchet`, `test:smoke`, `verify:scrub` |
-| `.github/workflows/nightly.yml` | 06:00 UTC and manual | `npm test` (default profile) + ratchet + report artifacts |
+| `.github/workflows/pr.yml` | Every pull request | `typecheck`, smoke, dashboard metrics, ratchet from `metrics.json`, `verify:scrub` |
+| `.github/workflows/nightly.yml` | 06:00 UTC and manual | Default suite, dashboard + Pages publish, ratchet from `metrics.json` |
 
 Coverage floor: `docs/coverage-floor.json`. Raise it when inventory % increases.
 
@@ -129,33 +131,35 @@ npm run coverage:ratchet
 
 Signed-off gaps and the per-release human pass: `docs/compensating-controls.md` (D14).
 
-## Metrics (`reports/metrics.json`)
+## Quality dashboard
 
-Unit 15a. After any Cucumber profile:
+**Published URL:** https://masudrana-bit.github.io/Rethink-Clinical-test-suite/
+
+Regenerated on every Nightly (and after PR smoke as artifacts only). Local copy:
+`reports/dashboard.html`.
 
 ```bash
-npm run dashboard:metrics
+npm run dashboard:metrics    # parse cucumber JSON + inventory → metrics, history, HTML
 ```
 
-Reads `reports/cucumber-report.json` plus `docs/surface-inventory.json`. Definitions (`rules/30-metrics-dashboard.md` §3, decision **D15**):
+### Metric definitions (`rules/30-metrics-dashboard.md` §3)
 
-- **Pass rate** = passed ÷ executed, excluding `@bug`. `@write` counts when that run executed it.
-- **Open defects** = every Gherkin `@bug` scenario this run did not prove green (default `npm test` does not execute them, so they stay open).
-- **`coverage.percent`** = inventory ratchet formula (D14). **`coverage.specPercent`** = `covered ÷ total inventory items`.
-- **Flake rate** / **trend** come from `reports/history.json` (last 10 / 30 runs). Cap 200; persist across CI per **D16**.
+These are binding. A change is a dated decision, not a silent edit.
 
-The same command also renders `reports/dashboard.html` (15c): a single self-contained page for
-non-QA readers — health headline, coverage, trend, product areas, open defects, honesty footer.
-Open it directly from disk. The published executive view is:
+- **Executed scenarios** = scenarios in this run's `reports/cucumber-report.json`.
+- **Pass rate (headline)** = passed ÷ executed, **excluding `@bug`**. Known defects are expected red (D3); counting them in the headline misstates health. `@write` counts when that run executed it (Unit 11 is done).
+- **Open defects** = Gherkin `@bug` scenarios this run did not prove green, listed by name. A `@bug` that passes is a “fix detected — remove @bug tag” callout (`bugFixDetected`). Default `npm test` does not execute `@bug`, so they stay open until a bugs-profile run proves them green.
+- **Coverage %** = inventory-based, never a substitute from scenario counts. Two figures (D15): **`coverage.percent`** is the D14 ratchet `(covered + bug + 0.5×partial) / in-scope`; **`coverage.specPercent`** is §3 `covered ÷ total inventory items`, with `partial` as its own slice. If the inventory were missing: “Coverage: pending inventory (Unit 8)”. Pass rate and coverage are different claims.
+- **Per-area rollup** = group this run by product-area tags (`@auth`, `@clients`, `@programs`, `@analyze-data`, `@behavior-support`, plus extra areas as their own rows). Each area shows pass state and scenario count. Inventory coverage per area is not broken down (shown as —).
+- **Flake rate** = (scenario names that both passed and failed in the last 10 `history.json` runs) ÷ scenarios executed this run.
+- **Trend** = pass rate and coverage % per run for the last 30 runs.
+- **Run metadata** = timestamp (with timezone), environment (dev2), git ref, trigger, duration, scenario/step totals including skipped/undefined (a nonzero undefined count is a false-green warning under `--strict`).
 
-**https://masudrana-bit.github.io/Rethink-Clinical-test-suite/**
+Related decisions: **D15** (both coverage claims, pass-rate exclusions), **D16** (history persist: `metrics-history` artifact + Pages), **D17** (Pages URL; ratchet reads `metrics.json`).
 
-Nightly and manual runs publish that stable GitHub Pages URL even when the suite is red.
-PRs generate the same files as downloadable artifacts without replacing the executive view.
-CI restores `reports/history.json` from the 90-day `metrics-history` artifact (then Pages as
-fallback), generates after the test with `if: always()`, and republishes history with the page.
-The coverage ratchet reads `coverage.percent` from that run's `reports/metrics.json`; it does
-not calculate a second coverage value. Detailed Allure evidence is published at `/allure/`.
+Nightly and manual runs publish the stable URL even when the suite is red. PRs generate the same files as downloadable artifacts without replacing the executive view. CI restores `reports/history.json` from the 90-day `metrics-history` artifact (then Pages as fallback). The coverage ratchet reads `coverage.percent` from that run's `reports/metrics.json`; it does not calculate a second coverage value. Detailed Allure evidence is at `/allure/`.
+
+Teams Adaptive Card notify (D18) is wired in Nightly but unused until a webhook is configured later. Unset secret skips the post.
 
 If GitHub-hosted runners cannot reach `*.internal.*`, set repo variable `CLINICAL_RUNNER`
 to a self-hosted runner label. Optional URL overrides: repo variables `BASE_URL`,

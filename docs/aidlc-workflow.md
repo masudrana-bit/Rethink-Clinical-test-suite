@@ -19,7 +19,7 @@
 3. **Load context.** Read `rules/00-project-rules.md`, `rules/10-app-context.md`, and
    `docs/coverage-matrix.md` before planning. Never read `output/` (the crawl) at runtime.
 4. **Ground every assertion** in a real dev2 response or a verified `data-testid` — never a guess.
-5. **Respect the decisions.** Decisions D1–D9 in `coverage-matrix.md` constrain everything. If you
+5. **Respect the decisions.** Decisions in `coverage-matrix.md` (D1–D18) constrain everything. If you
    discover something that contradicts or extends them, add a **new dated decision** and tell the
    human — do not silently work around it.
 6. **Stop for review.** After generating, present the tests and the run result. A human reviews
@@ -151,18 +151,12 @@ quarterly so the coverage denominator grows with the app.
 - *Landed:* [`docs/compensating-controls.md`](./compensating-controls.md). Coverage floor is 94.7%
   after SES-1 (`/sessions/new` landing).
 
-**Unit 15 — Metrics dashboard**  ◐
+**Unit 15 — Metrics dashboard**  ☑
 - *Intent:* product-facing quality dashboard from the latest run (`rules/30-metrics-dashboard.md`).
-- *15a landed:* JSON formatter + `scripts/generate-dashboard.js` → `reports/metrics.json` (D15).
-  `npm run dashboard:metrics`.
-- *15b landed:* append-only `reports/history.json` (cap 200), flake + trend. Persistence: **D16**
-  (GitHub Actions artifact `metrics-history`, 90 days; Pages copy in 15d).
-- *15c landed:* `reports/dashboard.html`, self-contained, product language. Product review asked for
-  a more professional layout and a clearer matrix; the one permitted revision applied it
-  (KPI strip, protection breakdown, per-area results matrix, defect table).
-- *15d landed:* post-steps run on green/red, ratchet reads the run's `metrics.json`, and GitHub
-  Pages publishes dashboard + history + Allure at the stable D17 URL. Green run `33733844597`
-  and deliberately red ratchet run `33734013611` both published; temporary probes were removed.
+- *Landed:* 15a–15e. `npm run dashboard:metrics` → `reports/metrics.json` + `dashboard.html` +
+  append `history.json`. GitHub Pages:
+  `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/` (D17). Coverage ratchet reads
+  `metrics.json`. Teams notify is deferred (no webhook). Recorded decisions **D15–D18**.
 
 ---
 
@@ -172,7 +166,8 @@ quarterly so the coverage denominator grows with the app.
 |-------|------|
 | Behaviour rules the agent obeys | `rules/00-project-rules.md` |
 | Endpoints, shapes, selectors, flows | `rules/10-app-context.md` |
-| Decisions D1–D9, tag taxonomy, grounding facts | `docs/coverage-matrix.md` |
+| Decisions D1–D18, tag taxonomy, grounding facts | `docs/coverage-matrix.md` |
+| Product dashboard spec + §3 metrics | `rules/30-metrics-dashboard.md` |
 | Formal test-case write-ups | `docs/test-cases.md` |
 | Defects / anomalies | `docs/defects.md`, `docs/bug-report.md` |
 | Full expansion prompts + gates | `docs/AIDLC-Max-Coverage-Playbook.pdf` |

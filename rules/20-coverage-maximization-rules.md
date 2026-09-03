@@ -4,8 +4,7 @@
 > `00-project-rules.md` and `10-app-context.md`. Every AI agent working on coverage loads all
 > three before planning anything. This file encodes what "maximum coverage" means for this
 > suite, the UI and API rules that make coverage real, and the ordered backlog to get there.
-> It incorporates every lesson learned so far (decisions D1–D9 plus the analyze-data oracle
-> failure, recorded as D10 below).
+> It incorporates every lesson learned so far (decisions D1–D18).
 
 ---
 
@@ -125,21 +124,22 @@ excluded from the PR gate until the unit is complete and stable.
 
 ## 8. Coverage expansion backlog (work top to bottom, one unit per bolt)
 
-| # | Unit | Exit criteria |
-|---|------|---------------|
-| 6 | Prove & stabilise baseline | Full read-only suite green 3× consecutively; zero flake; zero undefined/pending steps (`--strict` on) |
-| 7 | Harden existing tests | Every selector verified on live dev2; every test proven to fail on a described regression; zero traceability orphans |
-| 8 | Surface inventory & live matrix | Complete inventory (routes × endpoints × actions × states) mapped to tests; coverage % + ranked risk-rated gap list signed off |
-| 9 | States & negative paths (UI) | Inventory's state gaps for read paths closed per §4 |
-| 10 | Analyze-Data breadth | Custom Graph, Bulk Graphs, Print tabs + empty/loading states covered (read-only) |
-| 11 | Write/mutation unit | §6 satisfied; mutations covered with teardown on the dedicated client |
-| 12 | Visual regression | Baselines committed for key screens, volatile regions masked, diff gate active (`npm run test:visual`) |
-| 13 | Accessibility | axe-core on main pages; critical violations gated |
-| 14 | Operations / CI | Smoke per PR; full nightly; `@write`/`@bug` excluded from gate; coverage % published per run and **ratcheted** (build fails if it drops) |
+| # | Unit | Status | Exit criteria |
+|---|------|--------|---------------|
+| 6 | Prove & stabilise baseline | ☑ | Full read-only suite green 3× consecutively; zero flake; zero undefined/pending steps (`--strict` on) |
+| 7 | Harden existing tests | ☑ | Every selector verified on live dev2; every test proven to fail on a described regression; zero traceability orphans |
+| 8 | Surface inventory & live matrix | ☑ | Complete inventory (routes × endpoints × actions × states) mapped to tests; coverage % + ranked risk-rated gap list signed off |
+| 9 | States & negative paths (UI) | ☑ | Inventory's state gaps for read paths closed per §4 |
+| 10 | Analyze-Data breadth | ☑ | Custom Graph, Bulk Graphs, Print tabs + empty/loading states covered (read-only) |
+| 11 | Write/mutation unit | ☑ | §6 satisfied; mutations covered with teardown on the dedicated client |
+| 12 | Visual regression | ☑ | Baselines committed for key screens, volatile regions masked, diff gate active (`npm run test:visual`) |
+| 13 | Accessibility | ☑ | axe-core on main pages; critical violations gated |
+| 14 | Operations / CI | ☑ | Smoke per PR; full nightly; `@write`/`@bug` excluded from gate; coverage % published per run and **ratcheted** (build fails if it drops) |
+| 15 | Metrics dashboard | ☑ | Product quality dashboard regenerated every run (`rules/30-metrics-dashboard.md`); §3 metrics in `reports/metrics.json`; GitHub Pages URL; ratchet reads the same `coverage.percent` |
 
-After Unit 14, sustain: every new feature/bug enters as a new unit; `@bug` tests stay
+After Unit 15, sustain: every new feature/bug enters as a new unit; `@bug` tests stay
 red-until-fixed; flake triaged immediately; inventory re-run quarterly so the denominator
-grows with the app.
+grows with the app. The executive view is `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/`.
 
 ## 9. Definition of done — per test
 
@@ -158,8 +158,8 @@ grows with the app.
 - ☑ Visual-regression layer active (`@visual`, masked baselines)
 - ☑ Accessibility layer (axe-core) active (`@a11y`, critical-only)
 - ☑ Blind spots named with compensating controls (thin human exploratory pass per release)
-- ☑ CI: smoke per PR, full nightly, live ratcheted coverage %
-- ☑ Decision log current (D1–D14); flake ~zero as of the Unit 6 baseline (re-open if nightly flakes)
+- ☑ CI: smoke per PR, full nightly, live ratcheted coverage %, product dashboard published
+- ☑ Decision log current (D1–D18); flake ~zero as of the Unit 6 baseline (re-open if nightly flakes)
 
 ## 11. Standing prompts
 
@@ -167,7 +167,7 @@ Prepend to every task:
 
 > Before writing any code, restate the goal in one sentence, give me your plan, and list what
 > you need to confirm about the app. Wait for my approval. Load rules/ as context. If you
-> discover anything that contradicts or extends decisions D1–D14, add a new dated decision to
+> discover anything that contradicts or extends decisions D1–D18, add a new dated decision to
 > coverage-matrix.md and tell me.
 
 Per-unit invocation:

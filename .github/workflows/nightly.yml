@@ -116,3 +116,26 @@ jobs:
       - name: Publish the same URL on green and red runs
         id: deployment
         uses: actions/deploy-pages@v4
+
+  notify:
+    name: Post nightly summary to Teams
+    needs: [default-suite, publish]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Download this run's reports
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly-reports
+          path: .
+      - name: Post Adaptive Card to Teams
+        continue-on-error: true
+        run: npm run dashboard:notify
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          DASHBOARD_URL: https://masudrana-bit.github.io/Rethink-Clinical-test-suite/

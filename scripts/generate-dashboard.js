@@ -388,6 +388,7 @@ function toHistoryEntry(metrics, scenarios) {
     coveragePercent: metrics.coverage.pending ? null : metrics.coverage.percent,
     specPercent: metrics.coverage.pending ? null : metrics.coverage.specPercent,
     scenarios: outcomes,
+    openDefects: (metrics.openDefects || []).map((d) => d.name),
   };
 }
 

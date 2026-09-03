@@ -22,6 +22,7 @@
     "dashboard:metrics": "node scripts/generate-dashboard.js",
     "dashboard:restore": "node scripts/restore-dashboard-history.js",
     "dashboard:site": "node scripts/build-dashboard-site.js",
+    "dashboard:notify": "node scripts/notify-teams.js",
     "allure:clean": "node -e \"require('fs').rmSync('allure-results',{recursive:true,force:true})\"",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
