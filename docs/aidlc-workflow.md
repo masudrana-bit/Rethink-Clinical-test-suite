@@ -19,7 +19,7 @@
 3. **Load context.** Read `rules/00-project-rules.md`, `rules/10-app-context.md`, and
    `docs/coverage-matrix.md` before planning. Never read `output/` (the crawl) at runtime.
 4. **Ground every assertion** in a real dev2 response or a verified `data-testid` — never a guess.
-5. **Respect the decisions.** Decisions in `coverage-matrix.md` (D1–D18) constrain everything. If you
+5. **Respect the decisions.** Decisions in `coverage-matrix.md` (D1–D20) constrain everything. If you
    discover something that contradicts or extends them, add a **new dated decision** and tell the
    human — do not silently work around it.
 6. **Stop for review.** After generating, present the tests and the run result. A human reviews
@@ -166,7 +166,7 @@ quarterly so the coverage denominator grows with the app.
 |-------|------|
 | Behaviour rules the agent obeys | `rules/00-project-rules.md` |
 | Endpoints, shapes, selectors, flows | `rules/10-app-context.md` |
-| Decisions D1–D18, tag taxonomy, grounding facts | `docs/coverage-matrix.md` |
+| Decisions D1–D20, tag taxonomy, grounding facts | `docs/coverage-matrix.md` |
 | Product dashboard spec + §3 metrics | `rules/30-metrics-dashboard.md` |
 | Formal test-case write-ups | `docs/test-cases.md` |
 | Defects / anomalies | `docs/defects.md`, `docs/bug-report.md` |

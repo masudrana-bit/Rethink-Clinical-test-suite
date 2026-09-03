@@ -54,6 +54,20 @@ const DEFECT_SUMMARIES = {
     'The button for adding a target does not open anything.',
 };
 
+/**
+ * Every inventory status needs a row here. A status that is missing still counts
+ * toward the totals printed beside the matrix, so it would vanish from the page
+ * while the percentages kept including it.
+ */
+const COVERAGE_STATUS_ROWS = [
+  ['covered', 'Fully covered', 'Checked end to end, including how it behaves when things go wrong.'],
+  ['bug', 'Covered, defect open', 'Watched by a check that stays red until the product is fixed.'],
+  ['partial', 'Partly covered', 'The main path is checked; some behaviour is not.'],
+  ['wip', 'Blocked', 'Cannot be checked automatically until the product changes.'],
+  ['gap', 'Not covered', 'No automated check today.'],
+  ['excluded', 'Out of scope', 'Signed off as not needing a check, so it is left out of the protected figure.'],
+];
+
 const GAP_SUMMARIES = {
   'A-confirm-mastery': 'Confirming a mastery decision cannot be exercised automatically yet.',
   'A-dismiss-mastery': 'Dismissing a mastery decision cannot be exercised automatically yet.',
@@ -108,11 +122,20 @@ function stepDurationNs(step) {
   return Number(d);
 }
 
+/**
+ * Scenario Outline examples share a name, so a name is not an identity. The
+ * example row's line is. Separators are normalised so a Windows run and a Linux
+ * run produce the same key.
+ */
+function scenarioKey(scenario) {
+  return `${String(scenario.uri ?? '').replaceAll('\\', '/')}:${scenario.line}`;
+}
+
 function collectScenarios(report) {
   const scenarios = [];
   for (const feature of report) {
     const featureTags = feature.tags || [];
-    const uri = feature.uri || '';
+    const uri = (feature.uri || '').replaceAll('\\', '/');
     for (const element of feature.elements || []) {
       if (element.type && element.type !== 'scenario') continue;
       const tags = [...featureTags, ...(element.tags || [])];
@@ -222,6 +245,14 @@ function coverageBlock() {
   for (const item of inventory.items) {
     slices[item.status] = (slices[item.status] ?? 0) + 1;
   }
+  const rendered = new Set(COVERAGE_STATUS_ROWS.map(([key]) => key));
+  for (const status of Object.keys(slices)) {
+    if (!rendered.has(status)) {
+      console.warn(
+        `inventory status "${status}" has no dashboard row; add it to COVERAGE_STATUS_ROWS or it will be counted but not shown.`,
+      );
+    }
+  }
   return {
     pending: false,
     /** D14 / ratchet (D15). */
@@ -264,6 +295,13 @@ function areaRollup(scenarios) {
       coverage: null,
     };
   });
+}
+
+/** Checks tagged with more than one area appear in more than one rollup row. */
+function countMultiArea(scenarios) {
+  return scenarios.filter(
+    (s) => new Set(s.tags.filter((t) => AREA_TAGS.includes(t))).size > 1,
+  ).length;
 }
 
 function stepTotals(scenarios) {
@@ -342,6 +380,11 @@ function buildMetrics(report) {
     })).filter((g) => g.catalogued > 0),
     coverage: coverageBlock(),
     areas: areaRollup(scenarios),
+    areaOverlap: countMultiArea(scenarios),
+    catalog: {
+      definitions: fullCatalog.length,
+      note: 'A Scenario Outline counts once here; `executed` counts each example row.',
+    },
     flakeRate: null,
     flake: null,
     trend: [],
@@ -375,7 +418,7 @@ function capRuns(runs, cap = HISTORY_CAP) {
 function toHistoryEntry(metrics, scenarios) {
   const outcomes = {};
   for (const s of scenarios) {
-    outcomes[s.name] = s.status;
+    outcomes[scenarioKey(s)] = s.status;
   }
   return {
     timestamp: metrics.run.timestamp,
@@ -395,19 +438,21 @@ function toHistoryEntry(metrics, scenarios) {
 /**
  * §3 flake rate: scenarios that both passed and failed in the last 10 recorded
  * runs, divided by scenarios executed (this run). Reported as a percent.
+ * Runs are keyed by scenario identity; display names are resolved from the
+ * current run, so a check that no longer exists falls back to its key.
  */
-function computeFlake(runs, executed, window = FLAKE_WINDOW) {
+function computeFlake(runs, executed, window = FLAKE_WINDOW, nameByKey = new Map()) {
   const slice = runs.slice(-window);
-  const byName = new Map();
+  const byKey = new Map();
   for (const run of slice) {
-    for (const [name, status] of Object.entries(run.scenarios || {})) {
-      if (!byName.has(name)) byName.set(name, new Set());
-      byName.get(name).add(status);
+    for (const [key, status] of Object.entries(run.scenarios || {})) {
+      if (!byKey.has(key)) byKey.set(key, new Set());
+      byKey.get(key).add(status);
     }
   }
-  const names = [...byName.entries()]
+  const names = [...byKey.entries()]
     .filter(([, statuses]) => statuses.has('passed') && statuses.has('failed'))
-    .map(([name]) => name)
+    .map(([key]) => nameByKey.get(key) ?? key)
     .sort();
   return {
     rate: executed ? round1((names.length / executed) * 100) : null,
@@ -523,13 +568,7 @@ function renderDashboard(metrics) {
   const coverageSection = cov.pending
     ? `<p class="figure muted">${esc(cov.message)}</p>`
     : (() => {
-        const order = [
-          ['covered', 'Fully covered', 'Checked end to end, including how it behaves when things go wrong.'],
-          ['bug', 'Covered, defect open', 'Watched by a check that stays red until the product is fixed.'],
-          ['partial', 'Partly covered', 'The main path is checked; some behaviour is not.'],
-          ['wip', 'Blocked', 'Cannot be checked automatically until the product changes.'],
-          ['gap', 'Not covered', 'No automated check today.'],
-        ].map(([key, label, meaning]) => ({
+        const order = COVERAGE_STATUS_ROWS.map(([key, label, meaning]) => ({
           key,
           label,
           meaning,
@@ -556,8 +595,9 @@ function renderDashboard(metrics) {
           <div>
             <p class="figure">${cov.percent}<span class="unit">%</span></p>
             <p class="figure-label">of the product we track is protected by an automated check</p>
-            <p class="note">Based on ${cov.inScope} areas of the product that are in scope today.
-            Counting only the areas that are fully covered, the figure is ${cov.specPercent}%.</p>
+            <p class="note">Counted across the ${cov.inScope} areas in scope today, giving part credit
+            where only the main path is checked. Counting only the ${cov.covered} areas that are fully
+            covered, against all ${cov.total} areas on the list, the figure is ${cov.specPercent}%.</p>
           </div>
           <div>
             <div class="stack">${bar}</div>
@@ -682,9 +722,11 @@ function renderDashboard(metrics) {
   .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 18px; }
   .seg.covered { background: var(--good); } .seg.bug { background: #d98324; }
   .seg.partial { background: #4a9fc4; } .seg.wip { background: #97a4b3; } .seg.gap { background: #c9d0d9; }
+  .seg.excluded { background: #e4e9ee; }
   .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 9px; }
   .swatch.covered { background: var(--good); } .swatch.bug { background: #d98324; }
   .swatch.partial { background: #4a9fc4; } .swatch.wip { background: #97a4b3; } .swatch.gap { background: #c9d0d9; }
+  .swatch.excluded { background: #e4e9ee; box-shadow: inset 0 0 0 1px #c2cbd5; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--hair); vertical-align: middle; }
   thead th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--soft);
@@ -816,6 +858,11 @@ function renderDashboard(metrics) {
       metrics.areas.some((a) => a.executed === 0)
         ? ' Areas marked “Not run” were not part of this batch and are covered by other scheduled runs.'
         : ''
+    }${
+      metrics.areaOverlap
+        ? ` A check can serve more than one area, so ${metrics.areaOverlap} of the ${metrics.executed}
+           checks in this run are counted in two rows and the column adds up to more than the run total.`
+        : ''
     } Protection per area is reported product-wide in the section above.</p>
   </section>
 
@@ -880,7 +927,8 @@ function main() {
   const metrics = buildMetrics(report);
   const scenarios = collectScenarios(report);
   const history = appendHistory(metrics, scenarios);
-  const flake = computeFlake(history.runs, metrics.executed);
+  const nameByKey = new Map(scenarios.map((s) => [scenarioKey(s), s.name]));
+  const flake = computeFlake(history.runs, metrics.executed, FLAKE_WINDOW, nameByKey);
   metrics.flakeRate = flake.rate;
   metrics.flake = flake;
   metrics.trend = computeTrend(history.runs);
@@ -908,6 +956,8 @@ if (require.main === module) {
 module.exports = {
   buildMetrics,
   collectScenarios,
+  scenarioKey,
+  countMultiArea,
   catalogScenarios,
   catalogBugScenarios,
   renderDashboard,

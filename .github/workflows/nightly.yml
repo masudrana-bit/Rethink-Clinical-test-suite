@@ -16,6 +16,10 @@ on:
           - full
           - smoke
         default: full
+      reset_history:
+        description: Discard the recorded trend and start a fresh stream
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -44,6 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           DASHBOARD_HISTORY_URL: https://masudrana-bit.github.io/Rethink-Clinical-test-suite/history.json
+          HISTORY_RESET: ${{ inputs.reset_history && '1' || '0' }}
       - name: Default suite (excludes @write @bug @visual @wip)
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'full')
         run: npm test
@@ -79,7 +84,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: metrics-history
+          name: metrics-history-nightly
           path: reports/history.json
           if-no-files-found: ignore
           retention-days: 90

@@ -4,7 +4,7 @@
 > `00-project-rules.md` and `10-app-context.md`. Every AI agent working on coverage loads all
 > three before planning anything. This file encodes what "maximum coverage" means for this
 > suite, the UI and API rules that make coverage real, and the ordered backlog to get there.
-> It incorporates every lesson learned so far (decisions D1–D18).
+> It incorporates every lesson learned so far (decisions D1–D20).
 
 ---
 
@@ -159,7 +159,7 @@ grows with the app. The executive view is `https://masudrana-bit.github.io/Rethi
 - ☑ Accessibility layer (axe-core) active (`@a11y`, critical-only)
 - ☑ Blind spots named with compensating controls (thin human exploratory pass per release)
 - ☑ CI: smoke per PR, full nightly, live ratcheted coverage %, product dashboard published
-- ☑ Decision log current (D1–D18); flake ~zero as of the Unit 6 baseline (re-open if nightly flakes)
+- ☑ Decision log current (D1–D20); flake ~zero as of the Unit 6 baseline (re-open if nightly flakes)
 
 ## 11. Standing prompts
 
@@ -167,7 +167,7 @@ Prepend to every task:
 
 > Before writing any code, restate the goal in one sentence, give me your plan, and list what
 > you need to confirm about the app. Wait for my approval. Load rules/ as context. If you
-> discover anything that contradicts or extends decisions D1–D18, add a new dated decision to
+> discover anything that contradicts or extends decisions D1–D20, add a new dated decision to
 > coverage-matrix.md and tell me.
 
 Per-unit invocation:

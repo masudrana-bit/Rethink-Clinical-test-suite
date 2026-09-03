@@ -2,16 +2,20 @@
 /**
  * Restore Unit 15 history before a CI run.
  *
- * D16: prefer the newest non-expired `metrics-history` Actions artifact, then
- * fall back to the durable GitHub Pages copy. A missing history is a valid
- * first-run state and must never fail the test job.
+ * D16: prefer the newest non-expired history artifact, then fall back to the
+ * durable GitHub Pages copy. A missing history is a valid first-run state and
+ * must never fail the test job.
+ *
+ * D19: only Nightly writes the stream, so the artifact name carries the owner.
+ * The PR gate restores it read-only and never uploads, which keeps short smoke
+ * runs out of the published trend.
  */
 const fs = require('node:fs');
 const path = require('node:path');
 const AdmZip = require('adm-zip');
 
 const OUTPUT = path.join('reports', 'history.json');
-const ARTIFACT_NAME = 'metrics-history';
+const ARTIFACT_NAME = process.env.HISTORY_ARTIFACT || 'metrics-history-nightly';
 
 function validHistory(value) {
   return (
@@ -94,6 +98,11 @@ async function restorePages() {
 }
 
 async function main() {
+  if (process.env.HISTORY_RESET === '1') {
+    fs.rmSync(OUTPUT, { force: true });
+    console.log('history reset requested; this run starts a fresh stream');
+    return;
+  }
   try {
     if (await restoreArtifact()) return;
   } catch (error) {
