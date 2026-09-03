@@ -151,6 +151,18 @@ quarterly so the coverage denominator grows with the app.
 - *Landed:* [`docs/compensating-controls.md`](./compensating-controls.md). Coverage floor is 94.7%
   after SES-1 (`/sessions/new` landing).
 
+**Unit 15 — Metrics dashboard**  ◐
+- *Intent:* product-facing quality dashboard from the latest run (`rules/30-metrics-dashboard.md`).
+- *15a landed:* JSON formatter + `scripts/generate-dashboard.js` → `reports/metrics.json` (D15).
+  `npm run dashboard:metrics`.
+- *15b landed:* append-only `reports/history.json` (cap 200), flake + trend. Persistence: **D16**
+  (GitHub Actions artifact `metrics-history`, 90 days; Pages copy in 15d).
+- *15c landed:* `reports/dashboard.html`, self-contained, product language. Product review asked for
+  a more professional layout and a clearer matrix; the one permitted revision applied it
+  (KPI strip, protection breakdown, per-area results matrix, defect table).
+- *15d wiring:* post-steps run on green/red, ratchet reads the run's `metrics.json`, and GitHub
+  Pages publishes dashboard + history + Allure at the stable D17 URL. Green/red proof pending.
+
 ---
 
 ## Quick reference — where things live

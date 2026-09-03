@@ -48,6 +48,9 @@ These constrain every row below. Change a decision, revisit the rows it touches.
 | D11 | *Added at Unit 12.* Visual baselines compare chrome and layout, not live data. | Volatile regions (names, counts, charts, identity) are masked. `@visual` is not a data oracle and does not replace D9. |
 | D12 | *Added at Unit 13.* axe-core gates on **critical** impact only. | Serious/moderate (today: color-contrast, one definition-list) are attached, not a fail. See AN-6. |
 | D14 | *Added after Unit 14.* Remaining inventory gaps are signed off with named compensating controls. | Live floor is `docs/coverage-floor.json` (94.7% after SES-1). See [`compensating-controls.md`](./compensating-controls.md). Do not delete gap rows to inflate %. |
+| D15 | *Added at Unit 15a.* `reports/metrics.json` carries both coverage claims. | `coverage.percent` is the D14 ratchet formula `(covered + bug + 0.5×partial) / in-scope`. `coverage.specPercent` is §3 `covered ÷ total inventory items`, with `partial` as its own slice. Headline pass rate excludes `@bug` only (Unit 11 is done: `@write` counts when present in the run). Open defects are every Gherkin `@bug` scenario that this run did not prove green. |
+| D16 | *Added at Unit 15b (2026-09-03).* Where `history.json` lives across CI runs. | Working copy: `reports/history.json` (gitignored, append-only, never hand-edited). Shape `{ cap: 200, runs: [...] }`; after each append, drop the oldest runs until `runs.length ≤ cap`. **CI restore:** before `npm run dashboard:metrics`, download the previous workflow artifact named **`metrics-history`** (retention **90 days**) into `reports/history.json`; after generate, re-upload that file (`if: always()`, so red runs still append). Missing artifact (first run, expiry, fork PR) → start `runs: []` and log it — do not fail the job. **Durable copy (15d):** publish `history.json` next to `dashboard.html` on GitHub Pages; prefer that file when artifact restore misses so history outlives 90 days. Local: the on-disk file is the store. |
+| D17 | *Added at Unit 15d (2026-09-03).* Dashboard publication and coverage gate. | Publish the nightly/manual dashboard to GitHub Pages at `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/`; PRs produce artifacts but do not replace the executive view. Post-steps use `if: always()` so red runs still generate metrics, history, dashboard, and Allure. Pages contains `index.html`, `metrics.json`, `history.json`, and `/allure/`. The coverage ratchet reads `reports/metrics.json → coverage.percent`; it never recomputes coverage from inventory. Dashboard rendering is non-blocking, while a missing/invalid coverage metric fails the separate ratchet gate. |
 
 ## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
 
@@ -458,3 +461,18 @@ compares live inventory % to [`coverage-floor.json`](./coverage-floor.json).
 | OPS-3 | Coverage floor 94.7%; build fails if live % is lower | P0 | ☑ |
 
 Signed-off gaps and the per-release human pass: [`compensating-controls.md`](./compensating-controls.md) (D14).
+
+### Unit 15 — Metrics dashboard (15a–15d)
+
+Cucumber JSON at `reports/cucumber-report.json`. Parser: `npm run dashboard:metrics` → `reports/metrics.json` + append `reports/history.json`.
+
+| ID | Item | Priority | Status |
+|----|------|----------|--------|
+| DASH-1 | JSON formatter + `metrics.json` implementing §3 / D15 | P1 | ☑ 15a |
+| DASH-2 | `history.json`, flake, trends | P1 | ☑ 15b |
+| DASH-3 | `dashboard.html` | P1 | ☑ 15c — reviewed by product, one wording/layout revision applied |
+| DASH-4 | CI post-step + GitHub Pages publish (D16/D17) | P1 | ◐ 15d — awaiting green/red pipeline proof |
+
+**15a formulas (D15):** headline pass rate = passed ÷ executed, excluding `@bug` (`@write` included when present). Open defects = Gherkin `@bug` catalog not proven green this run. `coverage.percent` = D14 ratchet; `coverage.specPercent` = covered ÷ total inventory items.
+
+**15b (D16):** flake rate = (scenario names that both passed and failed in the last 10 history runs) ÷ executed this run. Trend = pass rate + both coverage % for the last 30 runs. Cap 200.

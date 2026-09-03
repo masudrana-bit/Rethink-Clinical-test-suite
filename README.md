@@ -129,6 +129,34 @@ npm run coverage:ratchet
 
 Signed-off gaps and the per-release human pass: `docs/compensating-controls.md` (D14).
 
+## Metrics (`reports/metrics.json`)
+
+Unit 15a. After any Cucumber profile:
+
+```bash
+npm run dashboard:metrics
+```
+
+Reads `reports/cucumber-report.json` plus `docs/surface-inventory.json`. Definitions (`rules/30-metrics-dashboard.md` §3, decision **D15**):
+
+- **Pass rate** = passed ÷ executed, excluding `@bug`. `@write` counts when that run executed it.
+- **Open defects** = every Gherkin `@bug` scenario this run did not prove green (default `npm test` does not execute them, so they stay open).
+- **`coverage.percent`** = inventory ratchet formula (D14). **`coverage.specPercent`** = `covered ÷ total inventory items`.
+- **Flake rate** / **trend** come from `reports/history.json` (last 10 / 30 runs). Cap 200; persist across CI per **D16**.
+
+The same command also renders `reports/dashboard.html` (15c): a single self-contained page for
+non-QA readers — health headline, coverage, trend, product areas, open defects, honesty footer.
+Open it directly from disk. The published executive view is:
+
+**https://masudrana-bit.github.io/Rethink-Clinical-test-suite/**
+
+Nightly and manual runs publish that stable GitHub Pages URL even when the suite is red.
+PRs generate the same files as downloadable artifacts without replacing the executive view.
+CI restores `reports/history.json` from the 90-day `metrics-history` artifact (then Pages as
+fallback), generates after the test with `if: always()`, and republishes history with the page.
+The coverage ratchet reads `coverage.percent` from that run's `reports/metrics.json`; it does
+not calculate a second coverage value. Detailed Allure evidence is published at `/allure/`.
+
 If GitHub-hosted runners cannot reach `*.internal.*`, set repo variable `CLINICAL_RUNNER`
 to a self-hosted runner label. Optional URL overrides: repo variables `BASE_URL`,
 `API_BASE_URL`, `AUTH_BASE_URL`.

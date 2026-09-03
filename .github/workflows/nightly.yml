@@ -6,29 +6,94 @@ name: Nightly
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
+  # Temporary branch trigger used only to prove 15d before this workflow reaches main.
+  # Removed after the green/red publication verification.
+  push:
+    branches:
+      - cursor/aidlc-e2e-test-generation-workflow
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Suite to publish
+        type: choice
+        options:
+          - full
+          - smoke
+        default: full
+      deliberate_red:
+        description: Deliberately fail the metrics ratchet (15d verification only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: quality-dashboard-pages
+  cancel-in-progress: false
 
 jobs:
   default-suite:
-    name: Default suite and coverage ratchet
+    name: Suite, dashboard, and coverage ratchet
     runs-on: ${{ vars.CLINICAL_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Restore dashboard history
+        continue-on-error: true
+        run: npm run dashboard:restore
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DASHBOARD_HISTORY_URL: https://masudrana-bit.github.io/Rethink-Clinical-test-suite/history.json
       - name: Default suite (excludes @write @bug @visual @wip)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'full')
         run: npm test
         env:
           BASE_URL: ${{ vars.BASE_URL }}
           API_BASE_URL: ${{ vars.API_BASE_URL }}
           AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
-      - run: npm run coverage:ratchet
+      - name: Smoke suite for publication verification
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'smoke')
+        run: npm run test:smoke
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          AUTH_BASE_URL: ${{ vars.AUTH_BASE_URL }}
+      - name: Generate dashboard after the run
+        if: always()
+        continue-on-error: true
+        run: npm run dashboard:metrics
+        env:
+          ALLURE_URL: ./allure/index.html
+      - name: Coverage ratchet reads dashboard metrics
+        if: always()
+        run: npm run coverage:ratchet
+        env:
+          COVERAGE_FLOOR: ${{ inputs.deliberate_red && '100' || '' }}
+      - name: Generate detailed test evidence
+        if: always()
+        continue-on-error: true
+        run: npm run allure:generate
+      - name: Assemble Pages site
+        if: always()
+        continue-on-error: true
+        run: npm run dashboard:site
+      - name: Persist dashboard history
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-history
+          path: reports/history.json
+          if-no-files-found: ignore
+          retention-days: 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -38,5 +103,27 @@ jobs:
             docs/surface-inventory.md
             docs/api-endpoint-report.md
             allure-results/
+            allure-report/
           if-no-files-found: ignore
           retention-days: 30
+      - name: Upload dashboard site for Pages
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/site
+
+  publish:
+    name: Publish quality dashboard
+    needs: default-suite
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the same URL on green and red runs
+        id: deployment
+        uses: actions/deploy-pages@v4
