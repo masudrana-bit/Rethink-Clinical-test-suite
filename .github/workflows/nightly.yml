@@ -80,7 +80,8 @@ jobs:
         if: always()
         run: npm run coverage:ratchet
         env:
-          COVERAGE_FLOOR: ${{ inputs.deliberate_red && '100' || '' }}
+          # Temporary 15d negative probe. Reverted after this run publishes.
+          COVERAGE_FLOOR: "100"
       - name: Generate detailed test evidence
         if: always()
         continue-on-error: true
