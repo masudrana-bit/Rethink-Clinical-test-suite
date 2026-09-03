@@ -1,0 +1,37 @@
+[
+  {
+    "uri": "publication-verification",
+    "id": "publication-verification",
+    "keyword": "Feature",
+    "name": "Quality dashboard publication",
+    "tags": [
+      {
+        "name": "@preflight"
+      }
+    ],
+    "elements": [
+      {
+        "id": "publication-verification;green-report",
+        "keyword": "Scenario",
+        "name": "The publication path receives a green report",
+        "line": 1,
+        "type": "scenario",
+        "tags": [],
+        "steps": [
+          {
+            "keyword": "Then ",
+            "name": "the report represents a passing run",
+            "line": 2,
+            "match": {
+              "location": "fixture"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1000000
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
