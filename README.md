@@ -120,8 +120,8 @@ Decision **D13**. No credentials are required (D1: `/temp-dev-login`). The gate 
 
 | Workflow | When | What |
 |----------|------|------|
-| `.github/workflows/pr.yml` | Every pull request | `typecheck`, smoke, dashboard metrics, ratchet from `metrics.json`, `verify:scrub` |
-| `.github/workflows/nightly.yml` | 06:00 UTC and manual | Default suite, dashboard + Pages publish, ratchet from `metrics.json` |
+| `.github/workflows/pr.yml` | Every pull request | `typecheck`, smoke, dashboard metrics + job-summary matrix, ratchet from `metrics.json`, `verify:scrub` |
+| `.github/workflows/nightly.yml` | 06:00 UTC and manual | Default suite, dashboard + job-summary matrix + Pages publish, ratchet from `metrics.json` |
 
 Coverage floor: `docs/coverage-floor.json`. Raise it when inventory % increases.
 
@@ -140,6 +140,7 @@ Regenerated on every Nightly (and after PR smoke as artifacts only). Local copy:
 
 ```bash
 npm run dashboard:metrics    # parse cucumber JSON + inventory → metrics, history, HTML
+npm run dashboard:summary    # print the same product-area matrix as Markdown
 ```
 
 ### Metric definitions (`rules/30-metrics-dashboard.md` §3)
@@ -155,9 +156,14 @@ These are binding. A change is a dated decision, not a silent edit.
 - **Trend** = pass rate and coverage % per run for the last 30 runs.
 - **Run metadata** = timestamp (with timezone), environment (dev2), git ref, trigger, duration, scenario/step totals including skipped/undefined (a nonzero undefined count is a false-green warning under `--strict`).
 
-Related decisions: **D15** (both coverage claims, pass-rate exclusions), **D16** (history persistence), **D17** (Pages URL; ratchet reads `metrics.json`), **D19** (Nightly owns the history stream), **D20** (history keyed by scenario identity).
+Related decisions: **D15** (both coverage claims, pass-rate exclusions), **D16** (history persistence), **D17** (Pages URL; ratchet reads `metrics.json`), **D19** (Nightly owns the history stream), **D20** (history keyed by scenario identity), **D21** (per-job Actions summary).
 
 Nightly and manual runs publish the stable URL even when the suite is red. PRs generate the same files as downloadable artifacts without replacing the executive view. The coverage ratchet reads `coverage.percent` from that run's `reports/metrics.json`; it does not calculate a second coverage value. Detailed Allure evidence is at `/allure/`.
+
+Every GitHub Actions job that runs Cucumber also shows that run's product-area matrix directly
+on the job's **Summary** page (D21). The summary is generated from the same `metrics.json`; if
+that file is unavailable, it shows an explicit warning instead of stale or invented figures.
+Static typecheck and publish jobs have no test report, so they do not show a matrix.
 
 **Nightly owns the trend (D19).** Only Nightly writes history, to the 90-day `metrics-history-nightly` artifact (Pages `/history.json` is the durable fallback). The PR gate restores it read-only and never uploads, so a short smoke run cannot make the executive trend look like a regression. To discard the recorded trend and start over, run Nightly with the `reset_history` input, or set `HISTORY_RESET=1` locally before `npm run dashboard:restore`.
 

@@ -20,6 +20,7 @@
     "coverage:inventory": "node scripts/coverage-inventory.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.js",
     "dashboard:metrics": "node scripts/generate-dashboard.js",
+    "dashboard:summary": "node scripts/write-dashboard-summary.js",
     "dashboard:restore": "node scripts/restore-dashboard-history.js",
     "dashboard:site": "node scripts/build-dashboard-site.js",
     "dashboard:notify": "node scripts/notify-teams.js",

@@ -69,6 +69,12 @@ jobs:
         run: npm run dashboard:metrics
         env:
           ALLURE_URL: ./allure/index.html
+      - name: Show dashboard matrix in the job summary
+        if: always()
+        continue-on-error: true
+        run: npm run dashboard:summary
+        env:
+          DASHBOARD_URL: https://masudrana-bit.github.io/Rethink-Clinical-test-suite/
       - name: Coverage ratchet reads dashboard metrics
         if: always()
         run: npm run coverage:ratchet
