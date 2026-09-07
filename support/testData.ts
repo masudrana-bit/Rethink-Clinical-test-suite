@@ -109,3 +109,17 @@ export async function resolveFixture(
 export function resetFixtureCache(): void {
   cached = undefined;
 }
+
+/** First client on the live list. Use when programs/library reads are down (legacy_id 500). */
+export async function firstListedClientId(api: ClinicalApi): Promise<number> {
+  const res = await api.clients();
+  if (!res.ok()) {
+    throw new Error(`Resolving a live client: clients returned ${res.status()}.`);
+  }
+  const body = await res.json();
+  const id = (body?.items ?? [])[0]?.id;
+  if (typeof id !== 'number') {
+    throw new Error('Resolving a live client: the clients list had no numeric id.');
+  }
+  return id;
+}

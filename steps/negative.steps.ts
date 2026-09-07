@@ -68,6 +68,30 @@ When(
   },
 );
 
+When('I attempt to patch a standard program in the library', async function (this: CustomWorld) {
+  const listed = await this.clinical.programLibrary({ pageSize: 200 });
+  recordResponseMetadata(this, listed);
+  const body = await listed.json().catch(() => undefined);
+  const items = (body?.items ?? []) as Array<{
+    id: number;
+    title?: string;
+    source?: string;
+    isCore?: boolean;
+  }>;
+  const standard = items.find(
+    (entry) => entry.source === 'standard' || entry.isCore === true,
+  );
+  expect(
+    standard,
+    'Clinical PR #37: the catalog should include a standard/core program to prove it is read-only',
+  ).toBeTruthy();
+  const res = await this.clinical.patchProgramLibrary(standard!.id, {
+    title: `${standard!.title ?? 'standard'}-must-not-apply`,
+  });
+  recordResponseMetadata(this, res, 'PATCH');
+  this.data.lastResponseBody = await res.json().catch(() => undefined);
+});
+
 When('I attempt to create a session for that unknown client', async function (this: CustomWorld) {
   const res = await this.clinical.createClientSession(this.data.missingClientId as number);
   recordResponseMetadata(this, res, 'POST');

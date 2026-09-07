@@ -19,6 +19,8 @@
     "report": "node scripts/report.js",
     "coverage:inventory": "node scripts/coverage-inventory.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.js",
+    "report:pages": "node scripts/generate-report-pages.js",
+    "report:validate": "node scripts/validate-traceability.js",
     "dashboard:metrics": "node scripts/generate-dashboard.js",
     "dashboard:summary": "node scripts/write-dashboard-summary.js",
     "dashboard:restore": "node scripts/restore-dashboard-history.js",

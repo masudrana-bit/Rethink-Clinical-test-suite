@@ -92,13 +92,99 @@ export class ClinicalApi {
     );
   }
 
-  programLibrary(): Promise<APIResponse> {
+  programLibrary(query: Record<string, string | number | boolean> = {}): Promise<APIResponse> {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      params.set(key, String(value));
+    }
+    const suffix = params.size ? `?${params.toString()}` : '';
     return this.track(
       'GET',
-      this.api.get(`${config.apiBaseUrl}/clinical/v1/program-library`, {
+      this.api.get(`${config.apiBaseUrl}/clinical/v1/program-library${suffix}`, {
         headers: this.headers(),
       }),
     );
+  }
+
+  /**
+   * Clinical PR #37: a standard library program must 409 before any write.
+   * If-Match is sent so a missing-precondition 428 cannot hide that refusal.
+   */
+  patchProgramLibrary(id: number, body: unknown): Promise<APIResponse> {
+    return this.track(
+      'PATCH',
+      this.api.patch(`${config.apiBaseUrl}/clinical/v1/program-library/${id}`, {
+        headers: {
+          ...this.headers(),
+          'Content-Type': 'application/json',
+          'If-Match': '*',
+        },
+        data: body,
+      }),
+    );
+  }
+
+  abcOptions(page = 1, pageSize = 200): Promise<APIResponse> {
+    return this.track(
+      'GET',
+      this.api.get(
+        `${config.apiBaseUrl}/clinical/v1/abc-options?page=${page}&pageSize=${pageSize}`,
+        { headers: this.headers() },
+      ),
+    );
+  }
+
+  lookup(name: string): Promise<APIResponse> {
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}/clinical/v1/lookup/${name}`, {
+        headers: this.headers(),
+      }),
+    );
+  }
+
+  dataCollectionScales(page = 1, pageSize = 200): Promise<APIResponse> {
+    return this.track(
+      'GET',
+      this.api.get(
+        `${config.apiBaseUrl}/clinical/v1/data-collection-scales?page=${page}&pageSize=${pageSize}`,
+        { headers: this.headers() },
+      ),
+    );
+  }
+
+  private clinicalQuery(
+    path: string,
+    query: Record<string, string | number | boolean | string[]> = {},
+  ): Promise<APIResponse> {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (Array.isArray(value)) {
+        for (const item of value) params.append(key, item);
+      } else {
+        params.set(key, String(value));
+      }
+    }
+    const suffix = params.size ? `?${params.toString()}` : '';
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}${path}${suffix}`, { headers: this.headers() }),
+    );
+  }
+
+  analyzeDataSeries(clientId: number): Promise<APIResponse> {
+    return this.clinicalQuery('/clinical/v1/reports/analyze-data/series', { clientId });
+  }
+
+  analyzeDataMasteredTargets(clientId: number): Promise<APIResponse> {
+    return this.clinicalQuery('/clinical/v1/reports/analyze-data/mastered-targets', { clientId });
+  }
+
+  analyzeDataGraphs(clientId: number, seriesIds: string[]): Promise<APIResponse> {
+    return this.clinicalQuery('/clinical/v1/reports/analyze-data/graphs', {
+      clientId,
+      seriesIds,
+    });
   }
 
   private programScoped(clientId: number, programId: number, suffix: string): Promise<APIResponse> {
@@ -125,6 +211,20 @@ export class ClinicalApi {
 
   dataCollection(clientId: number, programId: number): Promise<APIResponse> {
     return this.programScoped(clientId, programId, 'data-collection');
+  }
+
+  /**
+   * Gateway PR 49218: these routes skip Bearer and the /clinical/api rewrite.
+   * ApplicationKeyHandler still runs, so `x-application-key` is required.
+   */
+  clinicalHealthcheck(path = '/clinical/healthcheck'): Promise<APIResponse> {
+    const suffix = path.startsWith('/') ? path : `/${path}`;
+    return this.track(
+      'GET',
+      this.api.get(`${config.apiBaseUrl}${suffix}`, {
+        headers: { ...this.headers(), ...this.authEndpointHeaders() },
+      }),
+    );
   }
 
   automasteryEvaluations(

@@ -26,7 +26,7 @@
 | `@write` | Mutates the dedicated `TEST_CLIENT_ID` client. Excluded from `npm test`; `npm run test:write`. |
 | `@visual` | Screenshot-diff vs committed baselines. Excluded from `npm test`; `npm run test:visual`. |
 | `@a11y` | axe-core WCAG 2.A/2.AA. In `npm test`; critical impact only (D12). `npm run test:a11y`. |
-| `@auth` `@clients` `@programs` `@analyze-data` `@behavior-support` | Feature areas. |
+| `@auth` `@clients` `@programs` `@analyze-data` `@behavior-support` `@settings` `@lookups` `@health` | Feature areas. |
 
 ## Decisions taken at elaboration
 
@@ -47,13 +47,15 @@ These constrain every row below. Change a decision, revisit the rows it touches.
 | D10 | *Added at Unit 7.* "Targets in scope" is a report-filtered metric, not `sum(targets.totalCount)`. | Cross-layer equality is a false oracle. AZ-2 asserts the internal identity `mastered + remaining == in scope` and that in-scope does not exceed the live target total. |
 | D11 | *Added at Unit 12.* Visual baselines compare chrome and layout, not live data. | Volatile regions (names, counts, charts, identity) are masked. `@visual` is not a data oracle and does not replace D9. |
 | D12 | *Added at Unit 13.* axe-core gates on **critical** impact only. | Serious/moderate (today: color-contrast, one definition-list) are attached, not a fail. See AN-6. |
-| D14 | *Added after Unit 14.* Remaining inventory gaps are signed off with named compensating controls. | Live floor is `docs/coverage-floor.json` (94.7% after SES-1). See [`compensating-controls.md`](./compensating-controls.md). Do not delete gap rows to inflate %. |
+| D14 | *Added after Unit 14.* Remaining inventory gaps are signed off with named compensating controls. | Live floor is `docs/coverage-floor.json` (95.4% after Unit 18 lookup/reporting/ABC-column coverage). See [`compensating-controls.md`](./compensating-controls.md). Do not delete gap rows to inflate %. |
 | D15 | *Added at Unit 15a.* `reports/metrics.json` carries both coverage claims. | `coverage.percent` is the D14 ratchet formula `(covered + bug + 0.5×partial) / in-scope`. `coverage.specPercent` is §3 `covered ÷ total inventory items`, with `partial` as its own slice. Headline pass rate excludes `@bug` only (Unit 11 is done: `@write` counts when present in the run). Open defects are every Gherkin `@bug` scenario that this run did not prove green. |
 | D16 | *Added at Unit 15b (2026-09-03).* Where `history.json` lives across CI runs. | Working copy: `reports/history.json` (gitignored, append-only, never hand-edited). Shape `{ cap: 200, runs: [...] }`; after each append, drop the oldest runs until `runs.length ≤ cap`. **CI restore:** before `npm run dashboard:metrics`, download the previous workflow artifact named **`metrics-history`** (retention **90 days**) into `reports/history.json`; after generate, re-upload that file (`if: always()`, so red runs still append). Missing artifact (first run, expiry, fork PR) → start `runs: []` and log it — do not fail the job. **Durable copy (15d):** publish `history.json` next to `dashboard.html` on GitHub Pages; prefer that file when artifact restore misses so history outlives 90 days. Local: the on-disk file is the store. |
 | D17 | *Added at Unit 15d (2026-09-03).* Dashboard publication and coverage gate. | Publish the nightly/manual dashboard to GitHub Pages at `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/`; PRs produce artifacts but do not replace the executive view. Post-steps use `if: always()` so red runs still generate metrics, history, dashboard, and Allure. Pages contains `index.html`, `metrics.json`, `history.json`, and `/allure/`. The coverage ratchet reads `reports/metrics.json → coverage.percent`; it never recomputes coverage from inventory. Dashboard rendering is non-blocking, while a missing/invalid coverage metric fails the separate ratchet gate. |
 | D18 | *Added at Unit 15e (2026-09-03).* Nightly Teams Adaptive Card. | Post only from Nightly (schedule or `workflow_dispatch`), after Pages publish, `if: always()`. Power Automate **Workflows** incoming webhook in secret `TEAMS_WEBHOOK_URL` (not the retired Office 365 connector). Body is a Teams `message` with one Adaptive Card: status, headline pass rate, D14 coverage, known-defect deltas vs the previous history entry, button to the D17 URL. Missing secret or metrics skips the post. Notify failure never fails the pipeline. History entries store `openDefects` names so deltas survive restore. |
 | D19 | *Added at the Unit 15 audit (2026-09-03).* Nightly owns the metrics history stream. Extends D16. | Only Nightly writes history. The artifact is **`metrics-history-nightly`** (90 days); the PR gate restores it read-only for flake context and never uploads, so a short smoke run cannot enter the published trend. Before this, both workflows wrote an artifact named `metrics-history` and the restore picked the newest by name regardless of workflow, so four-scenario smoke runs sat in the executive trend and made the line fall from 100% to 94.7% with nothing having regressed. `HISTORY_RESET=1` (Nightly's `reset_history` dispatch input) starts a fresh stream; used once to discard the 15d proof fixtures. |
 | D20 | *Added at the Unit 15 audit (2026-09-03).* History outcomes are keyed by scenario identity, not name. | A Scenario Outline's examples share a name, so a name is not an identity: three outline names covered ten executions and a 76-scenario run stored only 69 outcomes, last write wins. Entries are now keyed `uri:line` with separators normalised, so a Windows run and a Linux run agree. Flake display names resolve from the current run and fall back to the key for a check that no longer exists. Editing a feature file shifts its lines and resets that check's flake history; that is accepted. |
+| D23 | *Added 2026-09-07.* A failure matching a declared outage is reported as **blocked**, never as lost coverage. | `docs/gates.json` names each environment precondition known to be broken, with the error signature that identifies it in a run, its owning service and its defect ID. `scripts/lib/traceability.js` attributes matching failures to their gate; `gates.html` shows each outage with its blast radius. Introduced because DEF-7 turned one backend 500 into 39 red scenarios, which the raw pass rate reported as a collapse from 95% to 44% while the coverage behind those scenarios was untouched. The honest pair of numbers is published together: raw pass rate, and pass rate of what was not blocked. A gate is deleted, not disabled, once its signature stops matching. |
+| D22 | *Added 2026-09-07.* Coverage is reported twice — **claimed** and **proven** — and the two are never merged. | Claimed is the curated `status` in `surface-inventory.json`, which the D14 ratchet already gates. Proven is derived per run by joining surface → cited cases → `docs/test-cases.md` → scenario name → Cucumber result. `coverage.html` shows both plus a verdict; `conflict` (claimed covered, genuinely failing) and `fix-detected` (claimed defective, now passing) fail `npm run report:validate`. The join is only trustworthy if the chain holds, so the same gate fails on a case naming a scenario that does not exist, a scenario no case claims, or an inventory citation that resolves to nothing — all three of which were present when the join was first built. |
 | D21 | *Added after Unit 15 (2026-09-03).* Every test-bearing GitHub Actions job shows its own dashboard matrix in the job summary. | Nightly and PR smoke both generate `metrics.json` and append a Markdown product-area matrix to `$GITHUB_STEP_SUMMARY`, including status, checks run, passed, failed, pass rate, coverage, and known defects. If metrics generation fails, the summary states that metrics are unavailable. Non-test jobs do not invent a matrix. The stable Pages URL and persistent trend remain Nightly-owned under D17/D19, so a PR smoke run cannot overwrite or enter the executive full-suite view. |
 
 ## Grounding facts (verified 2026-08-27 against the crawl and live dev2)
@@ -129,10 +131,11 @@ Not user-facing tests; the harness the rest depends on. No unit below starts unt
 | FND-1 | `BeforeAll` drives `/temp-dev-login` once and lifts the session from `localStorage` (D1) — `support/auth.ts` | P0 | ☑ |
 | FND-2 | Preflight reachability check on both origins, failing with an actionable message (D5) — `support/preflight.ts` | P0 | ☑ |
 | FND-3 | Runtime data resolver: pick a client **by capability** (has ≥1 program with ≥1 target), never by ID (D2) — `support/testData.ts` | P0 | ☑ |
-| FND-4 | Page Objects on real testids: `AppShell`, `ClientsPage`, `ClientWorkspace`, `AnalyzeDataPage`, `BehaviorSupportPage` | P0 | ☑ |
+| FND-4 | Page Objects on real testids: `AppShell`, `ClientsPage`, `ClientWorkspace`, `AnalyzeDataPage`, `BehaviorSupportPage`, `AbcSettingsPage`, `ProgramLibraryAdminPage` | P0 | ☑ |
 | FND-5 | Fresh browser context per scenario, seeded with the auth key only; asserts no demo-session bleed | P0 | ☑ |
 | FND-6 | Repo gaps closed: `scripts/report.js` added, `@wip` gating keeps undefined-step features out of the default run | P0 | ☑ |
 | FND-7 | Credential fields scrubbed from responses before tracing (D7), verified against a written trace by `npm run verify:scrub` | P0 | ☑ |
+| FND-8 | App CSP `connect-src` permits both backend origins from runtime config (WebApp PR #68) | P0 | ☑ |
 
 Verified by `features/preflight/foundations.feature` — 5 scenarios, green twice
 consecutively, plus a negative check that an unreachable API host aborts the run in
@@ -220,11 +223,12 @@ to `body`, so its options are addressed at page level; selecting one navigates t
 | ID | Scenario | Type | Priority | Status |
 |----|----------|------|----------|--------|
 | PRG-1 | Programs endpoint returns a valid envelope; every program has id, title and active flag | @api | P1 | ☑ |
-| PRG-2 | `program-library` returns the template catalog envelope | @api | P2 | ☑ |
+| PRG-2 | `program-library` returns the template catalog envelope, with `source` (`standard`/`custom`) and `copiedFromLessonId` | @api | P2 | ☑ |
+| PRG-2b | `program-library?includeInactive=true` is at least as large as the default list | @api | P2 | ☑ |
 | PRG-3a | `targets` and `objectives` return 200 with a paged envelope | @api | P1 | ☑ |
 | PRG-3b | `mastery-criteria` returns `{programId, phases[]}` naming the requested program | @api | P1 | ☑ |
 | PRG-3c | `target-groups` returns a bare array, not an envelope | @api | P1 | ☑ |
-| PRG-3d | `data-collection` returns `{programId, method, prompts[]}` naming the requested program | @api | P1 | ☑ |
+| PRG-3d | `data-collection` returns the storage view `{programId, method, prompts[]}` **and** the domain shape (`programId` string, `typeId`, `dimensions`, omitted-or-object `simpleSettings`, non-empty `updatedAt`) | @api | P1 | ☑ |
 | PRG-4 | `automastery-evaluations?status=flagged` returns only items with status `flagged` | @api | P1 | ☑ |
 | PRG-5 | Rail's Current tab lists exactly the client's **active** programs | @ui | P1 | ☑ |
 | PRG-6 | Selecting a program shows its targets, goals and settings panels | @ui | P1 | ☑ |
@@ -271,6 +275,9 @@ an exact partition.
 | AZ-12 | In-scope tile stays `--` while targets XHRs are held | @ui | P2 | ☑ |
 | AZ-13 | Empty programs envelope zeros the tiles and shows `mastered-report-empty` | @ui | P2 | ☑ |
 | AZ-14 | Report scope select is present (option values not contracted — AN-3) | @ui | P2 | ◐ |
+| AZ-15 | `GET .../reports/analyze-data/series?clientId=` returns a paged graphable-series catalog | @api | P1 | ☑ |
+| AZ-16 | `GET .../reports/analyze-data/mastered-targets?clientId=` summary: mastered + remaining = in-scope | @api | P1 | ☑ |
+| AZ-17 | `GET .../reports/analyze-data/graphs` for graphable `seriesIds` returns points | @api | P1 | ☑ |
 
 > AZ-2 rationale (D10): equating the in-scope tile to `sum(targets.totalCount)` is a false
 > oracle — the tile is window/status-filtered. The identity `mastered + remaining == in
@@ -329,6 +336,31 @@ an exact partition.
 | NEG-11 | Empty programs envelope renders `program-rail-empty` and no rail items | @ui @negative | P2 | ☑ |
 | NEG-12 | Automastery evaluation POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
 | NEG-13 | Session POST against a derived unknown client is safely rejected with 4xx | @api @endpoint-coverage | P2 | ☑ |
+| NEG-14 | PATCH of a `source: "standard"` program-library row returns 409 (Clinical PR #37) | @api @negative | P1 | ☑ |
+
+### Clinical health (gateway PR 49218)  `@health`
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| HLTH-1 | `GET /clinical/healthcheck` with `x-application-key` and no Bearer returns 200 | @api | P1 | ☑ |
+| HLTH-2 | `GET /clinical/healthcheck/report` with `x-application-key` and no Bearer returns 200 | @api | P1 | ☑ |
+| HLTH-3 | `GET /clinical/healthcheck` without an application key still returns 200 on dev2 (ApplicationKeyHandler does not 401) | @api @negative | P1 | ☑ |
+| HLTH-4 | `GET /clinical/healthcheck` with a Bearer token is still 200 (not rewritten to `/api` 404) | @api | P1 | ☑ |
+
+### Clinical settings  `@settings`
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| SET-1 | ABC options include render columns (`id`, `label`, `kind`, `order`, `parentId`, `active`, `isDefault`, `functionClass`, `origin`, `referenceCount`) | @api | P1 | ☑ |
+| SET-2 | `/settings/clinical/abc-settings` loads the live ABC library | @ui | P1 | ☑ |
+| SET-3 | `/settings/clinical/program-library` loads the live catalog | @ui | P1 | ☑ |
+| SET-4 | `GET /clinical/v1/data-collection-scales` returns named scale catalogs | @api | P2 | ☑ |
+
+### Clinical lookups  `@lookups`
+
+| ID | Scenario | Type | Priority | Status |
+|----|----------|------|----------|--------|
+| LOOK-1 | All 16 `GET /clinical/v1/lookup/{name}` catalogs return non-empty `{value, label}` arrays | @api | P2 | ☑ |
 
 > **NEG-4 was re-scoped.** The plan expected a not-found state. There isn't one: the app
 > redirects any unknown route to `/clients`. That is graceful — no crash, no blank shell,
@@ -342,7 +374,7 @@ an exact partition.
 > The missing client ID is derived as one past the highest real id rather than hardcoded,
 > so it cannot collide as the data changes (D2/D6).
 
-`npm run test:endpoints` combines the regular API profile, NEG-6–8 and NEG-12–13, and the
+`npm run test:endpoints` combines the regular API profile, NEG-6–8 and NEG-12–14, and the
 existing `behaviorplans` `@bug` scenario. This reaches every endpoint in the
 health-report catalog without credentials, a dedicated write client, or mutation.
 
@@ -462,7 +494,7 @@ compares live inventory % to [`coverage-floor.json`](./coverage-floor.json).
 |----|------|----------|--------|
 | OPS-1 | PR workflow: typecheck, `coverage:ratchet`, `test:smoke`, `verify:scrub` | P0 | ☑ |
 | OPS-2 | Nightly workflow: `npm test` (default profile) + ratchet + report artifacts | P0 | ☑ |
-| OPS-3 | Coverage floor 94.7%; build fails if live % is lower | P0 | ☑ |
+| OPS-3 | Coverage floor 95.1%; build fails if live % is lower | P0 | ☑ |
 
 Signed-off gaps and the per-release human pass: [`compensating-controls.md`](./compensating-controls.md) (D14).
 
@@ -485,3 +517,42 @@ Cucumber JSON at `reports/cucumber-report.json`. Parser: `npm run dashboard:metr
 **Audit (2026-09-03).** A post-unit review of the published page found four figures that did not reconcile, all now fixed: the inventory status `excluded` had no row in the protection matrix, so the table showed 75 items while the percentage beside it was computed over 76; PR smoke runs were entering the executive trend (**D19**); the per-area column summed to 84 against a run total of 76 because eight checks carry two area tags, with nothing on the page saying so; and Scenario Outline examples collapsed in history (**D20**). Remaining known items, not addressed: the displayed run duration is the sum of step times rather than wall clock; a failed `dashboard:site` can still turn Nightly red through `upload-pages-artifact`; and there are no unit tests for the generator even though the ratchet now reads its output.
 
 **15d proof (2026-09-03):** [green run 33733844597](https://github.com/masudrana-bit/Rethink-Clinical-test-suite/actions/runs/33733844597) published the stable Pages URL and passed the ratchet (`94.7%` from `metrics.json`, floor `94.7%`). [Deliberately red run 33734013611](https://github.com/masudrana-bit/Rethink-Clinical-test-suite/actions/runs/33734013611) raised only the temporary floor to `100%`; its ratchet failed on the same `metrics.json`, while the Pages job still published and history advanced from one to two entries. The temporary floor, feature-branch trigger, fixture, and deployment allowance were removed afterward.
+
+### Unit 16 — WebApp PR intake (68–73)
+
+Reviewed the five merged PRs read-only on 2026-09-07 and added externally observable
+coverage where this suite can exercise the real dev2 product.
+
+| PR | Contract | Coverage | Status |
+|----|----------|----------|--------|
+| [#68](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/68) | CSP recovers backend `connect-src` origins after a transient boot-time configuration miss | FND-8 compares the served policy with both runtime-config origins | ☑ |
+| [#69](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/69) | `/settings/clinical/abc-settings` renders the account's `/clinical/v1/abc-options` library | SET-1 API shape + SET-2 real route/network load | ☑ |
+| [#70](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/70) | Corrects WebApp-owned E2E stubs and an E2E environment URL | No production contract changed | N/A |
+| [#71](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/71) | Program-level PEAK scoring runs, totals, Train/Test modes, toggle-off, and run deletion/renumbering | Existing PRG-3d covers the corrected live `data-collection` route/domain read. End-to-end PEAK interaction remains blocked: dev2 has no seeded PEAK program on a client with a scheduled session. | blocked |
+| [#73](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/73) | Pins and diagnoses WebApp-owned E2E fixture discovery | No production contract changed; BE-8 author attribution was already covered by WR-3 | N/A |
+
+### Unit 17 — Clinical / WebApp PR intake (37–39, 55, 58, 59)
+
+Reviewed six PRs read-only on 2026-09-07. Promotion PRs (#38, #58) carry already-reviewed work onto `new-tenant/main`.
+
+| PR | Contract | Coverage | Status |
+|----|----------|----------|--------|
+| [Clinical #37](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical/pull/37) | Standard library programs are read-only (409); `POST .../copy` is the edit path | NEG-14 proves the 409. Copy is **excluded** from the coverage denominator until teardown exists (undeletable catalog row). | ☑ / excluded |
+| [WebApp #55](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/55) | Settings shell + `/settings/clinical/program-library` read catalog | SET-3 plus PRG-2b `includeInactive` | ☑ |
+| [Clinical #38](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical/pull/38) | Promote develop → `new-tenant/main` so #37 reaches dev2 | No new contract; made NEG-14 measurable | N/A |
+| [WebApp #58](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/58) | Sync develop → `new-tenant/main` (includes #54/#55/#56) | No new contract beyond #55; WR-3 already covers author attribution | N/A |
+| [WebApp #59](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical.WebApp/pull/59) | RBT data sheet records real attempts; config read no longer masquerades as "not configured" | PRG-3d covers the live data-collection read. Recording attempts requires completing `/sessions/new`, which default tests must not do. | blocked |
+| [Clinical #39](https://github.com/RethinkFirst-Mobile/Rethink.BH.Clinical/pull/39) | `copiedFromLessonId` on library reads; draft/publish lifecycle | PRG-2 asserts `copiedFromLessonId`. Draft create/publish/copy are writes without teardown. | ◐ |
+
+### Unit 18 — Clinical develop read APIs
+
+Measured on live clinical.dev2 on 2026-09-07. Assertions follow observed payloads, not the undeployed OpenAPI sketch.
+
+| Surface | Coverage | Status |
+|---------|----------|--------|
+| ABC option columns (Clinical #44) | SET-1 requires `parentId`, `active`, `isDefault`, `functionClass`, `origin`, `referenceCount` | ☑ |
+| Lookups (16 GETs) | LOOK-1 on `/clinical/v1/lookup/{name}` as `{value, label}` arrays | ☑ |
+| Analyze Data reporting | AZ-15 series, AZ-16 mastered-targets, AZ-17 graphs (graphable `seriesIds` only) | ☑ |
+| Data-collection scales | SET-4 | ☑ |
+| Program library detail, `includeDrafts`, PATCH `.../status` | Not automated: list 500 `column l.legacy_id does not exist` | deferred |
+| Account `behavior-categories`, client `programs` | Same `legacy_id` 500; lookups still cover behavior-category values | deferred |

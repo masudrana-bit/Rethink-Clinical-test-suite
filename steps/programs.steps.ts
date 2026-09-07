@@ -83,6 +83,54 @@ Then('every library entry has an id and a title', function (this: CustomWorld) {
   }
 });
 
+When('I request the program library including inactive rows', async function (this: CustomWorld) {
+  const baseline = await this.clinical.programLibrary();
+  const baselineBody = await baseline.json().catch(() => undefined);
+  this.data.defaultLibraryTotal = baselineBody?.totalCount;
+  await record(this, await this.clinical.programLibrary({ includeInactive: true, pageSize: 200 }));
+});
+
+Then(
+  'library entries publish a recognized source and a copiedFromLessonId field',
+  function (this: CustomWorld) {
+    const items = (this.data.lastResponseBody?.items ?? []) as Array<{
+      id: number;
+      source?: unknown;
+      copiedFromLessonId?: unknown;
+    }>;
+    expect(items.length, 'the library should not be empty').toBeGreaterThan(0);
+    const sources = new Set(['standard', 'custom']);
+    expect(
+      items.some((entry) => sources.has(String(entry.source))),
+      'Clinical PRs #37/#39: at least one catalog row should publish source standard|custom',
+    ).toBe(true);
+    for (const entry of items) {
+      if (entry.source !== undefined && entry.source !== null) {
+        expect(sources.has(String(entry.source)), `library ${entry.id}: source`).toBe(true);
+      }
+      expect(
+        'copiedFromLessonId' in entry,
+        `library ${entry.id}: copiedFromLessonId is published even when null`,
+      ).toBe(true);
+      expect(
+        entry.copiedFromLessonId === null || typeof entry.copiedFromLessonId === 'number',
+        `library ${entry.id}: copiedFromLessonId is null or a lesson id`,
+      ).toBe(true);
+    }
+  },
+);
+
+Then(
+  'the inactive-inclusive library is at least as large as the default list',
+  function (this: CustomWorld) {
+    const inclusive = this.data.lastResponseBody?.totalCount as number;
+    const baseline = this.data.defaultLibraryTotal as number;
+    expect(typeof inclusive, 'includeInactive totalCount').toBe('number');
+    expect(typeof baseline, 'default totalCount').toBe('number');
+    expect(inclusive, 'includeInactive cannot shrink the catalog').toBeGreaterThanOrEqual(baseline);
+  },
+);
+
 Then(
   'the document names the resolved program and carries a phases list',
   async function (this: CustomWorld) {
@@ -98,15 +146,43 @@ Then(
   async function (this: CustomWorld) {
     const { program } = await fixture(this);
     const body = this.data.lastResponseBody as {
-      programId: number;
+      programId: string | number;
       method: string;
       prompts: unknown[];
     };
-    expect(body.programId, 'programId should match the requested program').toBe(program.id);
+    expect(Number(body.programId), 'programId should match the requested program').toBe(program.id);
     expect(String(body.method ?? '').trim(), 'method').not.toBe('');
     expect(Array.isArray(body.prompts), 'prompts should be an array').toBe(true);
   },
 );
+
+Then('the data-collection document publishes the domain shape', async function (this: CustomWorld) {
+  const { program } = await fixture(this);
+  const body = this.data.lastResponseBody as {
+    programId?: unknown;
+    typeId?: unknown;
+    dimensions?: unknown;
+    simpleSettings?: unknown;
+    updatedAt?: unknown;
+  };
+  expect(typeof body.programId, 'programId is a string on the domain shape (Clinical PR #41)').toBe(
+    'string',
+  );
+  expect(Number(body.programId), 'programId still names the requested program').toBe(program.id);
+  expect('typeId' in body, 'typeId is published even when it is null').toBe(true);
+  expect(
+    body.typeId === null || typeof body.typeId === 'string',
+    'typeId is null or a string slug, never a renamed method object',
+  ).toBe(true);
+  expect(Array.isArray(body.dimensions), 'dimensions is a derived array, never omitted').toBe(true);
+  expect(
+    !('simpleSettings' in body) ||
+      (body.simpleSettings !== null && typeof body.simpleSettings === 'object'),
+    'simpleSettings is omitted or an object, never null',
+  ).toBe(true);
+  expect(typeof body.updatedAt, 'updatedAt').toBe('string');
+  expect(String(body.updatedAt).trim(), 'updatedAt is never empty').not.toBe('');
+});
 
 When(
   'I request flagged automastery evaluations for a program that has them',

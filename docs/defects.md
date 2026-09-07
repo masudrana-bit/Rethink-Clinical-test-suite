@@ -81,6 +81,44 @@ after the first failure. Asserting when the first response lands sees the empty 
 alone and passes vacuously, which is exactly what happened before
 `BehaviorSupportPage.goto` was changed to wait until the app stops re-requesting.
 
+## DEF-7 — A client's programs cannot be listed (blocks most of the suite)
+
+**Severity:** critical — this is the entry point to every client-scoped surface.
+
+`GET /clinical/v1/clients/{id}/programs` returns 500 for every client on `dev2`:
+
+> `Npgsql.PostgresException (0x80004005): 42703: column l.legacy_id does not exist`
+
+The deployed query references a column the `dev2` schema does not have, so this is a
+deploy/migration mismatch rather than a code path that can be worked around.
+
+**Blast radius:** the suite resolves its test client *by capability* — an active client
+with at least one program that has a target — and that resolution starts with this call.
+When it 500s the resolver throws before any scenario asserts anything, so Skills Programs,
+Analyze Data, Behavior Support, Sessions, the accessibility checks and the whole client
+workspace UI stop at their first step. In the run of 2026-09-07 this single defect
+accounted for **39 of 51** failing scenarios.
+
+**Regression window:** the same scenarios passed at 10:33 UTC on 2026-09-07 and failed at
+12:04 UTC the same day, so the change landed inside that window.
+
+**Tracked as:** gate `client-programs-500` in [`gates.json`](./gates.json). Failures matching
+its signature are reported as *blocked* rather than *failed*, so the coverage figures do not
+read as if 39 surfaces silently lost their tests.
+
+## DEF-8 — The program library catalogue cannot be read
+
+**Severity:** high — the organisation-wide template catalogue is unavailable.
+
+`GET /clinical/v1/program-library` (and the `?includeInactive=true` variant) returns HTTP
+500 with a `text/plain` body. The Program Library administration page consequently renders
+its error state instead of a grid, and `Patching a standard library program is refused`
+cannot find a standard/core row to prove the catalogue is read-only.
+
+**Blast radius:** 4 scenarios in the 2026-09-07 run.
+
+**Tracked as:** gate `program-library-500` in [`gates.json`](./gates.json).
+
 ## DEF-3 — `staff-role` returns credential fields
 
 The `staff-role` response carries `apiKey`, `password`, `passwordQuestion` and

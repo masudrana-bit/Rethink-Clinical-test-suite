@@ -60,7 +60,7 @@ root-cause clusters, trace IDs, impacted scenarios, and recommended next checks.
 
 ```bash
 npm run test:api          # regular green API regression profile
-npm run test:endpoints    # all 16 catalogued endpoints, including known defects
+npm run test:endpoints    # all catalogued endpoints, including known defects
 # then open docs/api-endpoint-report.md
 ```
 
@@ -141,7 +141,54 @@ Regenerated on every Nightly (and after PR smoke as artifacts only). Local copy:
 ```bash
 npm run dashboard:metrics    # parse cucumber JSON + inventory → metrics, history, HTML
 npm run dashboard:summary    # print the same product-area matrix as Markdown
+npm run report:pages         # coverage, traceability, blocker and endpoint pages
+npm run report:validate      # fail if the catalog and the suite have drifted apart
 ```
+
+### The published site
+
+`npm run dashboard:site` assembles `reports/site/`, and every page shares one nav:
+
+| Page | File | Answers |
+|------|------|---------|
+| Overview | `index.html` | Is the product healthy, and is it trending better? |
+| Coverage | `coverage.html` | What do we *claim* to cover, and what did this run *prove*? |
+| Traceability | `traceability.html` | Which case implements which scenario, and which surface does it protect? |
+| Blockers | `gates.html` | Why is the suite this colour, and what is one outage costing us? |
+| Endpoints | `endpoints.html` | Which API endpoints were exercised, and how did they answer? |
+| Evidence | `allure/` | Step-level QA drill-down. |
+
+Machine-readable twins: `summary.json` (headline numbers) and `traceability.json` (the
+full join). Markdown twin: `docs/traceability-matrix.md`.
+
+### Claimed versus proven
+
+The coverage page reads the same surface twice and reports the difference.
+
+- **Claimed** is the curated `status` in `docs/surface-inventory.json` — a human judgement.
+- **Proven** is derived: each surface names test cases, each case names a scenario in
+  `docs/test-cases.md`, and each scenario has a result in this run's Cucumber JSON.
+- **Verdict** compares them. `Contradicted` is the one that means the inventory is wrong
+  today: a surface recorded as covered whose checks failed for a reason no known outage
+  explains. It fails `npm run report:validate`.
+
+Give an inventory item a `statusRationale` to acknowledge a divergence you have already
+reasoned about. The verdict becomes `Acknowledged` and the gate warns instead of failing, so
+a justified exception never forces the check itself to be weakened.
+
+### Blockers, and why a red suite is not always lost coverage
+
+`docs/gates.json` names the environment outages we already understand, each with the error
+signature that identifies it in a run. A failure matching a signature is reported as
+**blocked**, not **failed**, and is attributed to its defect with a blast radius.
+
+Without this, one backend 500 reads as dozens of independent coverage regressions. On
+2026-09-07, [DEF-7](docs/defects.md) alone accounted for 39 of 51 failing scenarios; of the
+checks it did not block, 40 of 41 passed. Remove a gate once its defect is fixed — if the
+signature stops matching, the page shows it as clear.
+
+`npm run report:validate` also fails when a `@bug` surface starts passing, so a fix cannot
+sit unnoticed behind a stale tag.
 
 ### Metric definitions (`rules/30-metrics-dashboard.md` §3)
 

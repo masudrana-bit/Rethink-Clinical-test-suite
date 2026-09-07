@@ -24,7 +24,17 @@ const FEATURES_DIR = path.join('features');
 const INVENTORY_FILE = path.join('docs', 'surface-inventory.json');
 
 const CANONICAL_AREAS = ['auth', 'clients', 'programs', 'analyze-data', 'behavior-support'];
-const EXTRA_AREAS = ['negative', 'sessions', 'a11y', 'preflight', 'write', 'visual'];
+const EXTRA_AREAS = [
+  'negative',
+  'sessions',
+  'settings',
+  'health',
+  'lookups',
+  'a11y',
+  'preflight',
+  'write',
+  'visual',
+];
 const AREA_TAGS = [...CANONICAL_AREAS, ...EXTRA_AREAS];
 
 /** §4 wording rule: the dashboard names products, never feature files or tags. */
@@ -36,6 +46,9 @@ const AREA_LABELS = {
   'behavior-support': 'Behavior support',
   negative: 'Error handling',
   sessions: 'New session',
+  settings: 'Clinical settings',
+  health: 'Platform health',
+  lookups: 'Clinical lookups',
   a11y: 'Accessibility',
   preflight: 'Platform foundations',
   write: 'Data entry',

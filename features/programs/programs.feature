@@ -21,6 +21,14 @@ Feature: Client programs
     And the content type includes "x-api-version=1"
     And the envelope's paging arithmetic is self-consistent
     And every library entry has an id and a title
+    And library entries publish a recognized source and a copiedFromLessonId field
+
+  @api @programs
+  Scenario: The program library can include inactive catalog rows
+    When I request the program library including inactive rows
+    Then the response status is 200
+    And the envelope's paging arithmetic is self-consistent
+    And the inactive-inclusive library is at least as large as the default list
 
   @api @programs
   Scenario Outline: Paged per-program endpoints return a valid envelope
@@ -54,6 +62,7 @@ Feature: Client programs
     Then the response status is 200
     And the content type includes "x-api-version=1"
     And the document names the resolved program and carries a collection method
+    And the data-collection document publishes the domain shape
 
   @api @programs
   Scenario: Flagged automastery evaluations return only flagged items

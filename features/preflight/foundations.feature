@@ -31,3 +31,8 @@ Feature: Test harness foundations
     When I open the clients page and capture the staff-role response
     Then the captured response carries no credential fields
     And the app shell shows a signed-in user
+
+  @api
+  Scenario: Content Security Policy permits both configured backend origins
+    When I read the application policy and runtime API origins
+    Then connect-src permits both configured backend origins

@@ -35,19 +35,22 @@ Catalog of **automated** test cases already implemented against `clinical.dev2`.
 
 | Module | IDs | Count | Default run |
 |--------|-----|------:|-------------|
-| Foundations | FND-1 … FND-7 | 6 scenarios + harness | Yes |
+| Foundations | FND-1 … FND-8 | 7 scenarios + harness | Yes |
 | Authentication | AUTH-1 … AUTH-5 | 5 | Yes |
 | Clients | CLI-1 … CLI-10 | 11 | Yes |
-| Programs | PRG-1 … PRG-9 | 13 | Yes |
-| Analyze Data | AZ-1 … AZ-14 | 22 (2 of which `@bug`) | 20 Pass + 2 Known fail |
+| Programs | PRG-1 … PRG-9 | 14 | Yes |
+| Analyze Data | AZ-1 … AZ-17 | 25 (2 of which `@bug`) | 23 Pass + 2 Known fail |
 | Behavior Support | BS-1 … BS-3 | 3 | 1 Pass + 2 Known fail |
-| Negative | NEG-1 … NEG-13 | 13 | Yes |
+| Negative | NEG-1 … NEG-14 | 14 | Yes |
+| Health | HLTH-1 … HLTH-4 | 4 | Yes |
+| Clinical settings | SET-1 … SET-4 | 4 | Yes |
+| Lookups | LOOK-1 | 1 | Yes |
 | Write flows | WR-1 … WR-6 | 8 | 5 Ready + 1 Known fail + 2 WIP |
 | Visual | VIS-1 … VIS-5 | 5 | No (`npm run test:visual`) |
 | Accessibility | A11Y-1 … A11Y-5 | 5 | Yes |
 | Sessions | SES-1 … SES-2 | 2 | Yes |
 | Operations / CI | OPS-1 … OPS-3 | 3 (harness) | CI |
-| **Total executable** | | **94** | **76 default + 18 filtered** |
+| **Total executable** | | **109** | **91 default + 18 filtered** |
 
 Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targets / PRG-3a-objectives).
 
@@ -137,6 +140,18 @@ Outline examples are listed as separate cases (AZ-5a–e, AZ-8a–c, PRG-3a-targ
 | **Steps** | 1. Open the clients page. 2. Capture the `staff-role` response as the browser received it. |
 | **Expected result** | Captured JSON has no populated credential fields. App shell still shows the signed-in user (scrubbing must not break the UI). |
 | **Automation** | *Credential fields are stripped before the browser sees them*. Also `npm run verify:scrub`. |
+| **Status** | Pass |
+
+### FND-8 — CSP permits the configured backend origins
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Detect the WebApp PR #68 regression where a failed boot left `connect-src 'self'` and blocked every backend request. |
+| **Type** | API / response-header contract |
+| **Priority** | P0 |
+| **Steps** | 1. GET `/temp-dev-login` and `/runtime-config.json`. 2. Parse the `connect-src` directive. |
+| **Expected result** | The policy contains the origins of both `apiBaseUrl` and `authApiBaseUrl` from runtime config. |
+| **Automation** | *Content Security Policy permits both configured backend origins* |
 | **Status** | Pass |
 
 FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work**, not Gherkin cases.
@@ -382,8 +397,20 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Type** | API |
 | **Priority** | P2 |
 | **Steps** | 1. GET `/clinical/v1/program-library`. |
-| **Expected result** | HTTP 200. Paging holds. Every entry has `id` and non-empty `title`. Library is not empty. |
+| **Expected result** | HTTP 200. Paging holds. Every entry has `id` and non-empty `title`. At least one row publishes `source` as `standard` or `custom`. Every row includes `copiedFromLessonId` (null or a number). |
 | **Automation** | *The program library returns the template catalogue* |
+| **Status** | Pass |
+
+### PRG-2b — The program library can include inactive catalog rows
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Settings → Program Library (WebApp PR #55) must be able to see inactive catalog rows, not only clinician-facing active ones. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Steps** | 1. GET `/clinical/v1/program-library`. 2. GET the same path with `includeInactive=true`. |
+| **Expected result** | Both 200. Inclusive `totalCount` is ≥ the default list. |
+| **Automation** | *The program library can include inactive catalog rows* |
 | **Status** | Pass |
 
 ### PRG-3a-targets — Targets return a valid paged envelope
@@ -407,7 +434,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Priority** | P1 |
 | **Steps** | 1. GET `.../programs/{programId}/objectives`. |
 | **Expected result** | HTTP 200. Paging arithmetic is self-consistent. |
-| **Automation** | Outline — `objectives` |
+| **Automation** | Outline *Paged per-program endpoints return a valid envelope* — `objectives` |
 | **Status** | Pass |
 
 ### PRG-3b — Mastery criteria returns a programme-scoped criteria document
@@ -442,7 +469,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Type** | API |
 | **Priority** | P1 |
 | **Steps** | 1. GET `.../data-collection`. |
-| **Expected result** | HTTP 200. `programId` matches. `method` is non-empty. `prompts` is an array. |
+| **Expected result** | HTTP 200. `programId` is a string naming the requested program. `method` is non-empty. `prompts` is an array. Domain shape: `typeId` is present (string or null), `dimensions` is an array, `simpleSettings` is omitted or an object (never null), `updatedAt` is a non-empty string. |
 | **Automation** | *Data collection describes how the programme is measured* |
 | **Status** | Pass |
 
@@ -480,7 +507,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Priority** | P2 |
 | **Steps** | 1. Open workspace. 2. Record Current ids. 3. Switch to Inactive and record ids. 4. Compare with a fresh programs API read. |
 | **Expected result** | No id on both tabs. Every API program id appears on one tab. |
-| **Automation** | *Current and Inactive tabs together list every program exactly once* |
+| **Automation** | *Current and Inactive tabs partition the client's programs* |
 | **Status** | Pass |
 
 ### PRG-6 — Selecting a program reveals its details
@@ -724,6 +751,42 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Automation** | *The report scope select is present* |
 | **Status** | Pass (partial — values not asserted) |
 
+### AZ-15 — Analyze Data series lists graphable programs and behaviors
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The reporting series catalog answers before Custom/Bulk Graphs can render. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. Resolve a client from the live clients list (not hardcoded). 2. GET `/clinical/v1/reports/analyze-data/series?clientId=`. |
+| **Expected result** | HTTP 200 paged envelope. Every item has `{kind}:{id}` `id`, kind `program` or `behavior`, non-empty `label`, boolean `graphable`. |
+| **Automation** | *Analyze Data series lists graphable programs and behaviors* |
+| **Status** | Pass |
+
+### AZ-16 — Analyze Data mastered-targets summary is internally consistent
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | The dedicated mastered-targets reporting API matches the tile identity `mastered + remaining == in scope`. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET `/clinical/v1/reports/analyze-data/mastered-targets?clientId=`. |
+| **Expected result** | HTTP 200. `summary.targetsMastered + remaining == targetsInScope`. `bySkillArea.length == skillAreaCount`. Each skill area is named. `provenance` is present. |
+| **Automation** | *Analyze Data mastered-targets summary is internally consistent* |
+| **Status** | Pass |
+
+### AZ-17 — Analyze Data graphs return points for graphable series
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Graphs accept an explicit `seriesIds` filter of series that have a supported `dataType`. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET series. 2. Take graphable rows with a `dataType`. 3. GET graphs with those `seriesIds`. |
+| **Expected result** | HTTP 200. `graphs[]` (not `items`) includes each requested id and a `points` array. Unfiltered graphs 400 when non-graphable series are in scope — that path is not asserted as success. |
+| **Automation** | *Analyze Data graphs return points for graphable series* |
+| **Status** | Pass |
+
 ---
 
 ## 5. Behavior Support
@@ -945,6 +1008,146 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Status** | Pass |
 | **Fails when** | POST 2xx creates a session, or the server 5xxs. |
 
+### NEG-14 — Patching a standard library program is refused
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Clinical PR #37: a catalog row published as `source: "standard"` cannot be edited in place. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET the program library. 2. Pick a `standard` (or `isCore`) row. 3. PATCH it with `If-Match: *` and a title that must not apply. |
+| **Expected result** | HTTP 409. The resource is unchanged. |
+| **Automation** | *Patching a standard library program is refused* |
+| **Status** | Pass |
+| **Fails when** | PATCH 2xx writes the standard program, or the catalog has no standard row. |
+
+## Clinical health
+
+**Feature:** `features/health/health.feature`
+**Tags:** `@api` `@health`
+
+### HLTH-1 — Health check without a token
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `GET /clinical/healthcheck` is reachable with `x-application-key` and no Bearer. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. Clear the token. 2. GET `/clinical/healthcheck` with the runtime application key. |
+| **Expected result** | HTTP 200. |
+| **Automation** | *The health check is reachable with the application key and no token* |
+| **Status** | Pass |
+
+### HLTH-2 — Health report without a token
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `GET /clinical/healthcheck/report` is the `{everything}` route, not rewritten under `/api`. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. Clear the token. 2. GET `/clinical/healthcheck/report` with the application key. |
+| **Expected result** | HTTP 200. |
+| **Automation** | *The health report is reachable with the application key and no token* |
+| **Status** | Pass |
+
+### HLTH-3 — Health check without an application key
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Confirm the live gateway contract: health is reachable with no Bearer and no `x-application-key`. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. Clear the token. 2. GET `/clinical/healthcheck` with no application key. |
+| **Expected result** | HTTP 200 (measured on clinical.dev2 2026-09-07). Ocelot still lists ApplicationKeyHandler; it does not 401 here. |
+| **Automation** | *A health check without an application key is still reachable* |
+| **Status** | Pass |
+
+### HLTH-4 — Authenticated health is not a 404
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | A Bearer token must not send health through the `/clinical/api` catch-all (that used to 404). |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. Use the harvested token. 2. GET `/clinical/healthcheck` with the application key. |
+| **Expected result** | HTTP 200, not 404. |
+| **Automation** | *An authenticated health check is not rewritten under /api* |
+| **Status** | Pass |
+
+---
+
+## Clinical settings
+
+**Feature:** `features/settings/abc-settings.feature`
+**Tags:** `@settings`
+
+### SET-1 — ABC options expose renderable rows
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Ground WebApp PR #69 against the live `/clinical/v1/abc-options` contract. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET all ABC options in one page. 2. Validate paging and each row's rendering keys. |
+| **Expected result** | HTTP 200 with versioned JSON. Every row has numeric `id`, non-empty `label`, numeric `order`, a recognized `kind`, `parentId` null or a number, booleans `active`/`isDefault`, `functionClass` null or a string, non-empty `origin`, and non-negative `referenceCount`. |
+| **Automation** | *ABC options expose rows the settings page can render* |
+| **Status** | Pass |
+
+### SET-2 — ABC Settings loads its sectioned library
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Prove the new `/settings/clinical/abc-settings` route loads the real account library rather than a prototype fixture. |
+| **Type** | UI + network |
+| **Priority** | P1 |
+| **Steps** | 1. Open the direct route with the harvested session. 2. Wait for the page and section switcher. 3. Observe its ABC-options request. |
+| **Expected result** | Page and switcher are visible; loading resolves to tree or empty state; `GET /clinical/v1/abc-options` returns 200. |
+| **Automation** | *ABC Settings loads its sectioned option library* |
+| **Status** | Pass |
+
+### SET-3 — Program Library administration loads the catalog
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Prove WebApp PR #55 `/settings/clinical/program-library` loads the live organization catalog. |
+| **Type** | UI + network |
+| **Priority** | P1 |
+| **Steps** | 1. Open the direct route with the harvested session. 2. Wait for the admin page. 3. Observe its program-library request. |
+| **Expected result** | `program-library-admin` resolves to grid or empty; `GET /clinical/v1/program-library` returns 200. |
+| **Automation** | *Program Library administration loads the organization catalog* |
+| **Status** | Pass |
+
+### SET-4 — Data-collection scales return named account catalogs
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Ground `GET /clinical/v1/data-collection-scales` as the account scale library. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Steps** | 1. GET data-collection scales. 2. Validate paging and each catalog row. |
+| **Expected result** | HTTP 200. Every item has numeric `id`, non-empty `name` and `scaleType`, and an `items` array. |
+| **Automation** | *Data-collection scales return named account catalogs* |
+| **Status** | Pass |
+
+---
+
+## Clinical lookups
+
+**Feature:** `features/lookups/lookups.feature`  
+**Tags:** `@lookups`
+
+### LOOK-1 — Every lookup catalog returns value and label pairs
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Cover all 16 LookupController GETs through the gateway `/clinical/v1/lookup/{name}`. |
+| **Type** | API |
+| **Priority** | P2 |
+| **Steps** | 1. GET each catalog name. 2. Assert 200 and a non-empty `{value, label}` array. |
+| **Expected result** | Every catalog is a bare JSON array; each row has a string or number `value` and a non-empty `label`. |
+| **Automation** | *Every lookup catalog returns value and label pairs* |
+| **Status** | Pass |
+
 ---
 
 ## 7. Write flows (Phase 2b)
@@ -1016,6 +1219,7 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 
 | Field | Detail |
 |-------|--------|
+| **Automation** | *Confirming mastery on a suite-created evaluation removes the pending row* / *Dismissing a suite-created evaluation removes the pending row* |
 | **Status** | `@wip` — `POST .../automastery-evaluations` is 405; must not click pre-existing flagged rows. |
 
 ### WR-6 — Saving a report lists it in the same session
@@ -1230,7 +1434,7 @@ Harness, not Gherkin. Workflows: `.github/workflows/pr.yml`, `.github/workflows/
 
 | Field | Detail |
 |-------|--------|
-| **Objective** | Live inventory % must be ≥ `docs/coverage-floor.json` (currently 94.7). |
+| **Objective** | Live inventory % must be ≥ `docs/coverage-floor.json` (currently 95.1). |
 | **Fails when** | An inventory item is dropped from `covered`/`bug` without a signed-off exclusion, or the floor is higher than live %. |
 | **Status** | Pass locally (`npm run coverage:ratchet`) |
 

@@ -1,5 +1,5 @@
 {
-  "percent": 94.7,
-  "asOf": "2026-09-02",
-  "notes": "Minimum in-scope coverage %. CI runs npm run coverage:ratchet. Raise this when the inventory % increases. Never lower it to hide a gap."
+  "percent": 95.4,
+  "asOf": "2026-09-07",
+  "notes": "Minimum in-scope coverage %. CI runs npm run coverage:ratchet. Raise this when the inventory % increases. Never lower it to hide a gap. Raised from 95.1% after Unit 18 lookups, Analyze Data reporting APIs, ABC #44 columns, and data-collection scales."
 }

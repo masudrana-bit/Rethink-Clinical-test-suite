@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      # Catalog, feature files and inventory must still line up. No run needed.
+      - run: npm run report:validate
 
   smoke:
     name: Smoke against dev2
@@ -71,6 +73,10 @@ jobs:
       - name: Coverage ratchet reads dashboard metrics
         if: always()
         run: npm run coverage:ratchet
+      - name: Build coverage, traceability and blocker pages
+        if: always()
+        continue-on-error: true
+        run: npm run report:pages
       - name: Scrubbing guard
         if: always()
         run: npm run verify:scrub
@@ -90,6 +96,7 @@ jobs:
             reports/
             docs/surface-inventory.md
             docs/api-endpoint-report.md
+            docs/traceability-matrix.md
             allure-report/
           if-no-files-found: ignore
           retention-days: 14

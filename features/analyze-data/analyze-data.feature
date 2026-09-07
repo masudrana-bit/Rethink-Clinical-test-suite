@@ -123,3 +123,26 @@ Feature: Analyze Data
   Scenario: The report scope select is present
     When I open Analyze Data for the resolved client
     Then the report scope select is displayed
+
+  @api @analyze-data
+  Scenario: Analyze Data series lists graphable programs and behaviors
+    When I request Analyze Data series for a live client
+    Then the response status is 200
+    And the content type includes "x-api-version=1"
+    And the envelope's paging arithmetic is self-consistent
+    And every Analyze Data series has an id, kind, label and graphable flag
+
+  @api @analyze-data
+  Scenario: Analyze Data mastered-targets summary is internally consistent
+    When I request Analyze Data mastered targets for a live client
+    Then the response status is 200
+    And the content type includes "x-api-version=1"
+    And the mastered-targets summary adds up and names each skill area
+
+  @api @analyze-data
+  Scenario: Analyze Data graphs return points for graphable series
+    When I request Analyze Data graphs for graphable series of a live client
+    Then the response status is 200
+    And the content type includes "x-api-version=1"
+    And every returned graph names a requested series and carries points
+

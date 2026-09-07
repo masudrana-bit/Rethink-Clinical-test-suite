@@ -136,7 +136,7 @@ prompt and gate behind each.
   the gate, publish reports/traces, and publish a **live, ratcheted coverage %** that fails the
   build if it drops.
 - *Landed:* `.github/workflows/pr.yml` + `nightly.yml`, `npm run coverage:ratchet`,
-  `docs/coverage-floor.json` (94.7%), D13.
+  `docs/coverage-floor.json` (95.1%), D13.
 
 ---
 
@@ -148,15 +148,36 @@ quarterly so the coverage denominator grows with the app.
 
 **Sustain bolt — peak sign-off**  ☑  (2026-09-02)
 - *Intent:* name every remaining blind spot and sign it off with a compensating control (D14).
-- *Landed:* [`docs/compensating-controls.md`](./compensating-controls.md). Coverage floor is 94.7%
-  after SES-1 (`/sessions/new` landing).
+- *Landed:* [`docs/compensating-controls.md`](./compensating-controls.md). Coverage floor is 95.1%
+  after Unit 17 Program Library administration coverage.
 
 **Unit 15 — Metrics dashboard**  ☑
 - *Intent:* product-facing quality dashboard from the latest run (`rules/30-metrics-dashboard.md`).
 - *Landed:* 15a–15e. `npm run dashboard:metrics` → `reports/metrics.json` + `dashboard.html` +
   append `history.json`. GitHub Pages:
   `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/` (D17). Coverage ratchet reads
-  `metrics.json`. Teams notify is deferred (no webhook). Recorded decisions **D15–D18**.
+  `metrics.json`. Teams notify is deferred (no webhook). Recorded decisions **D15–D21**.
+
+**Unit 16 — WebApp PR intake 68–73**  ◐
+- *Landed:* CSP/runtime-origin regression coverage for #68; live ABC-options contract and
+  `/settings/clinical/abc-settings` route coverage for #69. PRs #70/#73 change only the
+  WebApp repository's own test harness.
+- *Blocked:* #71's PEAK scoring interactions need a seeded PEAK program on a client with a
+  scheduled session; dev2 has none. Its corrected `data-collection` API read remains covered.
+
+**Unit 17 — Clinical / WebApp PR intake 37–39, 55, 58, 59**  ◐
+- *Landed:* Program Library admin route (WebApp #55), `includeInactive` catalog read,
+  `source`/`copiedFromLessonId` on GET program-library (Clinical #39), and 409 on PATCH of a
+  standard library program (Clinical #37, deployed by #38).
+- *Not covered:* `POST .../copy` (undeletable row), BE-13 draft/publish writes, and WebApp #59
+  data-sheet recording (requires completing the session wizard).
+
+**Unit 18 — Clinical develop read APIs**  ☑
+- *Landed:* ABC option settings columns (Clinical #44, live on abc-options), all 16 lookup
+  catalogs, Analyze Data `series` / `mastered-targets` / `graphs`, and data-collection scales.
+- *Deferred:* program-library GET-by-id, `includeDrafts`, and PATCH `.../status` while
+  `/clinical/v1/program-library` 500s (`column l.legacy_id does not exist`). Same outage
+  blocks client `programs` and account `behavior-categories`.
 
 ---
 

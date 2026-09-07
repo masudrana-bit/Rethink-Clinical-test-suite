@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "notes": "Environment preconditions that are broken today. Each gate names one root cause and the error signature that identifies it in a run. Failures matching a signature are reported as blocked, so one backend defect does not read as dozens of independent coverage regressions. Remove a gate once its defect is fixed and the signature stops matching.",
+  "gates": [
+    {
+      "id": "client-programs-500",
+      "title": "A client's programs cannot be listed",
+      "surface": "GET /clinical/v1/clients/{id}/programs",
+      "meaning": "The suite resolves its test client by capability, which starts with this call, so almost every client-scoped check stops before it asserts anything. Skills Programs, Analyze Data, Behavior Support, Sessions and the client-workspace UI all depend on it.",
+      "rootCause": "Npgsql 42703: column l.legacy_id does not exist — the deployed query is ahead of the dev2 schema.",
+      "owner": "Clinical API",
+      "defect": "DEF-7",
+      "firstSeen": "2026-09-07",
+      "signature": "legacy_id does not exist|programs for client \\d+ returned 500|clients/\\d+/programs[\\s\\S]{0,160}HTTP 500"
+    },
+    {
+      "id": "program-library-500",
+      "title": "The program library catalogue cannot be read",
+      "surface": "GET /clinical/v1/program-library",
+      "meaning": "The organisation-wide template catalogue is unavailable, so the library API checks and the Program Library administration page cannot load their rows.",
+      "rootCause": "HTTP 500 from the gateway with a text/plain body; same deploy as DEF-7.",
+      "owner": "Clinical API",
+      "defect": "DEF-8",
+      "firstSeen": "2026-09-07",
+      "signature": "clinical/v1/program-library[\\s\\S]{0,160}HTTP 500|Program Library admin should finish loading|catalog should include a standard/core program"
+    },
+    {
+      "id": "behaviorplans-500",
+      "title": "Behavior plans cannot be listed",
+      "surface": "GET /observations/v1/client/{id}/behaviorplans",
+      "meaning": "Behavior Support cannot show a client's plans. The scenarios that assert the correct behaviour are tagged @bug and excluded from the default run, so this gate is usually invisible there.",
+      "rootCause": "HTTP 500 for every client on dev2.",
+      "owner": "Observations API",
+      "defect": "DEF-2",
+      "firstSeen": "2026-08-20",
+      "signature": "behaviorplans[\\s\\S]{0,160}HTTP 500"
+    }
+  ]
+}

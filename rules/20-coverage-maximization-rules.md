@@ -136,8 +136,11 @@ excluded from the PR gate until the unit is complete and stable.
 | 13 | Accessibility | ☑ | axe-core on main pages; critical violations gated |
 | 14 | Operations / CI | ☑ | Smoke per PR; full nightly; `@write`/`@bug` excluded from gate; coverage % published per run and **ratcheted** (build fails if it drops) |
 | 15 | Metrics dashboard | ☑ | Product quality dashboard regenerated every run (`rules/30-metrics-dashboard.md`); §3 metrics in `reports/metrics.json`; GitHub Pages URL; ratchet reads the same `coverage.percent` |
+| 16 | WebApp PR intake 68–73 | ◐ | CSP recovery and ABC Settings covered; PEAK scoring interaction coverage waits on a seeded PEAK program with a scheduled session |
+| 17 | Clinical/WebApp PR intake 37–39, 55, 58, 59 | ◐ | Program Library admin + standard-program 409 covered; library copy, draft/publish writes, and data-sheet recording wait on teardown / session-write policy |
+| 18 | Clinical develop read APIs (lookups, Analyze Data reports, ABC #44 columns, scales) | ☑ | Live-grounded GETs only. Program-library detail/`includeDrafts`/status PATCH deferred: list currently 500 (`column l.legacy_id does not exist`) |
 
-After Unit 15, sustain: every new feature/bug enters as a new unit; `@bug` tests stay
+After Unit 17, sustain: every new feature/bug enters as a new unit; `@bug` tests stay
 red-until-fixed; flake triaged immediately; inventory re-run quarterly so the denominator
 grows with the app. The executive view is `https://masudrana-bit.github.io/Rethink-Clinical-test-suite/`.
 

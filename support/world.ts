@@ -7,6 +7,8 @@ import { ClientWorkspace } from '../pages/ClientWorkspace';
 import { AnalyzeDataPage } from '../pages/AnalyzeDataPage';
 import { BehaviorSupportPage } from '../pages/BehaviorSupportPage';
 import { NewSessionPage } from '../pages/NewSessionPage';
+import { AbcSettingsPage } from '../pages/AbcSettingsPage';
+import { ProgramLibraryAdminPage } from '../pages/ProgramLibraryAdminPage';
 import { HarvestedAuth } from './auth';
 import { ResolvedFixture } from './testData';
 
@@ -62,6 +64,14 @@ export class CustomWorld extends World {
 
   get newSession(): NewSessionPage {
     return this.lazy('newSession', () => new NewSessionPage(this.page));
+  }
+
+  get abcSettings(): AbcSettingsPage {
+    return this.lazy('abcSettings', () => new AbcSettingsPage(this.page));
+  }
+
+  get programLibraryAdmin(): ProgramLibraryAdminPage {
+    return this.lazy('programLibraryAdmin', () => new ProgramLibraryAdminPage(this.page));
   }
 
   /** Authenticated API client. Use `new ClinicalApi(this.api)` for negative cases. */

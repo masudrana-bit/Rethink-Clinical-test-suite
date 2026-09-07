@@ -4,6 +4,7 @@ import { CustomWorld } from '../support/world';
 import { preflight } from '../support/preflight';
 import { resolveFixture } from '../support/testData';
 import { findCredentialFields } from '../support/scrub';
+import { config } from '../support/config';
 
 /** Unit 0 — FND-1 to FND-5. */
 
@@ -80,4 +81,37 @@ When(
 Then('the captured response carries no credential fields', function (this: CustomWorld) {
   const leaked = findCredentialFields(this.data.staffRoleBody);
   expect(leaked, `credential fields reached the browser at: ${leaked.join(', ')}`).toEqual([]);
+});
+
+When('I read the application policy and runtime API origins', async function (this: CustomWorld) {
+  const [pageResponse, runtimeResponse] = await Promise.all([
+    this.api.get(`${config.baseUrl}/temp-dev-login`),
+    this.api.get(`${config.baseUrl}/runtime-config.json`),
+  ]);
+  expect(pageResponse.status(), 'GET /temp-dev-login').toBe(200);
+  expect(runtimeResponse.status(), 'GET /runtime-config.json').toBe(200);
+
+  const runtime = (await runtimeResponse.json()) as {
+    apiBaseUrl?: string;
+    authApiBaseUrl?: string;
+  };
+  this.data.contentSecurityPolicy = pageResponse.headers()['content-security-policy'];
+  this.data.configuredBackendOrigins = [runtime.apiBaseUrl, runtime.authApiBaseUrl]
+    .filter((url): url is string => Boolean(url))
+    .map((url) => new URL(url).origin);
+});
+
+Then('connect-src permits both configured backend origins', function (this: CustomWorld) {
+  const policy = String(this.data.contentSecurityPolicy ?? '');
+  const connectSrc = policy
+    .split(';')
+    .map((directive) => directive.trim())
+    .find((directive) => directive.startsWith('connect-src '));
+  expect(connectSrc, 'the app should publish a connect-src CSP directive').toBeTruthy();
+
+  const origins = this.data.configuredBackendOrigins as string[];
+  expect(origins.length, 'runtime config should publish both API origins').toBe(2);
+  for (const origin of origins) {
+    expect(connectSrc, `connect-src should permit ${origin}`).toContain(origin);
+  }
 });

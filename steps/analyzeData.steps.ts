@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test';
+import { APIResponse, expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
 import {
   fixture,
@@ -11,6 +11,8 @@ import {
 import { NetworkRecorder } from '../support/network';
 import { PrimeSelect } from '../pages/PrimeSelect';
 import { AnalyzeMode, DateWindow, Grouping } from '../pages/AnalyzeDataPage';
+import { recordResponseMetadata } from '../support/apiDiagnostics';
+import { firstListedClientId } from '../support/testData';
 
 /** Unit 4 — AZ-1 to AZ-9. */
 
@@ -334,3 +336,124 @@ Then('the mastered report empty state is shown', async function (this: CustomWor
 Then('the report scope select is displayed', async function (this: CustomWorld) {
   await expect(this.analyzeData.scopeSelect).toBeVisible();
 });
+
+async function record(world: CustomWorld, res: APIResponse): Promise<void> {
+  recordResponseMetadata(world, res);
+  world.data.lastResponseBody = await res.json().catch(() => undefined);
+}
+
+When('I request Analyze Data series for a live client', async function (this: CustomWorld) {
+  const clientId = await firstListedClientId(this.clinical);
+  this.data.analyzeClientId = clientId;
+  await record(this, await this.clinical.analyzeDataSeries(clientId));
+});
+
+When(
+  'I request Analyze Data mastered targets for a live client',
+  async function (this: CustomWorld) {
+    const clientId = await firstListedClientId(this.clinical);
+    await record(this, await this.clinical.analyzeDataMasteredTargets(clientId));
+  },
+);
+
+When(
+  'I request Analyze Data graphs for graphable series of a live client',
+  async function (this: CustomWorld) {
+    const clientId = await firstListedClientId(this.clinical);
+    const listed = await this.clinical.analyzeDataSeries(clientId);
+    const body = await listed.json().catch(() => undefined);
+    const series = (body?.items ?? []) as Array<{
+      id?: string;
+      graphable?: boolean;
+      dataType?: unknown;
+    }>;
+    const graphable = series
+      .filter((row) => row.graphable && row.dataType && typeof row.id === 'string')
+      .map((row) => row.id as string);
+    expect(graphable.length, 'the caseload should include at least one graphable series').toBeGreaterThan(
+      0,
+    );
+    this.data.requestedGraphSeriesIds = graphable.slice(0, 2);
+    await record(this, await this.clinical.analyzeDataGraphs(clientId, this.data.requestedGraphSeriesIds));
+  },
+);
+
+Then(
+  'every Analyze Data series has an id, kind, label and graphable flag',
+  function (this: CustomWorld) {
+    const items = (this.data.lastResponseBody?.items ?? []) as Array<{
+      id?: unknown;
+      kind?: unknown;
+      label?: unknown;
+      graphable?: unknown;
+    }>;
+    expect(items.length, 'Analyze Data series should not be empty').toBeGreaterThan(0);
+    const kinds = new Set(['program', 'behavior']);
+    for (const row of items) {
+      expect(String(row.id ?? '').trim(), `series ${row.id}: id`).not.toBe('');
+      expect(kinds.has(String(row.kind)), `series ${row.id}: kind`).toBe(true);
+      expect(String(row.label ?? '').trim(), `series ${row.id}: label`).not.toBe('');
+      expect(typeof row.graphable, `series ${row.id}: graphable`).toBe('boolean');
+    }
+  },
+);
+
+Then(
+  'the mastered-targets summary adds up and names each skill area',
+  function (this: CustomWorld) {
+    const body = this.data.lastResponseBody as {
+      summary?: {
+        targetsMastered?: unknown;
+        targetsInScope?: unknown;
+        remaining?: unknown;
+        skillAreaCount?: unknown;
+      };
+      bySkillArea?: Array<{
+        skillArea?: unknown;
+        targetsMastered?: unknown;
+        targetsInScope?: unknown;
+      }>;
+      provenance?: unknown;
+    };
+    const summary = body?.summary ?? {};
+    expect(typeof summary.targetsMastered, 'summary.targetsMastered').toBe('number');
+    expect(typeof summary.targetsInScope, 'summary.targetsInScope').toBe('number');
+    expect(typeof summary.remaining, 'summary.remaining').toBe('number');
+    expect(typeof summary.skillAreaCount, 'summary.skillAreaCount').toBe('number');
+    expect(
+      Number(summary.targetsMastered) + Number(summary.remaining),
+      'mastered + remaining equals in-scope on the reporting API',
+    ).toBe(Number(summary.targetsInScope));
+    expect(Array.isArray(body?.bySkillArea), 'bySkillArea').toBe(true);
+    expect(body.bySkillArea!.length, 'skill-area rows match skillAreaCount').toBe(
+      Number(summary.skillAreaCount),
+    );
+    for (const row of body.bySkillArea!) {
+      expect(String(row.skillArea ?? '').trim(), 'skillArea name').not.toBe('');
+      expect(typeof row.targetsMastered, `${row.skillArea}: targetsMastered`).toBe('number');
+      expect(typeof row.targetsInScope, `${row.skillArea}: targetsInScope`).toBe('number');
+    }
+    expect(body.provenance, 'provenance is published').toBeTruthy();
+  },
+);
+
+Then(
+  'every returned graph names a requested series and carries points',
+  function (this: CustomWorld) {
+    const requested = (this.data.requestedGraphSeriesIds ?? []) as string[];
+    const graphs = (this.data.lastResponseBody?.graphs ?? []) as Array<{
+      id?: unknown;
+      kind?: unknown;
+      points?: unknown;
+    }>;
+    expect(graphs.length, 'graphs should include the requested series').toBe(requested.length);
+    const returned = new Set(graphs.map((graph) => String(graph.id)));
+    for (const id of requested) {
+      expect(returned.has(id), `graphs include ${id}`).toBe(true);
+    }
+    for (const graph of graphs) {
+      expect(String(graph.kind ?? '').trim(), `graph ${graph.id}: kind`).not.toBe('');
+      expect(Array.isArray(graph.points), `graph ${graph.id}: points`).toBe(true);
+    }
+  },
+);

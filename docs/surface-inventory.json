@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "asOf": "2026-09-02",
+  "asOf": "2026-09-07",
   "app": "Rethink Clinical (clinical.dev2)",
   "notes": [
     "Denominator for coverage %. Excluded items are signed-off and do not count.",
@@ -65,6 +65,22 @@
       "status": "covered",
       "risk": "P1",
       "tests": ["BS-1", "PRG-9"]
+    },
+    {
+      "id": "R-abc-settings",
+      "kind": "route",
+      "surface": "/settings/clinical/abc-settings",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["SET-2"]
+    },
+    {
+      "id": "R-program-library-admin",
+      "kind": "route",
+      "surface": "/settings/clinical/program-library",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["SET-3"]
     },
     {
       "id": "R-unknown-client",
@@ -139,7 +155,25 @@
       "surface": "GET /clinical/v1/program-library",
       "status": "covered",
       "risk": "P2",
-      "tests": ["PRG-2"]
+      "tests": ["PRG-2", "PRG-2b", "SET-3"]
+    },
+    {
+      "id": "E-program-library-patch",
+      "kind": "endpoint",
+      "surface": "PATCH /clinical/v1/program-library/:id",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["NEG-14"],
+      "gap": "Happy-path PATCH of a custom program is a mutation; default suite only proves standard rows 409 (Clinical PR #37)."
+    },
+    {
+      "id": "E-program-library-copy",
+      "kind": "endpoint",
+      "surface": "POST /clinical/v1/program-library/:id/copy",
+      "status": "excluded",
+      "risk": "P1",
+      "tests": [],
+      "gap": "Clinical PR #37 copy creates an account-owned row with no DELETE on this controller. Signed off until teardown exists; default tests must not create undeletable catalog rows."
     },
     {
       "id": "E-programs",
@@ -190,6 +224,70 @@
       "tests": ["PRG-3d"]
     },
     {
+      "id": "E-clinical-healthcheck",
+      "kind": "endpoint",
+      "surface": "GET /clinical/healthcheck",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["HLTH-1", "HLTH-3", "HLTH-4"]
+    },
+    {
+      "id": "E-clinical-health-report",
+      "kind": "endpoint",
+      "surface": "GET /clinical/healthcheck/report",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["HLTH-2"]
+    },
+    {
+      "id": "E-abc-options",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/abc-options",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["SET-1"]
+    },
+    {
+      "id": "E-lookup",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/lookup/:name",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["LOOK-1"]
+    },
+    {
+      "id": "E-data-collection-scales",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/data-collection-scales",
+      "status": "covered",
+      "risk": "P2",
+      "tests": ["SET-4"]
+    },
+    {
+      "id": "E-analyze-data-series",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/reports/analyze-data/series",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["AZ-15"]
+    },
+    {
+      "id": "E-analyze-data-mastered-targets",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/reports/analyze-data/mastered-targets",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["AZ-16"]
+    },
+    {
+      "id": "E-analyze-data-graphs",
+      "kind": "endpoint",
+      "surface": "GET /clinical/v1/reports/analyze-data/graphs",
+      "status": "covered",
+      "risk": "P1",
+      "tests": ["AZ-17"]
+    },
+    {
       "id": "E-automastery",
       "kind": "endpoint",
       "surface": "GET .../automastery-evaluations?status=",
@@ -222,6 +320,14 @@
       "status": "covered",
       "risk": "P0",
       "tests": ["CLI-8", "FND-2"]
+    },
+    {
+      "id": "S-csp-connect-src",
+      "kind": "state",
+      "surface": "CSP connect-src permits both runtime API origins",
+      "status": "covered",
+      "risk": "P0",
+      "tests": ["FND-8"]
     },
     {
       "id": "E-targets-post",

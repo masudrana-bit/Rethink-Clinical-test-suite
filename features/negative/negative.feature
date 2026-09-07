@@ -80,6 +80,11 @@ Feature: Negative and error cases
     When I retry the clients list after the API recovers
     Then the listed clients match the API response exactly
 
+  @api @negative @programs @endpoint-coverage
+  Scenario: Patching a standard library program is refused
+    When I attempt to patch a standard program in the library
+    Then the response status is 409
+
   @ui @negative @programs
   Scenario: A client with no programs shows an empty program rail
     Given the programs API returns an empty list
