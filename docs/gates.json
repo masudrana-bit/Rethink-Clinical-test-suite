@@ -1,28 +1,17 @@
 {
   "version": 1,
-  "notes": "Environment preconditions that are broken today. Each gate names one root cause and the error signature that identifies it in a run. Failures matching a signature are reported as blocked, so one backend defect does not read as dozens of independent coverage regressions. Remove a gate once its defect is fixed and the signature stops matching.",
+  "notes": "Preconditions that are broken today. Each gate names one root cause and the error signature that identifies it in a run. Failures matching a signature are reported as blocked, so one defect does not read as dozens of independent coverage regressions. Remove a gate once its defect is fixed and the signature stops matching — DEF-7 and DEF-8 were deleted on 2026-09-08 for exactly that reason.",
   "gates": [
     {
-      "id": "client-programs-500",
-      "title": "A client's programs cannot be listed",
-      "surface": "GET /clinical/v1/clients/{id}/programs",
-      "meaning": "The suite resolves its test client by capability, which starts with this call, so almost every client-scoped check stops before it asserts anything. Skills Programs, Analyze Data, Behavior Support, Sessions and the client-workspace UI all depend on it.",
-      "rootCause": "Npgsql 42703: column l.legacy_id does not exist — the deployed query is ahead of the dev2 schema.",
-      "owner": "Clinical API",
-      "defect": "DEF-7",
-      "firstSeen": "2026-09-07",
-      "signature": "legacy_id does not exist|programs for client \\d+ returned 500|clients/\\d+/programs[\\s\\S]{0,160}HTTP 500"
-    },
-    {
-      "id": "program-library-500",
-      "title": "The program library catalogue cannot be read",
-      "surface": "GET /clinical/v1/program-library",
-      "meaning": "The organisation-wide template catalogue is unavailable, so the library API checks and the Program Library administration page cannot load their rows.",
-      "rootCause": "HTTP 500 from the gateway with a text/plain body; same deploy as DEF-7.",
-      "owner": "Clinical API",
-      "defect": "DEF-8",
-      "firstSeen": "2026-09-07",
-      "signature": "clinical/v1/program-library[\\s\\S]{0,160}HTTP 500|Program Library admin should finish loading|catalog should include a standard/core program"
+      "id": "analyze-data-null-trim",
+      "title": "Analyze Data crashes before it requests a report",
+      "surface": "/clients/:id/analyze-data",
+      "meaning": "The mastered tiles never leave `--`, so every check that waits for a figure times out. This is the whole Analyze Data UI lane: the summary tiles, the skill-area chart, the grouping and date-window controls, the mode tabs, the mastery review list and the page's axe scan. The Analyze Data API checks are unaffected and still pass.",
+      "rootCause": "Frontend null dereference, not an API failure. Loading the page issues 177 calls that all return 200, then throws `Cannot read properties of null (reading 'trim')` 70 times and never requests analyze-data at all. The configured client carries the nulls that trigger it — of 86 programs, `area` is null on 15, `goalDescription` on 15 and `category` on 11; of 25 series, `skillArea` is null on 13. The mastered report groups by Domain, Category or Area, so a null grouping key is the likeliest trigger.",
+      "owner": "Clinical frontend",
+      "defect": "DEF-10",
+      "firstSeen": "2026-09-08",
+      "signature": "in-scope tile should resolve to a number|mastered-tile-in-scope"
     },
     {
       "id": "behaviorplans-500",

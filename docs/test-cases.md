@@ -783,9 +783,33 @@ FND-4 (page objects) and FND-6 (`@wip` gating, report script) are **harness work
 | **Type** | API |
 | **Priority** | P1 |
 | **Steps** | 1. GET series. 2. Take graphable rows with a `dataType`. 3. GET graphs with those `seriesIds`. |
-| **Expected result** | HTTP 200. `graphs[]` (not `items`) includes each requested id and a `points` array. Unfiltered graphs 400 when non-graphable series are in scope — that path is not asserted as success. |
+| **Expected result** | HTTP 200. `graphs[]` (not `items`) includes each requested id and a `points` array. Unfiltered graphs 400 when non-graphable series are in scope — that path is asserted by AZ-18 and AZ-19. |
 | **Automation** | *Analyze Data graphs return points for graphable series* |
 | **Status** | Pass |
+
+### AZ-18 — Asking for every series either plots them all or says which it cannot
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Pin the observable contract for the request a real report makes — every series in scope, not just the graphable ones. AZ-17 filters the awkward rows out before asking, so it can never reach this path. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET series for a live client. 2. GET graphs with **every** returned `seriesId`. |
+| **Expected result** | Either HTTP 200 with a graph for every requested id, or HTTP 400 whose message names each ungraphable series and blames none of the graphable ones. A 500, a silent empty body, or a refusal that does not identify the offending series all fail. |
+| **Automation** | *Asking for every series either plots them all or says which it cannot* |
+| **Status** | Pass |
+
+### AZ-19 — One unsupported series does not cost the whole report
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | A caseload containing metrics the API cannot graph should still yield the graphs it can. Asserts the corrected behaviour for DEF-9. |
+| **Type** | API |
+| **Priority** | P1 |
+| **Steps** | 1. GET series for a live client. 2. GET graphs with **every** returned `seriesId`. |
+| **Expected result** | HTTP 200, with a graph for each series flagged `graphable`. Ungraphable series are omitted rather than rejecting the report. |
+| **Automation** | *One unsupported series does not cost the whole report* |
+| **Status** | Known fail (`@bug`) — DEF-9 |
 
 ---
 

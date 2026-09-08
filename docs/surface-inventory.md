@@ -90,7 +90,7 @@ Remaining gaps are signed off (D14): mastery confirm/dismiss, `/sessions/new` (D
 | `E-data-collection-scales` | GET /clinical/v1/data-collection-scales | ✅ covered | P2 | SET-4 |
 | `E-analyze-data-series` | GET /clinical/v1/reports/analyze-data/series | ✅ covered | P1 | AZ-15 |
 | `E-analyze-data-mastered-targets` | GET /clinical/v1/reports/analyze-data/mastered-targets | ✅ covered | P1 | AZ-16 |
-| `E-analyze-data-graphs` | GET /clinical/v1/reports/analyze-data/graphs | ✅ covered | P1 | AZ-17 |
+| `E-analyze-data-graphs` | GET /clinical/v1/reports/analyze-data/graphs | ✅ covered | P1 | AZ-17, AZ-18, AZ-19 |
 | `E-automastery` | GET .../automastery-evaluations?status= | ✅ covered | P1 | PRG-4, AZ-6 |
 | `E-automastery-post` | POST .../automastery-evaluations | ✅ covered | P1 | NEG-12 |
 | `E-behaviorplans` | GET /observations/v1/client/:id/behaviorplans | 🐞 @bug | P1 | BS-2 |

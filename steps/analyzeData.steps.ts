@@ -437,6 +437,86 @@ Then(
   },
 );
 
+/**
+ * The graphable-only request above can never provoke the mixed-series rejection,
+ * because it filters the awkward rows out before asking. A clinician's report
+ * asks for everything the caseload has, so these two steps ask for that.
+ */
+When(
+  'I request Analyze Data graphs for every series of a live client',
+  async function (this: CustomWorld) {
+    const clientId = await firstListedClientId(this.clinical);
+    const listed = await this.clinical.analyzeDataSeries(clientId);
+    const body = await listed.json().catch(() => undefined);
+    const series = (body?.items ?? []) as Array<{ id?: string; graphable?: boolean }>;
+    const identified = series.filter((row) => typeof row.id === 'string');
+    expect(identified.length, 'the caseload should expose at least one series').toBeGreaterThan(0);
+
+    this.data.requestedGraphSeriesIds = identified.map((row) => row.id as string);
+    this.data.graphableSeriesIds = identified
+      .filter((row) => row.graphable)
+      .map((row) => row.id as string);
+    this.data.ungraphableSeriesIds = identified
+      .filter((row) => !row.graphable)
+      .map((row) => row.id as string);
+
+    const response = await this.clinical.analyzeDataGraphs(
+      clientId,
+      this.data.requestedGraphSeriesIds,
+    );
+    recordResponseMetadata(this, response);
+    // A rejection comes back as text/plain, so keep both readings.
+    this.data.lastResponseText = await response.text().catch(() => '');
+    this.data.lastResponseBody = await response.json().catch(() => undefined);
+  },
+);
+
+Then(
+  'the graphs response either plots every series or names each one it cannot',
+  function (this: CustomWorld) {
+    const requested = (this.data.requestedGraphSeriesIds ?? []) as string[];
+    const ungraphable = (this.data.ungraphableSeriesIds ?? []) as string[];
+    const status = this.data.lastResponseStatus;
+
+    if (status === 200) {
+      const graphs = (this.data.lastResponseBody?.graphs ?? []) as Array<{ id?: unknown }>;
+      const returned = new Set(graphs.map((graph) => String(graph.id)));
+      for (const id of requested) {
+        expect(returned.has(id), `graphs include ${id}`).toBe(true);
+      }
+      return;
+    }
+
+    expect(status, 'a mixed request either succeeds or is refused as a client error').toBe(400);
+    const message = String(this.data.lastResponseText ?? '');
+    expect(ungraphable.length, 'a refusal should only happen when a series is ungraphable').toBeGreaterThan(0);
+    for (const id of ungraphable) {
+      expect(message.includes(id), `the refusal names the ungraphable series ${id}`).toBe(true);
+    }
+    for (const id of (this.data.graphableSeriesIds ?? []) as string[]) {
+      expect(message.includes(id), `the refusal does not blame the graphable series ${id}`).toBe(
+        false,
+      );
+    }
+  },
+);
+
+Then(
+  'the graphs response plots the series it can and omits the rest',
+  function (this: CustomWorld) {
+    const graphable = (this.data.graphableSeriesIds ?? []) as string[];
+    expect(
+      this.data.lastResponseStatus,
+      'one unsupported series should not cost a clinician the whole report',
+    ).toBe(200);
+    const graphs = (this.data.lastResponseBody?.graphs ?? []) as Array<{ id?: unknown }>;
+    const returned = new Set(graphs.map((graph) => String(graph.id)));
+    for (const id of graphable) {
+      expect(returned.has(id), `graphs include the supported series ${id}`).toBe(true);
+    }
+  },
+);
+
 Then(
   'every returned graph names a requested series and carries points',
   function (this: CustomWorld) {

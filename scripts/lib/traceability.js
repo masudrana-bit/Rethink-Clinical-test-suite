@@ -312,13 +312,23 @@ function statusForCase(testCase, runByScenario) {
   if (testCase.link === 'undocumented') return { status: 'undocumented', rows: [] };
   if (testCase.scenarios.length === 0) return { status: 'unscripted', rows: [] };
 
+  // A @bug case documents a defect either way: filtered out of the default run,
+  // or red in a bugs run. Treating it as unproven coverage would mean that
+  // writing down a defect quietly demoted the surface it was found on.
+  const documentsDefect = testCase.scenarios.every((scenario) => scenario.tags.includes('bug'));
+
   const rows = testCase.scenarios.flatMap((scenario) => runByScenario.get(scenario.name) ?? []);
   if (rows.length === 0) {
+    if (documentsDefect) return { status: 'known-defect', rows };
     const filtered = testCase.scenarios.some((scenario) => scenario.filtered.length > 0);
     return { status: filtered ? 'filtered' : 'not-run', rows };
   }
   const failures = rows.filter((row) => row.status === 'failed');
   if (failures.length > 0) {
+    // A @bug scenario asserts behaviour the product does not have yet, so its
+    // red is the documented state, not a regression. The default run filters
+    // these out; a bugs-profile run must not turn them into contradictions.
+    if (failures.every((row) => row.tags.includes('bug'))) return { status: 'known-defect', rows };
     return { status: failures.every((row) => row.gate) ? 'blocked' : 'failed', rows };
   }
   if (rows.every((row) => row.status === 'passed')) return { status: 'passed', rows };
@@ -329,6 +339,7 @@ function statusForCase(testCase, runByScenario) {
 const COMPUTED_PRECEDENCE = [
   'failed',
   'blocked',
+  'known-defect',
   'partial',
   'not-run',
   'filtered',
@@ -338,8 +349,13 @@ const COMPUTED_PRECEDENCE = [
 ];
 
 function computedStatusFor(resolved) {
-  const statuses = resolved.map((testCase) => testCase.result.status).filter((s) => s !== 'process');
-  if (statuses.length === 0) return 'unmapped';
+  const all = resolved.map((testCase) => testCase.result.status).filter((s) => s !== 'process');
+  if (all.length === 0) return 'unmapped';
+  // Known defects are excluded from the rollup the same way the default run
+  // excludes them, unless they are all a surface has.
+  const statuses = all.some((s) => s !== 'known-defect')
+    ? all.filter((s) => s !== 'known-defect')
+    : all;
   for (const status of COMPUTED_PRECEDENCE) {
     if (statuses.includes(status)) return status === 'passed' ? 'proven' : status;
   }

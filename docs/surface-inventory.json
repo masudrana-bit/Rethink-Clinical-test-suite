@@ -285,7 +285,7 @@
       "surface": "GET /clinical/v1/reports/analyze-data/graphs",
       "status": "covered",
       "risk": "P1",
-      "tests": ["AZ-17"]
+      "tests": ["AZ-17", "AZ-18", "AZ-19"]
     },
     {
       "id": "E-automastery",

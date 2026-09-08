@@ -146,3 +146,13 @@ Feature: Analyze Data
     And the content type includes "x-api-version=1"
     And every returned graph names a requested series and carries points
 
+  @api @analyze-data
+  Scenario: Asking for every series either plots them all or says which it cannot
+    When I request Analyze Data graphs for every series of a live client
+    Then the graphs response either plots every series or names each one it cannot
+
+  @api @analyze-data @bug
+  Scenario: One unsupported series does not cost the whole report
+    When I request Analyze Data graphs for every series of a live client
+    Then the graphs response plots the series it can and omits the rest
+

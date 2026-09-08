@@ -81,7 +81,71 @@ after the first failure. Asserting when the first response lands sees the empty 
 alone and passes vacuously, which is exactly what happened before
 `BehaviorSupportPage.goto` was changed to wait until the app stops re-requesting.
 
-## DEF-7 — A client's programs cannot be listed (blocks most of the suite)
+## DEF-10 — Analyze Data crashes on null data before it requests a report
+
+**Severity:** high — the Analyze Data page never renders for the configured caseload. It is the
+single cause of 47 of the 52 failing rows in the 2026-09-08 full run.
+
+The mastered tiles stay at `--` and every downstream assertion times out waiting for a number.
+
+**Not an API failure, and not DEF-9.** Loading `/clients/892745/analyze-data` issues **177 API
+calls and every one returns 200**. The page then throws
+`Cannot read properties of null (reading 'trim')` **70 times** and **never requests
+`analyze-data` at all** — the crash happens while assembling program data, before the report is
+asked for. So no gate signature matches, and the graphs 400 is not involved.
+
+**The null values are real and plentiful** on that client. Of 86 programs: `area` null on 15,
+`goalDescription` on 15, `category` on 11, `domain` on 1. Of 25 series: `skillArea` null on 13,
+`metric` on 10, `dataTypeLabel` on 10. The mastered report groups by Domain, Category or Area,
+so a null grouping key is the likeliest trigger, but the exact field is the frontend team's to
+confirm.
+
+**Same underlying data as DEF-9.** `dataType` is null on exactly **17 of 25** series — the same
+17 the graphs endpoint refuses to plot. One gap in the reference data surfaces twice: as a 400
+from the API, and as a null dereference in the page.
+
+**Tracked as:** gate `analyze-data-null-trim` in [`gates.json`](./gates.json). Its signature covers
+the 47 tile timeouts and nothing else; the remaining 5 failures in that run are unrelated rail and
+workspace mismatches and are still reported as genuine failures.
+
+## DEF-9 — One ungraphable series rejects the entire Analyze Data report
+
+**Severity:** high — a clinician whose caseload is mostly unsupported metric types gets no
+graphs at all rather than the ones that would render.
+
+`GET /clinical/v1/reports/analyze-data/graphs` returns 400 for the whole request when **any**
+requested series has no supported `dataType`:
+
+> `these series have no supported dataType and cannot be graphed: program:345, program:226, …`
+
+**Reproduced independently on 2026-09-08.** Running AZ-19 against our capability-resolved
+client returned 400, and the refusal named **17 series** — `program:345, program:226,
+program:221, program:245, program:229, program:265, program:228, program:284, behavior:98,
+program:246, behavior:97, program:224, …` — the same identifiers the frontend team reported,
+from a client our harness picked on its own. AZ-18 passed on the same request, confirming the
+refusal names every ungraphable series and blames none of the graphable ones.
+
+**Root cause (reported by the Clinical frontend team, 2026-09-08):** `AnalyzeDataVocabulary.ToDataType`
+recognises five metric names — `opportunity`, `task analysis`, `duration`, `frequency`,
+`interval` — and returns `null` for everything else, while the deployed `ref.method_type`
+has thirteen rows. On one real caseload that leaves 8 of 25 series graphable; the remaining
+17 reject the report for all of them.
+
+**Why we did not catch it.** AZ-17 asks only for series already flagged `graphable`, so it
+filters the failure out before making the request. The narrow path is genuinely green — it
+just never exercises the one a report takes. AZ-18 now pins the real contract and stays green
+whichever way the API answers; AZ-19 (`@bug`) asserts the corrected behaviour and will start
+passing once partial success lands.
+
+**Also worth raising:** `Test-Nihat` (ref id 5) is live in dev2's `ref.method_type` and appears
+as a real series metric on a real caseload. LOOK-1 covers `method-types` but only asserts that
+labels are non-empty, so obvious test data passes unremarked.
+
+## DEF-7 — A client's programs cannot be listed (blocks most of the suite) — RESOLVED 2026-09-08
+
+**Resolved.** The endpoint returns 200 again; the full run of 2026-09-08 produced no failure
+matching the gate signature, and a direct probe of `/clients/892745/programs` and its per-program
+calls returned 200 for all 177 requests. Gate `client-programs-500` was deleted per D23.
 
 **Severity:** critical — this is the entry point to every client-scoped surface.
 
@@ -102,11 +166,15 @@ accounted for **39 of 51** failing scenarios.
 **Regression window:** the same scenarios passed at 10:33 UTC on 2026-09-07 and failed at
 12:04 UTC the same day, so the change landed inside that window.
 
-**Tracked as:** gate `client-programs-500` in [`gates.json`](./gates.json). Failures matching
-its signature are reported as *blocked* rather than *failed*, so the coverage figures do not
-read as if 39 surfaces silently lost their tests.
+**Tracked as:** gate `client-programs-500` in [`gates.json`](./gates.json), now deleted. While it
+was open, failures matching its signature were reported as *blocked* rather than *failed*, so the
+coverage figures never read as if 39 surfaces had silently lost their tests.
 
-## DEF-8 — The program library catalogue cannot be read
+## DEF-8 — The program library catalogue cannot be read — RESOLVED 2026-09-08
+
+**Resolved.** `GET /clinical/v1/program-library` returns 200 again — observed directly while
+probing DEF-10, including the paged `?page=3&pageSize=200` variant. Gate `program-library-500`
+was deleted per D23.
 
 **Severity:** high — the organisation-wide template catalogue is unavailable.
 
@@ -117,7 +185,7 @@ cannot find a standard/core row to prove the catalogue is read-only.
 
 **Blast radius:** 4 scenarios in the 2026-09-07 run.
 
-**Tracked as:** gate `program-library-500` in [`gates.json`](./gates.json).
+**Tracked as:** gate `program-library-500` in [`gates.json`](./gates.json), now deleted.
 
 ## DEF-3 — `staff-role` returns credential fields
 
